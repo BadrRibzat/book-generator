@@ -78,6 +78,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
+# In settings.py
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -89,6 +91,8 @@ DATABASES = {
     }
 }
 
+MONGODB_URI = config('MONGODB_URI')
+MONGODB_DB_NAME = config('MONGODB_DB_NAME')
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

@@ -5,6 +5,10 @@ db.sqlite3
 media/
 staticfiles/
 
+# Django migrations (ignore auto-generated, keep __init__.py)
+*/migrations/*.py
+!*/migrations/__init__.py
+
 # Environment
 .env
 .venv
@@ -23,3 +27,18 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Caches and large temporary files
+*.cache
+.cache/
+*.tmp
+tmp/
+*.bak
+
+# WeasyPrint / PDF temp files (optional)
+*.pdf
+!media/books/*.pdf
+!media/covers/*.pdf
+
+# Celery
+celerybeat-schedule

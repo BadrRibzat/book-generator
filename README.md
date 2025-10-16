@@ -2,35 +2,168 @@
 
 > **Production-ready SaaS that generates complete, publish-ready digital books (15-30 pages + professional cover) in PDF format using AI - 100% FREE, no credit card required.**
 
-![Status](https://img.shields.io/badge/status-ready-green)
+![Status](https://img.shields.io/badge/status-active%20development-blue)
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![Django](https://img.shields.io/badge/django-4.2-green)
+![Vue](https://img.shields.io/badge/vue-3.5+-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ---
 
 ## 🎯 What Is This?
 
-A complete SaaS application that:
+A complete full-stack SaaS application that:
 1. **Generates full book content** using Groq's free LLM API (Llama 3.1 70B)
 2. **Creates 3 professional cover designs** using HTML/CSS templates
 3. **Assembles everything into a single PDF** ready for download/publishing
 4. **Requires NO payment method** - uses only free-tier services
+5. **Modern SaaS UI/UX** with dark mode and premium design
 
 ### Key Features
 
-✅ **15 Sub-Niches** across 5 domains (Health, Food, Personal Dev, Hobbies, Lifestyle)  
-✅ **Auto-generated market-optimized titles**  
+✅ **15 Trending Sub-Niches** across 5 domains (Language & Kids, Tech & AI, Nutrition, Meditation, Home Workout)  
+✅ **Auto-generated market-optimized titles** with 45+ psychology-based templates  
 ✅ **15-30 page books** with professional formatting  
 ✅ **3 cover styles** (Modern, Bold, Elegant) with niche-specific colors  
 ✅ **Mandatory cover selection** before download (ensures complete product)  
 ✅ **Book history** with regenerate/delete options  
 ✅ **Session-based auth** (no JWT complexity)  
 ✅ **MongoDB + SQLite** for efficient storage  
-✅ **RESTful API** with 12+ endpoints  
+✅ **RESTful API** with Swagger/ReDoc documentation  
+✅ **Modern Vue 3 Frontend** with TypeScript, Tailwind CSS, and dark mode  
 ✅ **100% free stack** - no credit card needed anywhere
 
 ---
+
+## 🛠️ Tech Stack
+
+### Backend
+
+- **Framework**: Django 4.2 + Django REST Framework
+- **API Documentation**: drf-spectacular (Swagger UI + ReDoc)
+- **Database**: SQLite (metadata) + MongoDB Atlas (content storage)
+- **AI**: Groq API (Llama 3.1 70B Versatile, free tier)
+- **PDF Generation**: WeasyPrint (HTML/CSS → print-ready PDF)
+- **Authentication**: Django Session Authentication
+
+### Frontend
+
+- **Framework**: Vue 3.5+ with Composition API
+- **Language**: TypeScript for full type safety
+- **Build Tool**: Vite 7.1.10 (lightning-fast HMR)
+- **Styling**: Tailwind CSS 3.4.1 with custom animations
+- **Icons**: Font Awesome (38+ icons)
+- **State Management**: Pinia stores (auth, books, theme)
+- **Routing**: Vue Router 4 with authentication guards
+- **Features**: 
+  - 🌙 **Dark Mode** with localStorage persistence
+  - 🎨 **Glass-morphism** design language
+  - ✨ **Custom animations** (fadeIn, slideUp, scaleIn)
+  - 📱 **Fully responsive** mobile-first design
+  - 🎯 **SaaS-level UI/UX** with gradient buttons and modern forms
+
+### Deployment (Planned)
+
+- Backend: Render (free tier)
+- Frontend: Vercel / Netlify
+- Storage: Cloudflare R2 (free tier, no card)
+
+---
+
+## 🚀 Quick Start
+
+### Backend Setup
+
+```bash
+# 1. Clone & navigate to backend
+git clone https://github.com/BadrRibzat/book-generator.git
+cd book-generator/backend
+
+# 2. Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Configure environment variables
+cp .env.example .env
+# Add: GROQ_API_KEY, MONGODB_URI, SECRET_KEY
+
+# 5. Run migrations
+python manage.py migrate
+
+# 6. Start development server
+python manage.py runserver
+```
+
+**Backend will run on**: http://127.0.0.1:8000/  
+**API Documentation**: 
+- Swagger UI: http://127.0.0.1:8000/api/docs/
+- ReDoc: http://127.0.0.1:8000/api/redoc/
+
+### Frontend Setup
+
+```bash
+# 1. Navigate to frontend directory
+cd book-generator/frontend
+
+# 2. Install dependencies
+npm install
+
+# 3. Start development server
+npm run dev
+```
+
+**Frontend will run on**: http://localhost:5173/
+
+---
+
+## 🚦 Current Status
+
+### ✅ Completed Features
+
+**Backend (100%)**:
+- ✅ User authentication system
+- ✅ 15 trending niches with psychology-based colors
+- ✅ Book generation with Groq LLM (45+ title templates)
+- ✅ Cover generation system (3 styles)
+- ✅ PDF assembly and download
+- ✅ RESTful API with 14+ endpoints
+- ✅ Swagger/ReDoc API documentation
+- ✅ MongoDB integration for content storage
+
+**Frontend (95%)**:
+- ✅ Vue 3 + TypeScript + Vite project setup
+- ✅ Tailwind CSS with dark mode support
+- ✅ Font Awesome icon library (38 icons)
+- ✅ Vue Router with authentication guards
+- ✅ Pinia state management (auth, books, theme)
+- ✅ Landing pages (Home, Features, About, Pricing)
+- ✅ Modern authentication forms with animations
+- ✅ Profile page with theme selector
+- ✅ Book management pages (List, Create)
+- ✅ Dark mode with localStorage persistence
+- ✅ Layout component with navigation header
+- ✅ Custom animations and transitions
+
+### 🔄 In Progress
+
+- 🔨 Book Details page with dark mode
+- 🔨 Select Cover page with dark mode
+- 🔨 API integration between frontend and backend
+
+### 🔜 Next Steps
+
+1. Complete remaining dark mode styling
+2. Implement full API integration
+3. Add real-time book generation progress
+4. Testing and bug fixes
+5. Deployment preparation
+
+---
+
+## 📖 User Flow
 
 ## 🛠️ Tech Stack
 

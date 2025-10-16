@@ -26,6 +26,9 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
+# API Keys
+GROQ_API_KEY = config('GROQ_API_KEY')
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -39,6 +42,7 @@ INSTALLED_APPS = [
     # Third party apps
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
 
     # Your apps
     'users',
@@ -149,5 +153,49 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# DRF Spectacular settings for Swagger/ReDoc
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Book Generator SaaS API',
+    'DESCRIPTION': '''
+    Complete REST API for generating publish-ready digital books with professional covers.
+    
+    ## Features
+    - 15 trending sub-niches (Language/Kids, AI/Tech, Nutrition, Meditation, Home Workout)
+    - Auto-generated market-optimized titles
+    - LLM-powered content generation (15-30 pages)
+    - 3 professional cover styles per book
+    - Mandatory cover selection before download
+    - Complete PDF assembly (cover + interior)
+    
+    ## Workflow
+    1. SignUp → SignIn
+    2. Create book with domain/sub-niche/page-length
+    3. Wait for content generation (status: generating → content_generated)
+    4. Wait for covers (status: cover_pending)
+    5. **REQUIRED:** Select one of 3 covers
+    6. Download complete PDF (status: ready)
+    
+    ## Authentication
+    Session-based authentication. Use /api/auth/register/ and /api/auth/login/ to get started.
+    ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api',
+    'CONTACT': {
+        'name': 'Badr Ribzat',
+        'email': 'badr@bookgenerator.com',
+    },
+    'LICENSE': {
+        'name': 'MIT License',
+    },
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User registration, login, logout, profile'},
+        {'name': 'Configuration', 'description': 'Get available domains and sub-niches'},
+        {'name': 'Books', 'description': 'Book generation, cover selection, download, history'},
     ],
 }

@@ -42,3 +42,4 @@ tmp/
 
 # Celery
 celerybeat-schedule
+.history/

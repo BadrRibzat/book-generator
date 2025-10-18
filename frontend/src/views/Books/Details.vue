@@ -4,14 +4,14 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
-            <router-link to="/books" class="flex items-center">
+            <router-link to="/profile" class="flex items-center">
               <font-awesome-icon :icon="['fas', 'book']" class="h-6 w-6 text-primary-600" />
               <span class="ml-2 text-xl font-bold text-gray-900">Book Generator</span>
             </router-link>
           </div>
           <div class="flex items-center space-x-4">
             <router-link
-              to="/books"
+              to="/profile/books"
               class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
             >
               <font-awesome-icon :icon="['fas', 'book']" class="mr-1" />
@@ -243,7 +243,7 @@ const handleDelete = async () => {
   deleting.value = false;
 
   if (result.success) {
-    router.push('/books');
+    router.push('/profile/books');
   }
 };
 </script>

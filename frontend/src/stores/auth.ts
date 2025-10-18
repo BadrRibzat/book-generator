@@ -19,12 +19,15 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await apiClient.get<User>('/users/me/');
+      const response = await apiClient.get<User>('/auth/me/');
       user.value = response.data;
     } catch (err: any) {
       // Not authenticated or network error
       user.value = null;
-      if (err.response?.status !== 401) {
+      if (err.response?.status === 403) {
+        // User needs to sign in
+        console.log('User not authenticated - please sign in');
+      } else if (err.response?.status !== 401) {
         console.error('Auth check failed:', err);
       }
     } finally {
@@ -37,12 +40,41 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await apiClient.post<User>('/users/register/', credentials);
-      user.value = response.data;
+      
+      // Add password2 field for backend validation
+      const registerData = {
+        username: credentials.username,
+        email: credentials.email,
+        password: credentials.password,
+        password2: credentials.password // Backend expects confirmation
+      };
+      
+      await apiClient.post<any>('/auth/register/', registerData);
+      // Don't set user.value here - user must sign in after registration
       return { success: true };
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Sign up failed';
+      let message = 'Sign up failed';
+      if (err.response?.data) {
+        // Handle Django validation errors
+        const errors = err.response.data;
+        if (typeof errors === 'object') {
+          const errorMessages = [];
+          for (const [field, fieldErrors] of Object.entries(errors)) {
+            if (Array.isArray(fieldErrors)) {
+              errorMessages.push(`${field}: ${fieldErrors.join(', ')}`);
+            } else {
+              errorMessages.push(`${field}: ${fieldErrors}`);
+            }
+          }
+          message = errorMessages.join('; ');
+        } else if (errors.error) {
+          message = errors.error;
+        } else if (errors.detail) {
+          message = errors.detail;
+        }
+      }
       error.value = message;
+      console.error('Registration error:', err.response?.data);
       return { success: false, error: message };
     } finally {
       loading.value = false;
@@ -53,12 +85,41 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await apiClient.post<User>('/users/login/', credentials);
-      user.value = response.data;
+      
+      const response = await apiClient.post<any>('/auth/login/', credentials);
+      
+      // Store user data from login response
+      if (response.data.user) {
+        user.value = response.data.user;
+      }
+      
+      // Double-check by fetching current user to ensure session is working
+      await checkAuth();
+      
       return { success: true };
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Sign in failed';
+      let message = 'Sign in failed';
+      if (err.response?.data?.error) {
+        message = err.response.data.error;
+      } else if (err.response?.data?.detail) {
+        message = err.response.data.detail;
+      } else if (err.response?.data) {
+        // Handle validation errors
+        const errors = err.response.data;
+        if (typeof errors === 'object') {
+          const errorMessages = [];
+          for (const [, fieldErrors] of Object.entries(errors)) {
+            if (Array.isArray(fieldErrors)) {
+              errorMessages.push(fieldErrors.join(', '));
+            } else {
+              errorMessages.push(String(fieldErrors));
+            }
+          }
+          message = errorMessages.join('; ');
+        }
+      }
       error.value = message;
+      console.error('Login error:', err.response?.data);
       return { success: false, error: message };
     } finally {
       loading.value = false;
@@ -69,13 +130,14 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      await apiClient.post('/users/logout/');
+      await apiClient.post('/auth/logout/');
       user.value = null;
       return { success: true };
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Sign out failed';
-      error.value = message;
-      return { success: false, error: message };
+      // Even if logout fails, clear local state
+      user.value = null;
+      console.warn('Logout request failed, but cleared local state:', err);
+      return { success: true };
     } finally {
       loading.value = false;
     }

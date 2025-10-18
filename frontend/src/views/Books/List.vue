@@ -11,7 +11,7 @@
             </p>
           </div>
           <router-link
-            to="/books/create"
+            to="/profile/create"
             class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             <font-awesome-icon :icon="['fas', 'plus']" class="mr-2" />
@@ -44,7 +44,7 @@
           <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Get started by creating your first book.</p>
           <div class="mt-6">
             <router-link
-              to="/books/create"
+              to="/profile/create"
               class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg"
             >
               <font-awesome-icon :icon="['fas', 'plus']" class="mr-2" />
@@ -130,14 +130,21 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
 import type { BookStatus, Domain, SubNiche } from '../../types';
 
+const router = useRouter();
 const booksStore = useBooksStore();
 
 onMounted(async () => {
-  await booksStore.fetchBooks();
+  const result = await booksStore.fetchBooks();
+  
+  // If user has no books, redirect to create page to encourage first book
+  if (result.success && booksStore.allBooks.length === 0) {
+    router.push('/books/create');
+  }
 });
 
 const getStatusClass = (status: BookStatus) => {

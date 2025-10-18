@@ -3,6 +3,7 @@ import type { RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
 const routes: RouteRecordRaw[] = [
+  // Public routes
   {
     path: '/',
     name: 'Home',
@@ -24,6 +25,13 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/Pricing.vue'),
   },
   {
+    path: '/please-signin',
+    name: 'PleaseSignIn',
+    component: () => import('../views/PleaseSignIn.vue'),
+  },
+  
+  // Auth routes
+  {
     path: '/auth/signup',
     name: 'SignUp',
     component: () => import('../views/Auth/SignUp.vue'),
@@ -35,6 +43,8 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/Auth/SignIn.vue'),
     meta: { requiresGuest: true },
   },
+  
+  // Profile routes (protected)
   {
     path: '/profile',
     name: 'Profile',
@@ -42,17 +52,25 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/books',
-    name: 'Books',
+    path: '/profile/books',
+    name: 'ProfileBooks',
     component: () => import('../views/Books/List.vue'),
     meta: { requiresAuth: true },
   },
   {
-    path: '/books/create',
-    name: 'CreateBook',
-    component: () => import('../views/Books/Create.vue'),
+    path: '/profile/create',
+    name: 'ProfileCreate',
+    component: () => import('../views/Books/CreateGuided.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/profile/mybooks',
+    name: 'ProfileMyBooks',
+    component: () => import('../views/Books/List.vue'),
+    meta: { requiresAuth: true },
+  },
+  
+  // Book detail routes (can stay as /books for now, or change to /profile/books if needed)
   {
     path: '/books/:id',
     name: 'BookDetails',
@@ -75,7 +93,7 @@ const router = createRouter({
 });
 
 // Navigation guards
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
 
   // Check if user is authenticated (on first load)
@@ -87,11 +105,11 @@ router.beforeEach(async (to, from, next) => {
   const requiresGuest = to.matched.some((record) => record.meta.requiresGuest);
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    // Redirect to sign in if not authenticated
-    next({ name: 'SignIn', query: { redirect: to.fullPath } });
+    // Redirect to friendly "Please Sign In" page
+    next({ name: 'PleaseSignIn' });
   } else if (requiresGuest && authStore.isAuthenticated) {
-    // Redirect to books if already authenticated
-    next({ name: 'Books' });
+    // Redirect to profile if already authenticated
+    next({ name: 'Profile' });
   } else {
     next();
   }

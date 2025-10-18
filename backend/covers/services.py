@@ -405,11 +405,7 @@ class CoverGenerator:
             if images:
                 images[0].save(png_path, 'PNG')
         except ImportError:
-            # Fallback: Create a simple preview image
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import letter
-            from PIL import Image
-            
+            # Fallback: Create a simple preview image using PIL
             img = Image.new('RGB', (600, 900), color='white')
             draw = ImageDraw.Draw(img)
             draw.text((300, 450), "Cover Preview", fill='black', anchor='mm')

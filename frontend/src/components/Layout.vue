@@ -37,15 +37,15 @@
             
             <template v-if="authStore.isAuthenticated">
               <router-link 
-                to="/books" 
-                class="text-gray-700 hover:text-primary-600 font-medium flex items-center"
+                to="/profile/books" 
+                class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium flex items-center transition-colors"
               >
                 <font-awesome-icon :icon="['fas', 'book']" class="mr-1" />
                 My Books
               </router-link>
               <router-link 
                 to="/profile"
-                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
               >
                 <font-awesome-icon :icon="['fas', 'user']" class="mr-2" />
                 Profile
@@ -94,10 +94,10 @@
           </router-link>
           
           <template v-if="authStore.isAuthenticated">
-            <router-link to="/books" @click="mobileMenuOpen = false" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">
+            <router-link to="/profile/mybooks" @click="mobileMenuOpen = false" class="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
               My Books
             </router-link>
-            <router-link to="/profile" @click="mobileMenuOpen = false" class="block px-3 py-2 text-gray-700 hover:bg-gray-50 rounded-md">
+            <router-link to="/profile" @click="mobileMenuOpen = false" class="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors">
               Profile
             </router-link>
           </template>

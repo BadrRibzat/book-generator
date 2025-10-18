@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',  # DISABLED for API simplicity
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -82,8 +82,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# In settings.py
-SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+# Use database sessions instead of signed cookies for better cross-origin support
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -136,7 +136,54 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
+
+# Additional CORS settings for development
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False  # Keep False for security
+
+# Expose session cookie to frontend
+CORS_EXPOSE_HEADERS = [
+    'set-cookie',
+]
+
+# Allow common headers that frontend might send
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'cookie',
+]
+
+# Allow common methods
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Session settings for frontend compatibility
+SESSION_COOKIE_AGE = 1209600  # 2 weeks
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = False  # Allow JavaScript access for debugging (set True in production)
+SESSION_COOKIE_SAMESITE = 'Lax'  # Lax allows cookies on navigation
+SESSION_COOKIE_SECURE = False  # False for development (HTTP), True in production (HTTPS)
+SESSION_COOKIE_DOMAIN = None  # Allow localhost and 127.0.0.1
+SESSION_COOKIE_NAME = 'sessionid'  # Explicit session cookie name
+SESSION_COOKIE_PATH = '/'  # Cookie available for all paths
+
+# CSRF disabled for API simplicity
 
 # Celery Configuration
 CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0'
@@ -149,7 +196,7 @@ CELERY_TIMEZONE = 'UTC'
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'backend.authentication.CsrfExemptSessionAuthentication',  # Custom session auth without CSRF
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

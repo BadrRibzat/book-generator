@@ -162,6 +162,7 @@
         </p>
       </div>
     </div>
+  </div>
   </Layout>
 </template>
 
@@ -169,8 +170,8 @@
 import { reactive, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
-import Layout from '../../components/Layout.vue';
 import type { UserLogin } from '../../types';
+import Layout from '../../components/Layout.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -189,9 +190,15 @@ const handleSubmit = async () => {
   const result = await authStore.signIn(form);
   
   if (result.success) {
-    // Redirect to the page they were trying to access, or books list
-    const redirect = (route.query.redirect as string) || '/books';
-    router.push(redirect);
+    // Small delay to ensure session cookie is set
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Wait for authentication state to be fully set
+    await authStore.checkAuth();
+    
+    // Redirect to redirect param or profile page
+    const redirect = route.query.redirect as string || '/profile';
+    await router.replace(redirect);
   }
 };
 </script>

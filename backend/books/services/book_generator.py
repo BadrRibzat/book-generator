@@ -126,7 +126,7 @@ class BookGenerator:
         
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",  # or "mixtral-8x7b-32768"
+                model="llama-3.1-8b-instant",  # Fast, available model
                 messages=[
                     {
                         "role": "system",

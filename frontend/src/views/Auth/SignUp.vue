@@ -189,6 +189,7 @@
         </div>
       </div>
     </div>
+  </div>
   </Layout>
 </template>
 
@@ -223,7 +224,7 @@ const handleSubmit = async () => {
   const result = await authStore.signUp(form);
   
   if (result.success) {
-    router.push('/books');
+    router.push('/auth/signin');
   }
 };
 </script>

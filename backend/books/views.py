@@ -305,11 +305,11 @@ def register_user(request):
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        login(request, user)
+        # Don't auto-login after registration - user must sign in separately
         return Response(
             {
                 'user': UserSerializer(user).data,
-                'message': 'Registration successful. You are now logged in.'
+                'message': 'Registration successful. Please sign in with your credentials.'
             },
             status=status.HTTP_201_CREATED
         )
@@ -355,14 +355,29 @@ def login_user(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    user = authenticate(username=username, password=password)
+    user = authenticate(request=request, username=username, password=password)
     
     if user:
         login(request, user)
-        return Response({
+        
+        # Force session save
+        request.session.save()
+        
+        # Debug: Print session info
+        print(f"Login successful for user: {user.username}")
+        print(f"Session key: {request.session.session_key}")
+        print(f"Session data: {dict(request.session)}")
+        print(f"Session modified: {request.session.modified}")
+        
+        response = Response({
             'user': UserSerializer(user).data,
             'message': 'Login successful'
         })
+        
+        # Don't manually set cookie - Django middleware handles it
+        # The session cookie should be set automatically by SessionMiddleware
+        
+        return response
     
     return Response(
         {'error': 'Invalid credentials'},
@@ -410,6 +425,28 @@ def logout_user(request):
 @permission_classes([IsAuthenticated])
 def current_user(request):
     """Get current user info"""
+    # Debug: Print session and auth info
+    print(f"\n=== Current User Request Debug ===")
+    print(f"Request path: {request.path}")
+    print(f"Request method: {request.method}")
+    print(f"Session key from session: {request.session.session_key}")
+    print(f"Session key from cookie: {request.COOKIES.get(settings.SESSION_COOKIE_NAME, 'NOT FOUND')}")
+    print(f"User: {request.user}")
+    print(f"User ID: {request.user.id if request.user.is_authenticated else 'N/A'}")
+    print(f"Is authenticated: {request.user.is_authenticated}")
+    print(f"Session data: {dict(request.session)}")
+    print(f"Session exists: {request.session.session_key is not None}")
+    print(f"All cookies: {dict(request.COOKIES)}")
+    print(f"Session age: {request.session.get_expiry_age()}")
+    print(f"Session expiry date: {request.session.get_expiry_date()}")
+    print(f"=================================\n")
+    
+    if not request.user.is_authenticated:
+        return Response(
+            {'error': 'Not authenticated'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    
     return Response(UserSerializer(request.user).data)
 
 

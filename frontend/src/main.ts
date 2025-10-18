@@ -46,6 +46,9 @@ import {
   faAt,
   faShieldAlt,
   faUserCheck,
+  faPlusCircle,
+  faRoute,
+  faMagic,
 } from '@fortawesome/free-solid-svg-icons';
 
 // Add icons to library
@@ -87,7 +90,10 @@ library.add(
   faSignInAlt,
   faAt,
   faShieldAlt,
-  faUserCheck
+  faUserCheck,
+  faPlusCircle,
+  faRoute,
+  faMagic
 );
 
 const app = createApp(App);

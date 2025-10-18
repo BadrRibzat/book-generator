@@ -23,7 +23,7 @@ export const useBooksStore = defineStore('books', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await apiClient.get<ConfigResponse>('/books/config/');
+      const response = await apiClient.get<ConfigResponse>('/config/sub-niches/');
       config.value = response.data;
       return { success: true };
     } catch (err: any) {

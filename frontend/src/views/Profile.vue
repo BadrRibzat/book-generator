@@ -1,203 +1,188 @@
 <template>
   <Layout>
-    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="px-4 py-6 sm:px-0">
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <!-- Page Header -->
         <div class="mb-8 animate-fade-in">
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {{ authStore.currentUser?.username }}!
+          </h1>
           <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Manage your account settings and preferences
+            Manage your books and create amazing content
           </p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Profile Card -->
-          <div class="lg:col-span-2">
-            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-slide-up">
-              <!-- Header with gradient -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <!-- Sidebar -->
+          <div class="lg:col-span-1">
+            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 sticky top-6">
+              <!-- Profile Summary -->
               <div class="bg-gradient-to-r from-primary-600 to-blue-700 px-6 py-8">
-                <div class="flex items-center space-x-4">
-                  <div class="h-20 w-20 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 text-3xl font-bold shadow-lg">
+                <div class="flex flex-col items-center text-center">
+                  <div class="h-20 w-20 rounded-full bg-white dark:bg-gray-700 flex items-center justify-center text-primary-600 dark:text-primary-400 text-3xl font-bold shadow-lg mb-3">
                     {{ authStore.currentUser?.username?.charAt(0).toUpperCase() }}
                   </div>
-                  <div>
-                    <h2 class="text-2xl font-bold text-white">
-                      {{ authStore.currentUser?.username }}
-                    </h2>
-                    <p class="text-primary-100">
-                      {{ authStore.currentUser?.email }}
-                    </p>
-                  </div>
+                  <h2 class="text-xl font-bold text-white">
+                    {{ authStore.currentUser?.username }}
+                  </h2>
+                  <p class="text-primary-100 text-sm">
+                    {{ authStore.currentUser?.email }}
+                  </p>
                 </div>
               </div>
 
-              <!-- Profile Details -->
-              <div class="px-6 py-6 space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div class="group">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <font-awesome-icon :icon="['fas', 'user']" class="mr-2 text-primary-600 dark:text-primary-400" />
-                      Username
-                    </label>
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                      <p class="text-gray-900 dark:text-white font-medium">
-                        {{ authStore.currentUser?.username }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="group">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <font-awesome-icon :icon="['fas', 'at']" class="mr-2 text-primary-600 dark:text-primary-400" />
-                      Email Address
-                    </label>
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                      <p class="text-gray-900 dark:text-white font-medium">
-                        {{ authStore.currentUser?.email }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="group">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <font-awesome-icon :icon="['fas', 'database']" class="mr-2 text-primary-600 dark:text-primary-400" />
-                      User ID
-                    </label>
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                      <p class="text-gray-900 dark:text-white font-mono text-sm">
-                        #{{ authStore.currentUser?.id }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="group">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      <font-awesome-icon :icon="['fas', 'check-circle']" class="mr-2 text-green-600 dark:text-green-400" />
-                      Account Status
-                    </label>
-                    <div class="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                        <font-awesome-icon :icon="['fas', 'check-circle']" class="mr-1" />
-                        Active
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <button
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
-                  >
-                    <font-awesome-icon :icon="['fas', 'user']" class="mr-2" />
-                    Edit Profile
-                  </button>
-                  <button
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
-                  >
-                    <font-awesome-icon :icon="['fas', 'lock']" class="mr-2" />
-                    Change Password
-                  </button>
-                </div>
-              </div>
+              <!-- Navigation -->
+              <nav class="p-4 space-y-2">
+                <router-link
+                  to="/profile"
+                  class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                  :class="$route.path === '/profile' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium' : ''"
+                >
+                  <font-awesome-icon :icon="['fas', 'user']" class="mr-3" />
+                  Dashboard
+                </router-link>
+                
+                <router-link
+                  to="/profile/mybooks"
+                  class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                >
+                  <font-awesome-icon :icon="['fas', 'book']" class="mr-3" />
+                  My Books
+                </router-link>
+                
+                <router-link
+                  to="/profile/create"
+                  class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                >
+                  <font-awesome-icon :icon="['fas', 'plus-circle']" class="mr-3" />
+                  Create Book
+                </router-link>
+                
+                <button
+                  @click="handleSignOut"
+                  class="w-full flex items-center px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  <font-awesome-icon :icon="['fas', 'sign-out-alt']" class="mr-3" />
+                  Sign Out
+                </button>
+              </nav>
             </div>
           </div>
 
-          <!-- Quick Actions & Theme -->
-          <div class="space-y-6">
-            <!-- Theme Selector -->
-            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700 animate-slide-up">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <font-awesome-icon :icon="['fas', themeStore.isDark() ? 'moon' : 'sun']" class="mr-2 text-primary-600 dark:text-primary-400" />
-                Appearance
-              </h3>
-              <div class="space-y-3">
-                <button
-                  @click="themeStore.setTheme('light')"
-                  :class="[
-                    'w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200',
-                    !themeStore.isDark() 
-                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20' 
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                  ]"
-                >
-                  <div class="flex items-center">
-                    <font-awesome-icon :icon="['fas', 'sun']" class="mr-3 text-yellow-500" />
-                    <span class="font-medium text-gray-900 dark:text-white">Light Mode</span>
+          <!-- Main Content -->
+          <div class="lg:col-span-3">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-primary-100 dark:bg-primary-900/30 rounded-lg p-3">
+                    <font-awesome-icon :icon="['fas', 'book']" class="h-6 w-6 text-primary-600 dark:text-primary-400" />
                   </div>
-                  <font-awesome-icon 
-                    v-if="!themeStore.isDark()" 
-                    :icon="['fas', 'check-circle']" 
-                    class="text-primary-600" 
-                  />
-                </button>
-
-                <button
-                  @click="themeStore.setTheme('dark')"
-                  :class="[
-                    'w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200',
-                    themeStore.isDark() 
-                      ? 'border-primary-600 bg-primary-50 dark:bg-primary-900/20' 
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-                  ]"
-                >
-                  <div class="flex items-center">
-                    <font-awesome-icon :icon="['fas', 'moon']" class="mr-3 text-indigo-500" />
-                    <span class="font-medium text-gray-900 dark:text-white">Dark Mode</span>
+                  <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Books</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalBooks }}</p>
                   </div>
-                  <font-awesome-icon 
-                    v-if="themeStore.isDark()" 
-                    :icon="['fas', 'check-circle']" 
-                    class="text-primary-600" 
-                  />
-                </button>
-              </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border border-gray-200 dark:border-gray-700">
-              <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                <font-awesome-icon :icon="['fas', 'chart-line']" class="mr-2 text-primary-600 dark:text-primary-400" />
-                Quick Stats
-              </h3>
-              <div class="space-y-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <div class="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
-                      <font-awesome-icon :icon="['fas', 'book']" class="text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <span class="text-gray-700 dark:text-gray-300 font-medium">Books Created</span>
-                  </div>
-                  <span class="text-2xl font-bold text-gray-900 dark:text-white">0</span>
                 </div>
+              </div>
 
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <div class="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-3">
-                      <font-awesome-icon :icon="['fas', 'download']" class="text-green-600 dark:text-green-400" />
-                    </div>
-                    <span class="text-gray-700 dark:text-gray-300 font-medium">Downloads</span>
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
+                    <font-awesome-icon :icon="['fas', 'check-circle']" class="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
-                  <span class="text-2xl font-bold text-gray-900 dark:text-white">0</span>
+                  <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ completedBooks }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700 transform hover:scale-105 transition-transform duration-200">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
+                    <font-awesome-icon :icon="['fas', 'spinner']" class="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                  </div>
+                  <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ inProgressBooks }}</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- Danger Zone -->
-            <div class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl p-6 border-2 border-red-200 dark:border-red-900">
-              <h3 class="text-lg font-bold text-red-700 dark:text-red-400 mb-4 flex items-center">
-                <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="mr-2" />
-                Danger Zone
-              </h3>
-              <button
-                @click="handleSignOut"
-                :disabled="authStore.loading"
-                class="w-full inline-flex items-center justify-center px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg"
-              >
-                <font-awesome-icon :icon="['fas', 'sign-out-alt']" class="mr-2" />
-                <span v-if="!authStore.loading">Sign Out</span>
-                <span v-else>Signing out...</span>
-              </button>
+            <!-- Empty State or Recent Books -->
+            <div v-if="totalBooks === 0" class="bg-white dark:bg-gray-800 rounded-2xl p-12 shadow-xl border border-gray-200 dark:border-gray-700 text-center animate-fade-in">
+              <div class="max-w-md mx-auto">
+                <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-primary-100 dark:bg-primary-900/30 mb-6">
+                  <font-awesome-icon :icon="['fas', 'book-open']" class="h-12 w-12 text-primary-600 dark:text-primary-400" />
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  Start Creating Your First Book!
+                </h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-8">
+                  Choose from 15 trending niches and let AI generate professional content for you in minutes.
+                </p>
+                
+                <!-- Quick Start Guide -->
+                <div class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-xl p-6 mb-8 text-left">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <font-awesome-icon :icon="['fas', 'route']" class="mr-2 text-primary-600 dark:text-primary-400" />
+                    How It Works
+                  </h4>
+                  <ol class="space-y-3">
+                    <li class="flex items-start">
+                      <span class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-sm font-bold mr-3">1</span>
+                      <span class="text-gray-700 dark:text-gray-300">
+                        <strong>Choose</strong> your niche & book length (15-30 pages)
+                      </span>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-sm font-bold mr-3">2</span>
+                      <span class="text-gray-700 dark:text-gray-300">
+                        <strong>AI generates</strong> market-optimized title & content
+                      </span>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-sm font-bold mr-3">3</span>
+                      <span class="text-gray-700 dark:text-gray-300">
+                        <strong>Select</strong> from 3 AI-generated professional covers
+                      </span>
+                    </li>
+                    <li class="flex items-start">
+                      <span class="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-primary-600 text-white text-sm font-bold mr-3">4</span>
+                      <span class="text-gray-700 dark:text-gray-300">
+                        <strong>Download</strong> your print-ready PDF book
+                      </span>
+                    </li>
+                  </ol>
+                </div>
+
+                <router-link
+                  to="/profile/create"
+                  class="inline-flex items-center px-8 py-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-blue-700 hover:from-primary-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                >
+                  <font-awesome-icon :icon="['fas', 'magic']" class="mr-2" />
+                  Create Your First Book
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Recent Books (if user has books) -->
+            <div v-else class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl border border-gray-200 dark:border-gray-700">
+              <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Recent Books</h2>
+                <router-link
+                  to="/profile/mybooks"
+                  class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                >
+                  View All →
+                </router-link>
+              </div>
+              
+              <!-- Recent books list will go here -->
+              <p class="text-gray-600 dark:text-gray-400 text-center py-8">
+                Your recent books will appear here
+              </p>
             </div>
           </div>
         </div>
@@ -207,18 +192,40 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
-import { useThemeStore } from '../stores/theme';
 import Layout from '../components/Layout.vue';
+import apiClient from '../services/api';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const themeStore = useThemeStore();
+
+// Stats
+const totalBooks = ref(0);
+const completedBooks = ref(0);
+const inProgressBooks = ref(0);
+const loading = ref(false);
+
+// Load user's books on mount
+onMounted(async () => {
+  try {
+    loading.value = true;
+    const response = await apiClient.get('/books/');
+    const books = response.data;
+    
+    totalBooks.value = books.length;
+    completedBooks.value = books.filter((b: any) => b.status === 'ready').length;
+    inProgressBooks.value = books.filter((b: any) => ['generating', 'content_generated', 'cover_pending'].includes(b.status)).length;
+  } catch (error) {
+    console.error('Failed to load books:', error);
+  } finally {
+    loading.value = false;
+  }
+});
 
 const handleSignOut = async () => {
   const result = await authStore.signOut();
-  
   if (result.success) {
     router.push('/auth/signin');
   }

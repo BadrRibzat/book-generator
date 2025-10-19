@@ -78,10 +78,15 @@ class CoverGenerator:
             )
             
             # Render to PDF first (better quality)
-            HTML(string=html_content).write_pdf(
-                str(pdf_path),
-                stylesheets=[CSS(string=self._get_base_css())]
-            )
+            try:
+                html = HTML(string=html_content)
+                html.write_pdf(
+                    str(pdf_path),
+                    stylesheets=[CSS(string=self._get_base_css())]
+                )
+            except Exception as e:
+                print(f"WeasyPrint error: {str(e)}")
+                raise Exception(f"PDF generation failed: {str(e)}")
             
             # Convert PDF to PNG for preview
             self._pdf_to_png(str(pdf_path), str(image_path))
@@ -400,13 +405,57 @@ class CoverGenerator:
     def _pdf_to_png(self, pdf_path, png_path):
         """Convert first page of PDF to PNG for preview"""
         try:
-            from pdf2image import convert_from_path
-            images = convert_from_path(pdf_path, first_page=1, last_page=1, dpi=150)
-            if images:
-                images[0].save(png_path, 'PNG')
-        except ImportError:
-            # Fallback: Create a simple preview image using PIL
+            # Make sure pdf2image is available
+            import importlib.util
+            pdf2image_spec = importlib.util.find_spec('pdf2image')
+            if pdf2image_spec is not None:
+                try:
+                    from pdf2image import convert_from_path
+                    images = convert_from_path(pdf_path, first_page=1, last_page=1, dpi=150)
+                    if images:
+                        images[0].save(png_path, 'PNG')
+                        print(f"Successfully converted PDF to PNG: {png_path}")
+                        return
+                except Exception as e:
+                    print(f"pdf2image conversion failed: {e}, trying alternative method")
+            else:
+                print("pdf2image module not found, using fallback method")
+                
+            # Try alternative method using Pillow directly
+            try:
+                import fitz  # PyMuPDF
+                doc = fitz.open(pdf_path)
+                page = doc.load_page(0)
+                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+                pix.save(png_path)
+                print(f"PyMuPDF successfully saved PNG: {png_path}")
+                return
+            except ImportError:
+                print("PyMuPDF not available, using simple fallback")
+            except Exception as e:
+                print(f"PyMuPDF conversion failed: {e}")
+                
+        except Exception as e:
+            print(f"Error converting PDF to PNG: {e}")
+            
+        # Fallback: Create a simple preview image using PIL
+        try:
             img = Image.new('RGB', (600, 900), color='white')
             draw = ImageDraw.Draw(img)
-            draw.text((300, 450), "Cover Preview", fill='black', anchor='mm')
+            
+            # Try to load a font
+            try:
+                font = ImageFont.truetype("Arial", 40)
+            except:
+                font = ImageFont.load_default()
+                
+            # Draw placeholder text
+            draw.rectangle([50, 50, 550, 850], outline="black", width=5)
+            draw.text((300, 300), "Cover Preview", fill='black', font=font, anchor="mm")
+            draw.text((300, 400), "Image generation", fill='black', font=font, anchor="mm")
+            draw.text((300, 500), "in progress", fill='black', font=font, anchor="mm")
+            
             img.save(png_path, 'PNG')
+            print(f"Created fallback image: {png_path}")
+        except Exception as e:
+            print(f"Error creating fallback image: {e}")

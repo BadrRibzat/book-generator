@@ -49,8 +49,10 @@ class BookViewSet(viewsets.ModelViewSet):
         # Trigger async content generation
         self._generate_book_content(book)
         
+        # Return full book data including ID
+        response_data = BookSerializer(book).data
         return Response(
-            BookSerializer(book).data,
+            response_data,
             status=status.HTTP_201_CREATED
         )
     
@@ -98,13 +100,30 @@ class BookViewSet(viewsets.ModelViewSet):
         Generate 3 cover options for the book
         """
         try:
+            # First check if MongoDB connection is valid
+            try:
+                db = get_mongodb_db()
+                content_doc = db.book_contents.find_one({'book_id': book.id})
+                if not content_doc:
+                    raise Exception("Book content not found in MongoDB")
+            except Exception as mongo_err:
+                print(f"MongoDB connection error: {mongo_err}")
+                raise Exception(f"Database connection error: {str(mongo_err)}")
+            
+            print(f"Generating covers for book {book.id}: {book.title}")
             cover_gen = CoverGenerator()
             covers = cover_gen.generate_three_covers(book)
             
-            book.status = 'cover_pending'
+            # Check if covers were successfully generated
+            if len(covers) == 0:
+                raise Exception("No covers were generated")
+                
+            print(f"Successfully generated {len(covers)} covers for book {book.id}")
+            book.status = 'content_generated'  # Change to content_generated to force cover selection
             book.save()
             
         except Exception as e:
+            print(f"Cover generation failed: {str(e)}")
             book.status = 'error'
             book.error_message = f"Cover generation failed: {str(e)}"
             book.save()
@@ -116,7 +135,8 @@ class BookViewSet(viewsets.ModelViewSet):
         """
         book = self.get_object()
         
-        if book.status not in ['cover_pending', 'ready']:
+        # Allow regenerating covers even if in error state
+        if book.status not in ['content_generated', 'cover_pending', 'ready', 'error']:
             return Response(
                 {'error': 'Content must be generated first'},
                 status=status.HTTP_400_BAD_REQUEST
@@ -124,6 +144,11 @@ class BookViewSet(viewsets.ModelViewSet):
         
         # Delete old covers
         book.covers.all().delete()
+        
+        # Set status to indicate we're working on covers
+        book.status = 'content_generated'
+        book.error_message = None
+        book.save()
         
         # Generate new ones
         self._generate_covers(book)
@@ -145,18 +170,54 @@ class BookViewSet(viewsets.ModelViewSet):
             )
         
         try:
-            cover = book.covers.get(id=cover_id)
-            cover.select()  # This also updates book status to 'ready'
+            print(f"Selecting cover {cover_id} for book {book.id}")
+            
+            # Check if the cover exists
+            try:
+                cover = book.covers.get(id=cover_id)
+            except Exception as e:
+                print(f"Cover lookup failed: {str(e)}")
+                return Response(
+                    {'error': f'Cover not found: {str(e)}'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+                
+            # Check if cover image exists
+            from pathlib import Path
+            from django.conf import settings
+            image_path = Path(settings.MEDIA_ROOT) / cover.image_path
+            if not image_path.exists():
+                print(f"Warning: Cover image file does not exist: {image_path}")
+            
+            # Select the cover
+            try:
+                cover.select()  # This also updates book status to 'ready'
+                print(f"Cover {cover_id} selected successfully")
+            except Exception as e:
+                print(f"Cover selection failed: {str(e)}")
+                return Response(
+                    {'error': f'Cover selection failed: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
             
             # Generate final PDF
-            self._create_final_pdf(book)
+            try:
+                self._create_final_pdf(book)
+                print(f"Final PDF created for book {book.id}")
+            except Exception as e:
+                print(f"PDF creation failed: {str(e)}")
+                return Response(
+                    {'error': f'PDF creation failed: {str(e)}'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
             
             return Response(BookSerializer(book).data)
             
         except Exception as e:
+            print(f"Cover selection overall error: {str(e)}")
             return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': f'Cover selection failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
     def _create_final_pdf(self, book):

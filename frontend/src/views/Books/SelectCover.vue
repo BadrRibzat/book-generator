@@ -1,33 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <nav class="bg-white shadow">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex items-center">
-            <router-link to="/books" class="flex items-center">
-              <font-awesome-icon :icon="['fas', 'book']" class="h-6 w-6 text-primary-600" />
-              <span class="ml-2 text-xl font-bold text-gray-900">Book Generator</span>
-            </router-link>
-          </div>
-          <div class="flex items-center space-x-4">
-            <router-link
-              to="/books"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              <font-awesome-icon :icon="['fas', 'book']" class="mr-1" />
-              My Books
-            </router-link>
-            <router-link
-              to="/profile"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium"
-            >
-              <font-awesome-icon :icon="['fas', 'user']" class="mr-1" />
-              Profile
-            </router-link>
-          </div>
-        </div>
-      </div>
-    </nav>
+  <Layout>
+    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
 
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div class="px-4 py-6 sm:px-0">
@@ -53,6 +26,14 @@
         </div>
 
         <div v-else-if="book && book.covers.length > 0" class="space-y-6">
+          <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 class="text-blue-800 font-medium mb-2">Choose Your Book Cover</h3>
+            <p class="text-sm text-blue-600">
+              Click on one of the cover designs below to select it for your book. 
+              Once you've made your selection, click the "Confirm Selection" button.
+            </p>
+          </div>
+          
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div
               v-for="cover in book.covers"
@@ -98,9 +79,9 @@
                   {{ selectedCoverId ? 'Click the button to confirm your selection' : 'Click on a cover above to select it' }}
                 </p>
               </div>
-              <div class="flex space-x-3">
+          <div class="flex space-x-3">
                 <router-link
-                  :to="`/books/${id}`"
+                  :to="`/profile/books/${bookId}`"
                   class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                 >
                   Cancel
@@ -129,7 +110,7 @@
           </p>
           <div class="mt-6">
             <router-link
-              :to="`/books/${id}`"
+              :to="`/profile/books/${bookId}`"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
             >
               Back to Book Details
@@ -139,12 +120,14 @@
       </div>
     </div>
   </div>
+  </Layout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
+import Layout from '../../components/Layout.vue';
 
 interface Props {
   id: string;
@@ -157,8 +140,19 @@ const booksStore = useBooksStore();
 const selectedCoverId = ref<number | null>(null);
 const book = computed(() => booksStore.currentBook);
 
+// Convert string ID to number safely
+const bookId = computed(() => {
+  const id = parseInt(props.id);
+  return isNaN(id) ? 0 : id;
+});
+
 onMounted(async () => {
-  await booksStore.fetchBook(parseInt(props.id));
+  if (bookId.value === 0) {
+    router.push('/profile/books');
+    return;
+  }
+  
+  await booksStore.fetchBook(bookId.value);
 });
 
 const handleSelectCover = async () => {
@@ -166,12 +160,12 @@ const handleSelectCover = async () => {
 
   booksStore.clearError();
   
-  const result = await booksStore.selectCover(parseInt(props.id), {
+  const result = await booksStore.selectCover(bookId.value, {
     cover_id: selectedCoverId.value,
   });
 
   if (result.success) {
-    router.push(`/books/${props.id}`);
+    router.push(`/profile/books/${bookId.value}`);
   }
 };
 </script>

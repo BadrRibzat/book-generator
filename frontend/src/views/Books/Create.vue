@@ -108,7 +108,7 @@
           <!-- Form Actions -->
           <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-200 dark:border-gray-700">
             <router-link
-              to="/books"
+              to="/profile/books"
               class="inline-flex justify-center items-center px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
             >
               Cancel
@@ -193,7 +193,7 @@ const handleSubmit = async () => {
   const result = await booksStore.createBook(form);
   
   if (result.success && result.data) {
-    router.push(`/books/${result.data.id}`);
+    router.push(`/profile/books/${result.data.id}`);
   }
 };
 </script>

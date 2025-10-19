@@ -104,7 +104,7 @@
               <!-- Action Buttons -->
               <div class="flex space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <router-link
-                  :to="`/books/${book.id}`"
+                  :to="`/profile/books/${book.id}`"
                   class="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
                 >
                   <font-awesome-icon :icon="['fas', 'eye']" class="mr-2" />
@@ -143,7 +143,7 @@ onMounted(async () => {
   
   // If user has no books, redirect to create page to encourage first book
   if (result.success && booksStore.allBooks.length === 0) {
-    router.push('/books/create');
+    router.push('/profile/create');
   }
 });
 

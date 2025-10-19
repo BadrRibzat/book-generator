@@ -66,12 +66,14 @@ export interface Book {
   status: BookStatus;
   created_at: string;
   updated_at: string;
+  content_generated_at: string | null;
   completed_at: string | null;
   covers: Cover[];
   selected_cover: Cover | null;
   can_download: boolean;
   download_url: string | null;
   error_message: string | null;
+  user_username?: string;
 }
 
 export interface BookCreate {

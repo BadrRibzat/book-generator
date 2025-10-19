@@ -160,7 +160,7 @@
                 <a href="/api/docs/" target="_blank" class="text-gray-400 hover:text-white">API Documentation</a>
               </li>
               <li>
-                <router-link to="/books" class="text-gray-400 hover:text-white">My Books</router-link>
+                <router-link to="/profile/books" class="text-gray-400 hover:text-white">My Books</router-link>
               </li>
               <li>
                 <a href="#" class="text-gray-400 hover:text-white">Help Center</a>

@@ -45,15 +45,16 @@ class BookSerializer(serializers.ModelSerializer):
     selected_cover = CoverSerializer(read_only=True)
     can_download = serializers.SerializerMethodField()
     download_url = serializers.SerializerMethodField()
+    user_username = serializers.CharField(source='user.username', read_only=True)
     
     class Meta:
         model = Book
-        fields = ['id', 'title', 'domain', 'sub_niche', 'page_length', 
-                  'status', 'created_at', 'updated_at', 'completed_at',
+        fields = ['id', 'user_username', 'title', 'domain', 'sub_niche', 'page_length', 
+                  'status', 'created_at', 'updated_at', 'completed_at', 'content_generated_at',
                   'covers', 'selected_cover', 'can_download', 'download_url',
-                  'error_message']
+                  'error_message', 'mongodb_id']
         read_only_fields = ['id', 'title', 'status', 'created_at', 
-                           'updated_at', 'completed_at', 'error_message']
+                           'updated_at', 'completed_at', 'content_generated_at', 'error_message', 'mongodb_id']
     
     def get_can_download(self, obj):
         return obj.can_download()

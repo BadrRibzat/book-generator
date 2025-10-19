@@ -439,7 +439,7 @@ const handleSubmit = async () => {
     }
 
     // Redirect to book details page to monitor progress
-    router.push(`/books/${book.id}`);
+    router.push(`/profile/books/${book.id}`);
   } catch (err: any) {
     error.value = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to create book';
     console.error('Create book error:', err);

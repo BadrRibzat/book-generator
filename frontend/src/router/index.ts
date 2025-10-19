@@ -70,7 +70,22 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   
-  // Book detail routes (can stay as /books for now, or change to /profile/books if needed)
+  // Book detail routes - support both /profile/books/:id and /books/:id to prevent 404 errors
+  {
+    path: '/profile/books/:id',
+    name: 'ProfileBookDetails',
+    component: () => import('../views/Books/Details.vue'),
+    meta: { requiresAuth: true },
+    props: true,
+  },
+  {
+    path: '/profile/books/:id/covers',
+    name: 'ProfileSelectCover',
+    component: () => import('../views/Books/SelectCover.vue'),
+    meta: { requiresAuth: true },
+    props: true,
+  },
+  // Legacy paths - these will still work but we'll gradually transition to the profile-prefixed versions
   {
     path: '/books/:id',
     name: 'BookDetails',
@@ -86,6 +101,24 @@ const routes: RouteRecordRaw[] = [
     props: true,
   },
 ];
+
+// Add a catch-all route to redirect /books to /profile/books
+routes.push({
+  path: '/books',
+  redirect: '/profile/books',
+});
+
+// Add a redirect for deep book paths
+routes.push({
+  path: '/books/:id(\\d+)',
+  redirect: to => `/profile/books/${to.params.id}`,
+});
+
+// Add a redirect for cover selection
+routes.push({
+  path: '/books/:id(\\d+)/covers',
+  redirect: to => `/profile/books/${to.params.id}/covers`,
+});
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

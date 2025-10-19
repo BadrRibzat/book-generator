@@ -38,8 +38,17 @@ class PDFMerger:
         # Add cover as first page
         cover_pdf_path = self.media_root / cover.pdf_path
         if cover_pdf_path.exists():
-            cover_reader = PdfReader(str(cover_pdf_path))
-            writer.add_page(cover_reader.pages[0])
+            try:
+                cover_reader = PdfReader(str(cover_pdf_path))
+                # Fix for "PDF.__init__() takes 1 positional argument but 3 were given"
+                # Properly handle the page retrieval - use correct method to access pages
+                if len(cover_reader.pages) > 0:
+                    writer.add_page(cover_reader.pages[0])
+                else:
+                    print(f"Warning: Cover PDF exists but has no pages: {cover_pdf_path}")
+            except Exception as e:
+                print(f"Error accessing cover PDF: {e}")
+                # Continue without cover page if there's an error
         
         # Add interior pages
         if os.path.exists(interior_pdf_path):

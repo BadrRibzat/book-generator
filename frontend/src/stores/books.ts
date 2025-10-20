@@ -95,7 +95,7 @@ export const useBooksStore = defineStore('books', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await apiClient.post<Book>(`/books/${bookId}/select-cover/`, coverData);
+      const response = await apiClient.post<Book>(`/books/${bookId}/select_cover/`, coverData);
       
       // Update book in array
       const index = books.value.findIndex((b) => b.id === bookId);

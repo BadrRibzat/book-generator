@@ -105,23 +105,69 @@
               <div class="flex space-x-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <router-link
                   :to="`/profile/books/${book.id}`"
-                  class="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
+                  class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
                 >
-                  <font-awesome-icon :icon="['fas', 'eye']" class="mr-2" />
+                  <font-awesome-icon :icon="['fas', 'eye']" class="mr-1" />
                   View
                 </router-link>
 
                 <a
                   v-if="book.can_download"
                   :href="book.download_url || '#'"
-                  class="flex-1 inline-flex justify-center items-center px-4 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 transition-all duration-200 shadow-md"
+                  class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-md"
                 >
-                  <font-awesome-icon :icon="['fas', 'download']" class="mr-2" />
+                  <font-awesome-icon :icon="['fas', 'download']" class="mr-1" />
                   Download
                 </a>
+
+                <button
+                  @click="confirmDeleteBook(book)"
+                  class="inline-flex justify-center items-center px-3 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 transition-all duration-200"
+                  title="Delete book"
+                >
+                  <font-awesome-icon :icon="['fas', 'trash']" class="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+            <font-awesome-icon :icon="['fas', 'exclamation-triangle']" class="w-5 h-5 text-red-600 dark:text-red-400" />
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Delete Book</h3>
+        </div>
+        
+        <p class="text-gray-600 dark:text-gray-300 mb-6">
+          Are you sure you want to delete <strong>"{{ bookToDelete?.title || 'Untitled Book' }}"</strong>? 
+          This action cannot be undone.
+        </p>
+        
+        <div class="flex space-x-3">
+          <button
+            @click="cancelDelete"
+            class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            :disabled="isDeleting"
+          >
+            Cancel
+          </button>
+          <button
+            @click="deleteBook"
+            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isDeleting"
+          >
+            <span v-if="isDeleting" class="flex items-center justify-center">
+              <font-awesome-icon :icon="['fas', 'spinner']" class="animate-spin mr-2" />
+              Deleting...
+            </span>
+            <span v-else>Delete Book</span>
+          </button>
         </div>
       </div>
     </div>
@@ -129,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
@@ -137,6 +183,38 @@ import type { BookStatus, Domain, SubNiche } from '../../types';
 
 const router = useRouter();
 const booksStore = useBooksStore();
+
+// Delete functionality
+const showDeleteModal = ref(false);
+const bookToDelete = ref<any>(null);
+const isDeleting = ref(false);
+
+const confirmDeleteBook = (book: any) => {
+  bookToDelete.value = book;
+  showDeleteModal.value = true;
+};
+
+const deleteBook = async () => {
+  if (!bookToDelete.value) return;
+  
+  try {
+    isDeleting.value = true;
+    await booksStore.deleteBook(bookToDelete.value.id);
+    
+    showDeleteModal.value = false;
+    bookToDelete.value = null;
+  } catch (error) {
+    console.error('Failed to delete book:', error);
+    alert('Failed to delete book. Please try again.');
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const cancelDelete = () => {
+  showDeleteModal.value = false;
+  bookToDelete.value = null;
+};
 
 onMounted(async () => {
   const result = await booksStore.fetchBooks();

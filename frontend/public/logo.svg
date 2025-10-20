@@ -1,0 +1,33 @@
+<svg width="500" height="300" viewBox="0 0 500 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <title>BookAI Project Logo</title>
+    <defs>
+        <linearGradient id="AI_Gradient" x1="250" y1="130" x2="250" y2="210" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#F59E0B"/>
+            <stop offset="1" stop-color="#FF5722"/>
+        </linearGradient>
+        <linearGradient id="Flourish_Gradient" x1="250" y1="100" x2="250" y2="250" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FFC107"/>
+            <stop offset="1" stop-color="#F97316"/>
+        </linearGradient>
+    </defs>
+
+    <!-- Book Pages (Light Gray/White) -->
+    <path d="M190 130 L190 250 L250 260 L250 140 Z" fill="#EBF2FA"/>
+    <path d="M310 130 L310 250 L250 260 L250 140 Z" fill="#F7FAFC"/>
+
+    <!-- Book Covers (Deep Blue) -->
+    <path d="M185 130 C185 120 200 115 250 110 C300 115 315 120 315 130 L315 270 L250 280 L185 270 Z" fill="#1E3A8A"/>
+
+    <!-- Inner Book Detail (Blue Spine) -->
+    <rect x="245" y="110" width="10" height="170" fill="#2C5282"/>
+
+    <!-- AI Text (Gold/Orange Gradient) -->
+    <g transform="translate(200, 160)">
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="80" font-weight="900" text-anchor="middle" fill="url(#AI_Gradient)">AI</text>
+    </g>
+
+    <!-- Flowing Flourish (Creative Energy) -->
+    <path d="M250 110 C270 90 320 120 300 170 C280 220 250 240 250 270" stroke="url(#Flourish_Gradient)" stroke-width="15" fill="none" stroke-linecap="round"/>
+    <path d="M250 110 C230 90 180 120 200 170 C220 220 250 240 250 270" stroke="#FF5722" stroke-width="15" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+</svg>

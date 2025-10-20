@@ -6,6 +6,7 @@ import apiClient from '../services/api';
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(null);
+  const userProfile = ref<any | null>(null);
   const initialized = ref(false);
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -19,11 +20,15 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await apiClient.get<User>('/auth/me/');
+      const response = await apiClient.get<User>('/users/profile/');
       user.value = response.data;
+      
+      // Also fetch user profile data
+      await fetchUserProfile();
     } catch (err: any) {
       // Not authenticated or network error
       user.value = null;
+      userProfile.value = null;
       if (err.response?.status === 403) {
         // User needs to sign in
         console.log('User not authenticated - please sign in');
@@ -33,6 +38,18 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       initialized.value = true;
       loading.value = false;
+    }
+  }
+
+  async function fetchUserProfile() {
+    try {
+      const response = await apiClient.get('/users/profiles/');
+      if (response.data && response.data.length > 0) {
+        userProfile.value = response.data[0]; // Get first profile (current user)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch user profile:', err);
+      userProfile.value = null;
     }
   }
 
@@ -49,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
         password2: credentials.password // Backend expects confirmation
       };
       
-      await apiClient.post<any>('/auth/register/', registerData);
+      await apiClient.post<any>('/users/auth/register/', registerData);
       // Don't set user.value here - user must sign in after registration
       return { success: true };
     } catch (err: any) {
@@ -86,7 +103,7 @@ export const useAuthStore = defineStore('auth', () => {
       loading.value = true;
       error.value = null;
       
-      const response = await apiClient.post<any>('/auth/login/', credentials);
+      const response = await apiClient.post<any>('/users/auth/login/', credentials);
       
       // Store user data from login response
       if (response.data.user) {
@@ -130,7 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true;
       error.value = null;
-      await apiClient.post('/auth/logout/');
+      await apiClient.post('/users/auth/logout/');
       user.value = null;
       return { success: true };
     } catch (err: any) {
@@ -150,6 +167,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     // State
     user,
+    userProfile,
     initialized,
     loading,
     error,
@@ -158,6 +176,7 @@ export const useAuthStore = defineStore('auth', () => {
     currentUser,
     // Actions
     checkAuth,
+    fetchUserProfile,
     signUp,
     signIn,
     signOut,

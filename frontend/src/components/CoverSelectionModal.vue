@@ -91,20 +91,25 @@ const submitting = ref(false);
 const error = ref<string | null>(null);
 
 onMounted(async () => {
-  loading.value = true;
-  error.value = null;
-  
-  try {
-    await booksStore.fetchBook(props.bookId);
-    if (booksStore.currentBook?.covers && booksStore.currentBook?.covers.length > 0) {
-      // Auto-select first cover if available
-      selectedCoverId.value = booksStore.currentBook.covers[0].id;
+  // Only fetch if we don't already have covers
+  if (!booksStore.currentBook || booksStore.currentBook.id !== props.bookId || !booksStore.currentBook.covers?.length) {
+    loading.value = true;
+    error.value = null;
+    
+    try {
+      await booksStore.fetchBook(props.bookId);
+      if (booksStore.currentBook?.covers && booksStore.currentBook?.covers.length > 0) {
+        // Auto-select first cover if available
+        selectedCoverId.value = booksStore.currentBook.covers[0].id;
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to load covers';
+    } finally {
+      loading.value = false;
     }
-  } catch (err) {
-    error.value = 'Failed to load covers. Please try again.';
-    console.error(err);
-  } finally {
-    loading.value = false;
+  } else if (booksStore.currentBook.covers?.length > 0) {
+    // Use existing covers
+    selectedCoverId.value = booksStore.currentBook.covers[0].id;
   }
 });
 

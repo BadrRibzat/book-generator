@@ -3,6 +3,15 @@
     <!-- Hero Section -->
     <section class="bg-gradient-to-br from-primary-50 to-white py-20">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <!-- User Status -->
+        <div v-if="authStore.isAuthenticated" class="mb-6">
+          <div class="inline-flex items-center px-4 py-2 bg-primary-100 text-primary-800 rounded-full text-sm font-medium">
+            <font-awesome-icon :icon="['fas', 'user']" class="mr-2" />
+            Currently on {{ currentPlanName }} plan
+            <span v-if="currentPlan !== 'free'" class="ml-2 px-2 py-1 bg-primary-200 rounded text-xs">ACTIVE</span>
+          </div>
+        </div>
+        
         <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6">
           Simple, Transparent Pricing
         </h1>
@@ -52,12 +61,14 @@
               </li>
             </ul>
 
-            <router-link
-              to="/auth/signup"
-              class="block w-full text-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
+            <button
+              @click="selectPlan('free')"
+              class="block w-full text-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg transition-all"
+              :class="currentPlan === 'free' ? 'bg-green-100 text-green-800 border-green-300 cursor-default' : 'text-gray-700 bg-white hover:bg-gray-50'"
+              :disabled="currentPlan === 'free'"
             >
-              Get Started Free
-            </router-link>
+              {{ currentPlan === 'free' ? '✓ Current Plan' : 'Get Started Free' }}
+            </button>
           </div>
 
           <!-- Pro Plan (Popular) -->
@@ -107,12 +118,14 @@
               </li>
             </ul>
 
-            <router-link
-              to="/auth/signup"
-              class="block w-full text-center px-6 py-3 border-2 border-white text-base font-medium rounded-lg text-primary-600 bg-white hover:bg-primary-50 transition-all"
+            <button
+              @click="selectPlan('premium')"
+              class="block w-full text-center px-6 py-3 border-2 text-base font-medium rounded-lg transition-all"
+              :class="(currentPlan === 'basic' || currentPlan === 'premium') ? 'border-green-300 text-green-800 bg-green-100 cursor-default' : 'border-white text-primary-600 bg-white hover:bg-primary-50'"
+              :disabled="currentPlan === 'basic' || currentPlan === 'premium'"
             >
-              Start Pro Trial
-            </router-link>
+              {{ (currentPlan === 'basic' || currentPlan === 'premium') ? '✓ Current Plan' : 'Start Pro Trial' }}
+            </button>
           </div>
 
           <!-- Enterprise Plan -->
@@ -158,12 +171,14 @@
               </li>
             </ul>
 
-            <a
-              href="#"
-              class="block w-full text-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-all"
+            <button
+              @click="selectPlan('enterprise')"
+              class="block w-full text-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg transition-all"
+              :class="currentPlan === 'enterprise' ? 'bg-green-100 text-green-800 border-green-300 cursor-default' : 'text-gray-700 bg-white hover:bg-gray-50'"
+              :disabled="currentPlan === 'enterprise'"
             >
-              Contact Sales
-            </a>
+              {{ currentPlan === 'enterprise' ? '✓ Current Plan' : 'Contact Sales' }}
+            </button>
           </div>
         </div>
       </div>
@@ -232,5 +247,69 @@
 </template>
 
 <script setup lang="ts">
-import Layout from '../components/Layout.vue';
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import Layout from '../components/Layout.vue'
+import apiClient from '../services/api'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+// State
+const subscriptionPlans = ref<any[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+
+// Computed
+const currentPlan = computed(() => {
+  return authStore.userProfile?.subscription_tier || 'free'
+})
+
+// Get current plan display name
+const currentPlanName = computed(() => {
+  const tier = currentPlan.value
+  if (tier === 'basic') return 'Pro'
+  if (tier === 'premium') return 'Pro'
+  if (tier === 'enterprise') return 'Enterprise'
+  return 'Free'
+})
+
+// Methods
+async function fetchSubscriptionPlans() {
+  try {
+    loading.value = true
+    const response = await apiClient.get('/users/subscription-plans/')
+    subscriptionPlans.value = response.data
+  } catch (err: any) {
+    console.error('Failed to fetch subscription plans:', err)
+    error.value = 'Failed to load subscription plans'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function selectPlan(planTier: string) {
+  if (!authStore.isAuthenticated) {
+    router.push('/auth/login')
+    return
+  }
+
+  if (planTier === 'free') {
+    // Handle free plan selection
+    return
+  }
+
+  // For paid plans, redirect to payment/checkout
+  // This will be implemented when Stripe integration is ready
+  console.log(`Selected plan: ${planTier}`)
+  
+  // Placeholder for now - in production this would redirect to Stripe Checkout
+  alert(`Plan selection for ${planTier} will be implemented with Stripe integration. Current plan: ${currentPlanName.value}`)
+}
+
+// Lifecycle
+onMounted(async () => {
+  await fetchSubscriptionPlans()
+})
 </script>

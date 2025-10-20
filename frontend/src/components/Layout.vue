@@ -6,8 +6,8 @@
         <div class="flex justify-between items-center h-16">
           <div class="flex items-center">
             <router-link to="/" class="flex items-center space-x-2">
-              <font-awesome-icon :icon="['fas', 'book']" class="h-8 w-8 text-primary-600 dark:text-primary-400" />
-              <span class="text-2xl font-bold text-gray-900 dark:text-white">BookGen AI</span>
+              <img src="/logo.svg" alt="BookAI Logo" class="h-8 w-auto" />
+              <span class="text-2xl font-bold text-gray-900 dark:text-white">BookAI</span>
             </router-link>
           </div>
 

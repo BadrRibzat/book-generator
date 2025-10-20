@@ -73,12 +73,23 @@ class BookCreateSerializer(serializers.ModelSerializer):
         """Ensure sub_niche matches the selected domain"""
         domain = self.initial_data.get('domain')
         
+        # Map domains to their valid sub-niches
         domain_niches = {
-            'language_kids': ['ai_learning_stories', 'multilingual_coloring', 'kids_mindful_journals'],
-            'tech_ai': ['ai_ethics', 'nocode_guides', 'smart_home_diy'],
-            'nutrition': ['specialty_diet', 'plant_based_cooking', 'nutrition_mental_health'],
-            'meditation': ['mindfulness_anxiety', 'sleep_meditation', 'gratitude_journals'],
-            'home_workout': ['equipment_free', 'yoga_remote_workers', 'mobility_training'],
+            'personal_development': ['self_improvement', 'goal_setting', 'confidence_building'],
+            'business_entrepreneurship': ['startup_guide', 'marketing_basics', 'leadership_skills'],
+            'health_wellness': ['mental_health', 'fitness_nutrition', 'healthy_habits'],
+            'relationships': ['communication', 'dating_advice', 'family_dynamics'],
+            'childrens_books': ['educational_stories', 'bedtime_stories', 'activity_books'],
+            'education': ['study_skills', 'career_guidance', 'skill_development'],
+            'technology': ['coding_basics', 'digital_literacy', 'tech_trends'],
+            'finance': ['personal_finance', 'investing_basics', 'budgeting'],
+            'hobbies': ['arts_crafts', 'gardening', 'cooking'],
+            'travel': ['travel_guides', 'cultural_exploration', 'budget_travel'],
+            'productivity': ['time_management', 'organization', 'workflow_optimization'],
+            'creative_writing': ['storytelling', 'poetry', 'creative_exercises'],
+            'sustainability': ['eco_living', 'renewable_energy', 'sustainable_practices'],
+            'ai_future_tech': ['ai_basics', 'future_tech', 'digital_transformation'],
+            'mindfulness': ['meditation_basics', 'stress_reduction', 'mindful_living'],
         }
         
         if value not in domain_niches.get(domain, []):

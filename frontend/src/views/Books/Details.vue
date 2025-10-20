@@ -276,6 +276,7 @@ onBeforeUnmount(() => {
 const startPolling = () => {
   if (pollingInterval.value) {
     clearInterval(pollingInterval.value);
+    pollingInterval.value = null;
   }
   
   pollingInterval.value = window.setInterval(async () => {
@@ -287,20 +288,24 @@ const startPolling = () => {
       
       // Show cover selection when content is generated
       if (status === 'content_generated' && booksStore.currentBook?.covers.length > 0) {
-        clearInterval(pollingInterval.value);
-        pollingInterval.value = null;
+        if (pollingInterval.value) {
+          clearInterval(pollingInterval.value);
+          pollingInterval.value = null;
+        }
         // Show cover selection modal instead of redirecting
         showCoverModal.value = true;
         return;
       }
       
-      // Stop polling for other non-generating statuses
-      if (status !== 'generating' && pollingInterval.value) {
-        clearInterval(pollingInterval.value);
-        pollingInterval.value = null;
+      // Stop polling for final statuses
+      if (status === 'ready' || status === 'error') {
+        if (pollingInterval.value) {
+          clearInterval(pollingInterval.value);
+          pollingInterval.value = null;
+        }
       }
     }
-  }, 2000); // Poll every 2 seconds
+  }, 3000); // Poll every 3 seconds (less frequent)
 };
 
 const getStatusClass = (status: BookStatus) => {

@@ -11,23 +11,31 @@
         </div>
 
         <!-- Error Message -->
-        <div v-if="booksStore.error" class="rounded-lg bg-red-50 dark:bg-red-900/20 p-6 mb-6 border border-red-200 dark:border-red-800 animate-scale-in">
+        <div v-if="booksStore.error || error" class="rounded-lg bg-red-50 dark:bg-red-900/20 p-6 mb-6 border border-red-200 dark:border-red-800 animate-scale-in">
           <div class="flex">
             <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="h-5 w-5 text-red-400 dark:text-red-500 mt-0.5" />
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800 dark:text-red-400">{{ booksStore.error }}</h3>
+              <h3 class="text-sm font-medium text-red-800 dark:text-red-400">
+                {{ booksStore.error || error }}
+              </h3>
             </div>
           </div>
         </div>
 
+        <!-- Loading State -->
+        <div v-if="loading" class="flex justify-center items-center py-12">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+          <span class="ml-3 text-gray-600 dark:text-gray-400">Loading content categories...</span>
+        </div>
+
         <!-- Form -->
-        <form @submit.prevent="handleSubmit" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-slide-up">
+        <form v-else @submit.prevent="handleSubmit" class="bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-slide-up">
           <div class="px-6 py-8 space-y-6">
             <!-- Domain Select -->
             <div class="group">
               <label for="domain" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 <font-awesome-icon :icon="['fas', 'book-open']" class="mr-2 text-primary-600 dark:text-primary-400" />
-                Domain
+                Content Category
               </label>
               <select
                 id="domain"
@@ -36,14 +44,12 @@
                 required
                 class="mt-1 block w-full pl-4 pr-10 py-3 text-base border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent rounded-lg transition-all duration-200"
               >
-                <option value="">Select a domain</option>
-                <option value="language_kids">Language & Kids</option>
-                <option value="tech_ai">Technology & AI</option>
-                <option value="nutrition">Nutrition & Wellness</option>
-                <option value="meditation">Meditation & Mindfulness</option>
-                <option value="home_workout">Home Workout & Fitness</option>
+                <option value="">Select a content category</option>
+                <option v-for="domain in availableDomains" :key="domain.value" :value="domain.value">
+                  {{ domain.label }}
+                </option>
               </select>
-              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Choose the main category for your book</p>
+              <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Choose from 15 trending content categories</p>
             </div>
 
             <!-- Sub-Niche Select -->
@@ -135,65 +141,81 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
-import type { BookCreate, Domain } from '../../types';
+import apiClient from '../../services/api';
 
 const router = useRouter();
 const booksStore = useBooksStore();
 
-const form = reactive<BookCreate>({
-  domain: '' as Domain,
-  sub_niche: '' as any,
+const form = ref({
+  domain: '',
+  sub_niche: '',
   page_length: 20,
 });
 
-const nichesByDomain: Record<Domain, Array<{ value: string; label: string }>> = {
-  language_kids: [
-    { value: 'ai_learning_stories', label: 'AI Learning Stories' },
-    { value: 'multilingual_coloring', label: 'Multilingual Coloring Books' },
-    { value: 'kids_mindful_journals', label: 'Kids Mindfulness Journals' },
-  ],
-  tech_ai: [
-    { value: 'ai_ethics', label: 'AI Ethics & Responsibility' },
-    { value: 'nocode_guides', label: 'No-Code Development Guides' },
-    { value: 'smart_home_diy', label: 'Smart Home DIY' },
-  ],
-  nutrition: [
-    { value: 'specialty_diet', label: 'Specialty Diet Cookbooks' },
-    { value: 'plant_based_cooking', label: 'Plant-Based Cooking' },
-    { value: 'nutrition_mental_health', label: 'Nutrition for Mental Health' },
-  ],
-  meditation: [
-    { value: 'mindfulness_anxiety', label: 'Mindfulness for Anxiety' },
-    { value: 'sleep_meditation', label: 'Sleep Meditation Guides' },
-    { value: 'gratitude_journals', label: 'Gratitude Journals' },
-  ],
-  home_workout: [
-    { value: 'equipment_free', label: 'Equipment-Free Workouts' },
-    { value: 'yoga_remote_workers', label: 'Yoga for Remote Workers' },
-    { value: 'mobility_training', label: 'Mobility Training' },
-  ],
-};
+const configData = ref<any>({});
+const loading = ref(true);
+const error = ref<string | null>(null);
 
-const availableNiches = computed(() => {
-  if (!form.domain) return [];
-  return nichesByDomain[form.domain] || [];
+// Available domains (15 trending categories)
+const availableDomains = computed(() => {
+  if (!configData.value.sub_niches) return [];
+  
+  return Object.keys(configData.value.sub_niches).map(key => ({
+    value: key,
+    label: configData.value.sub_niches[key].name || key.replace(/_/g, ' ')
+  }));
 });
 
+// Available niches for selected domain
+const availableNiches = computed(() => {
+  if (!form.value.domain || !configData.value.sub_niches) return [];
+  
+  const domain = configData.value.sub_niches[form.value.domain];
+  if (!domain || !domain.sub_niches) return [];
+  
+  return Object.keys(domain.sub_niches).map(key => ({
+    value: key,
+    label: domain.sub_niches[key].name || key.replace(/_/g, ' ')
+  }));
+});
+
+const fetchConfig = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+    
+    const response = await apiClient.get('/config/sub-niches/');
+    configData.value = response.data;
+    
+    console.log('Loaded config data:', configData.value);
+  } catch (err: any) {
+    console.error('Failed to fetch config:', err);
+    error.value = 'Failed to load content categories. Please refresh the page.';
+  } finally {
+    loading.value = false;
+  }
+};
+
 const handleDomainChange = () => {
-  form.sub_niche = '' as any;
+  form.value.sub_niche = '';
 };
 
 const handleSubmit = async () => {
   booksStore.clearError();
   
-  const result = await booksStore.createBook(form);
+  const result = await booksStore.createBook(form.value);
   
   if (result.success && result.data) {
     router.push(`/profile/books/${result.data.id}`);
   }
 };
+
+// Lifecycle
+onMounted(async () => {
+  await fetchConfig();
+});
 </script>

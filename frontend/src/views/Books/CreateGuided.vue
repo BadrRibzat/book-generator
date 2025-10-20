@@ -80,14 +80,11 @@
                     />
                     <div class="flex flex-1">
                       <div class="flex-shrink-0">
-                        <font-awesome-icon :icon="['fas', domain.icon]" class="h-6 w-6" :class="form.domain === domain.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'" />
+                        <font-awesome-icon :icon="['fas', domainIcons[domain.value] || 'book']" class="h-6 w-6" :class="form.domain === domain.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'" />
                       </div>
                       <div class="ml-4 flex flex-col">
                         <span class="block text-sm font-medium" :class="form.domain === domain.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
                           {{ domain.label }}
-                        </span>
-                        <span class="mt-1 flex items-center text-xs" :class="form.domain === domain.value ? 'text-primary-700 dark:text-primary-300' : 'text-gray-500 dark:text-gray-400'">
-                          {{ domain.description }}
                         </span>
                       </div>
                     </div>
@@ -351,21 +348,56 @@ const form = ref({
 });
 
 const domains = ref([
-  { value: 'language_kids', label: 'Language & Kids', icon: 'child', description: 'Educational and creative content for children' },
-  { value: 'tech_ai', label: 'Technology & AI', icon: 'robot', description: 'Cutting-edge tech and AI insights' },
-  { value: 'nutrition', label: 'Nutrition & Wellness', icon: 'apple-alt', description: 'Health, diet, and wellness guides' },
-  { value: 'meditation', label: 'Meditation & Mindfulness', icon: 'spa', description: 'Mental health and mindfulness practices' },
-  { value: 'home_workout', label: 'Home Workout & Fitness', icon: 'dumbbell', description: 'Fitness and exercise programs' },
+  { value: 'personal_development', label: 'Personal Development and Self-Help' },
+  { value: 'business_entrepreneurship', label: 'Business and Entrepreneurship' },
+  { value: 'health_wellness', label: 'Health and Wellness' },
+  { value: 'relationships', label: 'Relationships' },  
+  { value: 'childrens_books', label: 'Children\'s Books' },
+  { value: 'education_learning', label: 'Education and Learning' },
+  { value: 'technology_digital', label: 'Technology and Digital Skills' },
+  { value: 'finance_investment', label: 'Finance and Investment' },
+  { value: 'hobbies_interests', label: 'Hobbies and Interests' },
+  { value: 'travel_adventure', label: 'Travel and Adventure' },
+  { value: 'productivity_time', label: 'Productivity and Time Management' },
+  { value: 'creative_writing', label: 'Creative Writing and Storytelling' },
+  { value: 'sustainability_eco', label: 'Sustainability and Eco-Friendly Living' },
+  { value: 'ai_future_tech', label: 'AI and Future Technologies' },
+  { value: 'mindfulness_meditation', label: 'Mindfulness and Meditation' }
 ]);
 
-const allNiches = ref({});
+const domainIcons: Record<string, string> = {
+  'personal_development': 'user-graduate',
+  'business_entrepreneurship': 'briefcase',
+  'health_wellness': 'heartbeat', 
+  'relationships': 'heart',
+  'childrens_books': 'child',
+  'education_learning': 'graduation-cap',
+  'technology_digital': 'laptop-code',
+  'finance_investment': 'chart-line',
+  'hobbies_interests': 'palette',
+  'travel_adventure': 'plane',
+  'productivity_time': 'clock',
+  'creative_writing': 'pen-fancy',
+  'sustainability_eco': 'leaf', 
+  'ai_future_tech': 'robot',
+  'mindfulness_meditation': 'spa'
+};
+
+const allNiches = ref<any>({});
 const pageLengths = [15, 20, 25, 30];
 
 const availableNiches = computed(() => {
   if (!form.value.domain || !allNiches.value[form.value.domain]) {
     return [];
   }
-  return allNiches.value[form.value.domain];
+  
+  const domain = allNiches.value[form.value.domain];
+  if (!domain || !domain.sub_niches) return [];
+  
+  return Object.keys(domain.sub_niches).map(key => ({
+    value: key,
+    label: domain.sub_niches[key].name || key.replace(/_/g, ' ')
+  }));
 });
 
 const isStepValid = computed(() => {
@@ -387,9 +419,10 @@ onMounted(async () => {
   try {
     const response = await apiClient.get('/config/sub-niches/');
     allNiches.value = response.data.sub_niches;
+    console.log('Loaded niches:', allNiches.value);
   } catch (err) {
     error.value = 'Failed to load book configuration';
-    console.error(err);
+    console.error('Failed to load niches:', err);
   }
 });
 

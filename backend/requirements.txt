@@ -78,3 +78,9 @@ wcwidth==0.2.14
 weasyprint==52.5
 webencodings==0.5.1
 zopfli==0.2.3.post1
+
+# Stripe Integration for Payments
+stripe==8.9.0
+
+# Exchange Rate API for Multi-Currency
+requests

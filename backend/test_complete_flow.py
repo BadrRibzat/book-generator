@@ -8,7 +8,7 @@ import requests
 import time
 import sys
 
-BASE_URL = "http://127.0.0.1:8000/api"
+BASE_URL = "http://127.0.0.1:8000/api/users"
 session = requests.Session()
 
 def print_step(step, message):
@@ -36,11 +36,28 @@ def test_registration():
         print(f"✗ Registration failed: {response.text}")
         return False
 
+def test_login():
+    """Test user login"""
+    print_step(2, "Logging In User")
+    
+    response = session.post(f"{BASE_URL}/auth/login/", json={
+        "username": "testuser",
+        "password": "testpass123"
+    })
+    
+    if response.status_code == 200:
+        data = response.json()
+        print(f"✓ User logged in: {data['user']['username']}")
+        return True
+    else:
+        print(f"✗ Login failed: {response.text}")
+        return False
+
 def test_get_niches():
     """Test getting available sub-niches"""
-    print_step(2, "Getting Available Sub-Niches")
+    print_step(3, "Getting Available Sub-Niches")
     
-    response = session.get(f"{BASE_URL}/config/sub-niches/")
+    response = session.get("http://127.0.0.1:8000/api/config/sub-niches/")
     
     if response.status_code == 200:
         data = response.json()
@@ -55,11 +72,11 @@ def test_get_niches():
 
 def test_create_book():
     """Test book creation"""
-    print_step(3, "Creating Book")
+    print_step(4, "Creating Book")
     
-    response = session.post(f"{BASE_URL}/books/", json={
-        "domain": "health",
-        "sub_niche": "yoga_beginners",
+    response = session.post("http://127.0.0.1:8000/api/books/", json={
+        "domain": "health_wellness",
+        "sub_niche": "general_health",
         "page_length": 15
     })
     
@@ -77,13 +94,13 @@ def test_create_book():
 
 def wait_for_covers(book_id, max_wait=120):
     """Wait for content generation and cover creation"""
-    print_step(4, "Waiting for Content Generation & Cover Creation")
+    print_step(5, "Waiting for Content Generation & Cover Creation")
     
     start_time = time.time()
     dots = 0
     
     while time.time() - start_time < max_wait:
-        response = session.get(f"{BASE_URL}/books/{book_id}/")
+        response = session.get(f"http://127.0.0.1:8000/api/books/{book_id}/")
         
         if response.status_code != 200:
             print(f"\n✗ Failed to get book status: {response.text}")
@@ -115,7 +132,7 @@ def wait_for_covers(book_id, max_wait=120):
 
 def test_select_cover(book_id, covers):
     """Test cover selection"""
-    print_step(5, "Selecting Cover")
+    print_step(6, "Selecting Cover")
     
     if not covers:
         print("✗ No covers available")
@@ -124,7 +141,7 @@ def test_select_cover(book_id, covers):
     cover_id = covers[0]['id']
     print(f"  Selecting cover: {covers[0]['template_style']} (ID: {cover_id})")
     
-    response = session.post(f"{BASE_URL}/books/{book_id}/select_cover/", json={
+    response = session.post(f"http://127.0.0.1:8000/api/books/{book_id}/select_cover/", json={
         "cover_id": cover_id
     })
     
@@ -141,9 +158,9 @@ def test_select_cover(book_id, covers):
 
 def test_download_book(book_id):
     """Test book download"""
-    print_step(6, "Downloading Book")
+    print_step(7, "Downloading Book")
     
-    response = session.get(f"{BASE_URL}/books/{book_id}/download/")
+    response = session.get(f"http://127.0.0.1:8000/api/books/{book_id}/download/")
     
     if response.status_code == 200:
         filename = f"test_book_{book_id}.pdf"
@@ -164,9 +181,9 @@ def test_download_book(book_id):
 
 def test_book_history():
     """Test getting book history"""
-    print_step(7, "Getting Book History")
+    print_step(8, "Getting Book History")
     
-    response = session.get(f"{BASE_URL}/books/")
+    response = session.get("http://127.0.0.1:8000/api/books/")
     
     if response.status_code == 200:
         books = response.json()
@@ -192,6 +209,9 @@ def main():
     try:
         # Run tests
         if not test_registration():
+            return False
+        
+        if not test_login():
             return False
         
         if not test_get_niches():

@@ -19,11 +19,11 @@ class Command(BaseCommand):
                 'price_monthly': 0.00,
                 'price_annual': 0.00,
                 'currency': 'USD',
-                'max_books_per_month': 1,
-                'max_pages_per_book': 20,
+                'max_books_per_month': 30,  # 1 book per day = ~30 per month
+                'max_pages_per_book': 30,
                 'priority_generation': False,
                 'commercial_license': False,
-                'ai_enhancement': False,
+                'ai_enhancement': True,
                 'custom_templates': False,
                 'team_collaboration': False,
                 'priority_support': False,
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 'price_monthly': 15.00,
                 'price_annual': 165.00,  # 15% discount
                 'currency': 'USD',
-                'max_books_per_month': 1,
+                'max_books_per_month': 30,  # 1 book per day = ~30 per month
                 'max_pages_per_book': 30,
                 'priority_generation': False,
                 'commercial_license': False,
@@ -75,7 +75,7 @@ class Command(BaseCommand):
                 'price_monthly': 45.00,
                 'price_annual': 495.00,  # 15% discount
                 'currency': 'USD',
-                'max_books_per_month': 3,
+                'max_books_per_month': 90,  # 3 books per day = ~90 per month
                 'max_pages_per_book': 30,
                 'priority_generation': True,
                 'commercial_license': True,
@@ -103,7 +103,7 @@ class Command(BaseCommand):
                 'price_monthly': 60.00,
                 'price_annual': 660.00,  # 15% discount
                 'currency': 'USD',
-                'max_books_per_month': 5,
+                'max_books_per_month': 150,  # 5 books per day = ~150 per month
                 'max_pages_per_book': 30,
                 'priority_generation': True,
                 'commercial_license': True,
@@ -129,15 +129,15 @@ class Command(BaseCommand):
         updated_count = 0
         
         for profile in profiles:
-            # Set default books per month based on subscription tier
+            # Set default books per day based on subscription tier
             if profile.subscription_tier == 'free':
-                profile.books_per_month = 1
+                profile.books_per_day = 1
             elif profile.subscription_tier == 'basic':
-                profile.books_per_month = 1
+                profile.books_per_day = 1
             elif profile.subscription_tier == 'premium':
-                profile.books_per_month = 3
+                profile.books_per_day = 3
             elif profile.subscription_tier == 'enterprise':
-                profile.books_per_month = 5
+                profile.books_per_day = 5
             
             # Generate referral code if not exists
             if not profile.referral_code:

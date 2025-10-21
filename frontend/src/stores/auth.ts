@@ -67,6 +67,12 @@ export const useAuthStore = defineStore('auth', () => {
       };
       
       await apiClient.post<any>('/users/auth/register/', registerData);
+      
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Account Created', 'Please sign in to get started');
+      }
+      
       // Don't set user.value here - user must sign in after registration
       return { success: true };
     } catch (err: any) {
@@ -113,6 +119,11 @@ export const useAuthStore = defineStore('auth', () => {
       // Double-check by fetching current user to ensure session is working
       await checkAuth();
       
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Welcome back!', `Signed in as ${user.value?.username}`);
+      }
+      
       return { success: true };
     } catch (err: any) {
       let message = 'Sign in failed';
@@ -149,6 +160,12 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null;
       await apiClient.post('/users/auth/logout/');
       user.value = null;
+      
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Signed out', 'You have been successfully signed out');
+      }
+      
       return { success: true };
     } catch (err: any) {
       // Even if logout fails, clear local state

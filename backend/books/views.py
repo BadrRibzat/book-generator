@@ -119,7 +119,7 @@ class BookViewSet(viewsets.ModelViewSet):
                 raise Exception("No covers were generated")
                 
             print(f"Successfully generated {len(covers)} covers for book {book.id}")
-            book.status = 'content_generated'  # Change to content_generated to force cover selection
+            book.status = 'cover_pending'  # Set to cover_pending to indicate covers are ready for selection
             book.save()
             
         except Exception as e:
@@ -459,6 +459,11 @@ def register_user(request):
     serializer = UserRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        
+        # Create user profile
+        from users.models import UserProfile
+        UserProfile.objects.create(user=user)
+        
         # Don't auto-login after registration - user must sign in separately
         return Response(
             {

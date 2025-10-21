@@ -73,23 +73,23 @@ class BookCreateSerializer(serializers.ModelSerializer):
         """Ensure sub_niche matches the selected domain"""
         domain = self.initial_data.get('domain')
         
-        # Map domains to their valid sub-niches
+        # Map domains to their valid sub-niches (updated to match API)
         domain_niches = {
-            'personal_development': ['self_improvement', 'goal_setting', 'confidence_building'],
-            'business_entrepreneurship': ['startup_guide', 'marketing_basics', 'leadership_skills'],
-            'health_wellness': ['mental_health', 'fitness_nutrition', 'healthy_habits'],
-            'relationships': ['communication', 'dating_advice', 'family_dynamics'],
-            'childrens_books': ['educational_stories', 'bedtime_stories', 'activity_books'],
-            'education': ['study_skills', 'career_guidance', 'skill_development'],
-            'technology': ['coding_basics', 'digital_literacy', 'tech_trends'],
-            'finance': ['personal_finance', 'investing_basics', 'budgeting'],
-            'hobbies': ['arts_crafts', 'gardening', 'cooking'],
-            'travel': ['travel_guides', 'cultural_exploration', 'budget_travel'],
-            'productivity': ['time_management', 'organization', 'workflow_optimization'],
-            'creative_writing': ['storytelling', 'poetry', 'creative_exercises'],
-            'sustainability': ['eco_living', 'renewable_energy', 'sustainable_practices'],
-            'ai_future_tech': ['ai_basics', 'future_tech', 'digital_transformation'],
-            'mindfulness': ['meditation_basics', 'stress_reduction', 'mindful_living'],
+            'personal_development': ['productivity_home', 'self_esteem', 'parenting_guidance', 'mental_health'],
+            'business_entrepreneurship': ['online_business', 'investing_basics', 'marketing_guide', 'business_planning'],
+            'health_wellness': ['general_health', 'autoimmune_living', 'holistic_wellness', 'fitness_nutrition'],
+            'relationships': ['dating_advice', 'marriage_tips', 'conflict_resolution', 'communication_skills'],
+            'childrens_books': ['early_readers', 'religion_manners', 'educational_fun', 'bedtime_stories'],
+            'education_learning': ['study_techniques', 'exam_preparation', 'language_learning', 'online_learning'],
+            'technology_digital': ['coding_basics', 'graphic_design', 'social_media_marketing', 'digital_tools'],
+            'finance_investment': ['personal_finance', 'investment_strategies', 'retirement_planning', 'financial_independence'],
+            'hobbies_interests': ['cooking_recipes', 'diy_crafts', 'gardening_guide', 'photography_tips'],
+            'travel_adventure': ['travel_guides', 'budget_travel', 'adventure_planning', 'cultural_exploration'],
+            'productivity_time': ['time_management', 'organization_tips', 'goal_setting', 'workflow_optimization'],
+            'creative_writing': ['writing_techniques', 'creative_prompts', 'genre_writing', 'publishing_guide'],
+            'sustainability_eco': ['zero_waste', 'renewable_energy', 'sustainable_products', 'eco_living'],
+            'ai_future_tech': ['ai_concepts', 'ai_ethics', 'future_tech_trends', 'automation_impact'],
+            'mindfulness_meditation': ['mindfulness_practices', 'meditation_techniques', 'stress_reduction', 'inner_peace'],
         }
         
         if value not in domain_niches.get(domain, []):

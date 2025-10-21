@@ -41,12 +41,12 @@
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
-                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.monthlyBooks }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ stats.monthlyLimit }} limit</p>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Today</p>
+                <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.dailyBooks }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ stats.dailyLimit }} limit</p>
               </div>
               <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                <font-awesome-icon :icon="['fas', 'calendar']" class="h-6 w-6 text-green-600 dark:text-green-400" />
+                <font-awesome-icon :icon="['fas', 'calendar-day']" class="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
@@ -58,13 +58,13 @@
                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Usage Progress</p>
                 <div class="mt-2">
                   <div class="flex justify-between text-sm">
-                    <span class="text-gray-900 dark:text-white">{{ stats.monthlyBooks }}</span>
-                    <span class="text-gray-500 dark:text-gray-400">{{ stats.monthlyLimit }}</span>
+                    <span class="text-gray-900 dark:text-white">{{ stats.dailyBooks }}</span>
+                    <span class="text-gray-500 dark:text-gray-400">{{ stats.dailyLimit }}</span>
                   </div>
                   <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-1">
                     <div 
                       class="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
-                      :style="{ width: `${Math.min((stats.monthlyBooks / stats.monthlyLimit) * 100, 100)}%` }"
+                      :style="{ width: `${Math.min((stats.dailyBooks / stats.dailyLimit) * 100, 100)}%` }"
                     ></div>
                   </div>
                 </div>
@@ -198,7 +198,7 @@
                   <div class="text-right">
                     <div class="text-sm text-gray-500 dark:text-gray-400">Books remaining</div>
                     <div class="text-lg font-bold text-gray-900 dark:text-white">
-                      {{ Math.max(0, stats.monthlyLimit - stats.monthlyBooks) }}
+                      {{ Math.max(0, stats.dailyLimit - stats.dailyBooks) }}
                     </div>
                   </div>
                 </div>
@@ -260,7 +260,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { useBooksStore } from '../stores/books'
 import Layout from '../components/Layout.vue'
@@ -276,20 +275,19 @@ interface Book {
 interface UserProfile {
   subscription_tier?: string
   subscription_status?: string
-  books_used_this_month?: number
-  books_per_month?: number
+  books_used_today?: number
+  books_per_day?: number
   total_books?: number
 }
 
 const authStore = useAuthStore()
 const booksStore = useBooksStore()
-const router = useRouter()
 
 // State
 const stats = ref({
   totalBooks: 0,
-  monthlyBooks: 0,
-  monthlyLimit: 1,
+  dailyBooks: 0,
+  dailyLimit: 1,
   revenueGenerated: 0
 })
 
@@ -333,9 +331,9 @@ const getStatusBgClass = (status?: string) => {
 const getTierDescription = (tier?: string) => {
   switch (tier?.toLowerCase()) {
     case 'free': return 'Limited access'
-    case 'basic': return '1 book/month - $15'
-    case 'premium': return '3 books/month - $45'
-    case 'enterprise': return '5 books/month - $60'
+    case 'basic': return '1 book/day - $15'
+    case 'premium': return '3 books/day - $45'
+    case 'enterprise': return '5 books/day - $60'
     default: return 'No active plan'
   }
 }
@@ -391,11 +389,11 @@ const deleteBook = async () => {
     // Update stats
     stats.value.totalBooks = Math.max(0, stats.value.totalBooks - 1)
     
-    // If it was created this month, update monthly count
+    // If it was created today, update daily count
     const bookDate = new Date(bookToDelete.value.created_at)
-    const now = new Date()
-    if (bookDate.getMonth() === now.getMonth() && bookDate.getFullYear() === now.getFullYear()) {
-      stats.value.monthlyBooks = Math.max(0, stats.value.monthlyBooks - 1)
+    const today = new Date()
+    if (bookDate.toDateString() === today.toDateString()) {
+      stats.value.dailyBooks = Math.max(0, stats.value.dailyBooks - 1)
     }
     
     showDeleteModal.value = false
@@ -431,8 +429,8 @@ onMounted(async () => {
       
       // Calculate stats from profile data
       stats.value.totalBooks = userProfile.value.total_books || 0
-      stats.value.monthlyBooks = userProfile.value.books_used_this_month || 0
-      stats.value.monthlyLimit = userProfile.value.books_per_month || 1
+      stats.value.dailyBooks = userProfile.value.books_used_today || 0
+      stats.value.dailyLimit = userProfile.value.books_per_day || 1
     } else {
       // Fallback: fetch books data separately
       await booksStore.fetchBooks()
@@ -443,21 +441,20 @@ onMounted(async () => {
 
       // Calculate stats from books data
       stats.value.totalBooks = books.length
-      stats.value.monthlyBooks = books.filter((book: Book) => {
+      stats.value.dailyBooks = books.filter((book: Book) => {
         const bookDate = new Date(book.created_at)
-        const now = new Date()
-        return bookDate.getMonth() === now.getMonth() && 
-               bookDate.getFullYear() === now.getFullYear()
+        const today = new Date()
+        return bookDate.toDateString() === today.toDateString()
       }).length
 
       // Fallback data based on subscription tier
       userProfile.value = {
         subscription_tier: 'free',
         subscription_status: 'active',
-        books_used_this_month: stats.value.monthlyBooks,
-        books_per_month: 1
+        books_used_today: stats.value.dailyBooks,
+        books_per_day: 1
       }
-      stats.value.monthlyLimit = 1
+      stats.value.dailyLimit = 1
     }
 
   } catch (error) {
@@ -467,8 +464,8 @@ onMounted(async () => {
     userProfile.value = {
       subscription_tier: 'free',
       subscription_status: 'inactive',
-      books_used_this_month: 0,
-      books_per_month: 1
+      books_used_today: 0,
+      books_per_day: 1
     }
   }
 })

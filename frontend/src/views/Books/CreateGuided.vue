@@ -4,41 +4,40 @@
       <div class="max-w-4xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-12 animate-fade-in">
-          <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-primary-600 to-blue-700 rounded-2xl mb-4 shadow-lg">
-            <font-awesome-icon :icon="['fas', 'magic']" class="h-8 w-8 text-white" />
+          <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary-500 via-primary-600 to-blue-700 rounded-3xl mb-6 shadow-2xl shadow-primary-500/25">
+            <font-awesome-icon :icon="['fas', 'magic']" class="h-10 w-10 text-white" />
           </div>
-          <h1 class="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">
+          <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-primary-800 to-blue-800 dark:from-white dark:via-primary-200 dark:to-blue-200 mb-4">
             Create Your AI-Powered Book
           </h1>
-          <p class="text-lg text-gray-600 dark:text-gray-400">
-            Follow these simple steps to generate your professional book
+          <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
+            Transform your ideas into professional books with our advanced AI technology. Choose from trending niches and watch your content come to life.
           </p>
         </div>
 
         <!-- Progress Steps -->
+        <!-- Progress Steps -->
         <div class="mb-12">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between max-w-4xl mx-auto">
             <div v-for="(step, index) in steps" :key="index" class="flex-1">
               <div class="flex items-center" :class="index < steps.length - 1 ? 'mr-4' : ''">
                 <div class="flex flex-col items-center flex-1">
                   <div 
-                    class="w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all duration-300"
-                    :class="currentStep > index ? 'bg-green-500 text-white' : currentStep === index ? 'bg-primary-600 text-white ring-4 ring-primary-200 dark:ring-primary-900' : 'bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400'"
+                    class="w-12 h-12 rounded-full flex items-center justify-center font-bold transition-all duration-500 shadow-lg"
+                    :class="currentStep > index ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-green-500/25' : currentStep === index ? 'bg-gradient-to-r from-primary-600 to-blue-700 text-white shadow-primary-500/25 ring-4 ring-primary-200 dark:ring-primary-900 animate-pulse' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 shadow-gray-200 dark:shadow-gray-800'"
                   >
-                    <font-awesome-icon v-if="currentStep > index" :icon="['fas', 'check']" />
-                    <span v-else>{{ index + 1 }}</span>
+                    <font-awesome-icon v-if="currentStep > index" :icon="['fas', 'check']" class="h-6 w-6" />
+                    <span v-else class="text-lg">{{ index + 1 }}</span>
                   </div>
-                  <span class="text-xs mt-2 font-medium" :class="currentStep >= index ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'">
+                  <span class="text-sm mt-3 font-semibold" :class="currentStep >= index ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'">
                     {{ step }}
                   </span>
                 </div>
-                <div v-if="index < steps.length - 1" class="flex-1 h-1 mx-2" :class="currentStep > index ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-700'"></div>
+                <div v-if="index < steps.length - 1" class="flex-1 h-1 mx-4 mt-[-20px]" :class="currentStep > index ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gray-300 dark:bg-gray-700'"></div>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Error Message -->
+        </div>        <!-- Error Message -->
         <div v-if="error" class="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 mb-6 border border-red-200 dark:border-red-800 animate-scale-in">
           <div class="flex">
             <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="h-5 w-5 text-red-400 mt-0.5" />
@@ -49,9 +48,9 @@
         </div>
 
         <!-- Form Card -->
-        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-700 animate-slide-up">
+        <div class="bg-white dark:bg-gray-800 shadow-2xl rounded-3xl overflow-hidden border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 animate-slide-up">
           <form @submit.prevent="handleNext">
-            <div class="p-8 sm:p-12">
+            <div class="p-10 sm:p-12">
               
               <!-- Step 1: Choose Domain -->
               <div v-show="currentStep === 0" class="space-y-6 animate-fade-in">
@@ -64,12 +63,12 @@
                   Select the main category that best fits your book concept. We've curated 5 trending domains with proven market demand.
                 </p>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <label
                     v-for="domain in domains"
                     :key="domain.value"
-                    class="relative flex cursor-pointer rounded-xl border p-6 shadow-sm focus:outline-none transition-all duration-200 hover:shadow-lg"
-                    :class="form.domain === domain.value ? 'border-primary-600 ring-2 ring-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700'"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                    :class="form.domain === domain.value ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
                   >
                     <input
                       type="radio"
@@ -78,20 +77,25 @@
                       v-model="form.domain"
                       class="sr-only"
                     />
-                    <div class="flex flex-1">
-                      <div class="flex-shrink-0">
-                        <font-awesome-icon :icon="['fas', domainIcons[domain.value] || 'book']" class="h-6 w-6" :class="form.domain === domain.value ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'" />
+                    <div class="flex flex-1 items-center">
+                      <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300" :class="form.domain === domain.value ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                          <font-awesome-icon :icon="['fas', domainIcons[domain.value] || 'book']" class="h-6 w-6" />
+                        </div>
                       </div>
-                      <div class="ml-4 flex flex-col">
-                        <span class="block text-sm font-medium" :class="form.domain === domain.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                      <div class="flex flex-col">
+                        <span class="block text-sm font-bold mb-1" :class="form.domain === domain.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
                           {{ domain.label }}
+                        </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                          {{ getDomainDescription(domain.value) }}
                         </span>
                       </div>
                     </div>
                     <font-awesome-icon
                       v-if="form.domain === domain.value"
                       :icon="['fas', 'check-circle']"
-                      class="h-5 w-5 text-primary-600 dark:text-primary-400 absolute top-4 right-4"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
                     />
                   </label>
                 </div>
@@ -108,12 +112,12 @@
                   Choose a specific sub-niche within <strong>{{ getDomainLabel(form.domain) }}</strong>. Each niche is carefully selected based on market trends and audience demand.
                 </p>
 
-                <div class="space-y-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label
                     v-for="niche in availableNiches"
                     :key="niche.value"
-                    class="relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all duration-200 hover:shadow-md"
-                    :class="form.sub_niche === niche.value ? 'border-primary-600 ring-2 ring-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-primary-300'"
+                    class="group relative flex cursor-pointer rounded-xl border-2 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-102 backdrop-blur-sm"
+                    :class="form.sub_niche === niche.value ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
                   >
                     <input
                       type="radio"
@@ -123,19 +127,19 @@
                       class="sr-only"
                     />
                     <div class="flex flex-1 items-center">
-                      <div class="flex-shrink-0">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" :class="form.sub_niche === niche.value ? 'bg-primary-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
-                          <font-awesome-icon :icon="['fas', 'star']" />
+                      <div class="flex-shrink-0 mr-4">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300" :class="form.sub_niche === niche.value ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                          <font-awesome-icon :icon="['fas', 'star']" class="h-5 w-5" />
                         </div>
                       </div>
-                      <span class="ml-4 block text-sm font-medium" :class="form.sub_niche === niche.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                      <span class="block text-sm font-semibold" :class="form.sub_niche === niche.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
                         {{ niche.label }}
                       </span>
                     </div>
                     <font-awesome-icon
                       v-if="form.sub_niche === niche.value"
                       :icon="['fas', 'check-circle']"
-                      class="h-5 w-5 text-primary-600 dark:text-primary-400"
+                      class="h-5 w-5 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
                     />
                   </label>
                 </div>
@@ -152,12 +156,12 @@
                   Select how many pages you want your book to have. More pages mean more detailed content, but will take longer to generate.
                 </p>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <label
                     v-for="length in pageLengths"
                     :key="length"
-                    class="relative flex cursor-pointer rounded-xl border p-6 shadow-sm focus:outline-none transition-all duration-200 hover:shadow-lg flex-col items-center"
-                    :class="form.page_length === length ? 'border-primary-600 ring-2 ring-primary-600 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-300 dark:border-gray-600 hover:border-primary-300'"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex-col items-center backdrop-blur-sm"
+                    :class="form.page_length === length ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
                   >
                     <input
                       type="radio"
@@ -166,16 +170,23 @@
                       v-model.number="form.page_length"
                       class="sr-only"
                     />
-                    <font-awesome-icon :icon="['fas', 'book']" class="h-8 w-8 mb-2" :class="form.page_length === length ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'" />
-                    <span class="text-2xl font-bold" :class="form.page_length === length ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300" :class="form.page_length === length ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                      <font-awesome-icon :icon="['fas', 'book']" class="h-8 w-8" />
+                    </div>
+                    <span class="text-3xl font-bold mb-2" :class="form.page_length === length ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
                       {{ length }}
                     </span>
-                    <span class="text-xs" :class="form.page_length === length ? 'text-primary-700 dark:text-primary-300' : 'text-gray-500 dark:text-gray-400'">
+                    <span class="text-sm font-medium mb-2" :class="form.page_length === length ? 'text-primary-700 dark:text-primary-300' : 'text-gray-500 dark:text-gray-400'">
                       pages
                     </span>
-                    <span class="text-xs mt-2" :class="form.page_length === length ? 'text-primary-700 dark:text-primary-300' : 'text-gray-500 dark:text-gray-400'">
+                    <span class="text-xs px-2 py-1 rounded-full" :class="form.page_length === length ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
                       ~{{ getEstimatedTime(length) }}
                     </span>
+                    <font-awesome-icon
+                      v-if="form.page_length === length"
+                      :icon="['fas', 'check-circle']"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-3 right-3 transition-all duration-300 animate-scale-in"
+                    />
                   </label>
                 </div>
 
@@ -265,14 +276,14 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="bg-gray-50 dark:bg-gray-900/50 px-8 py-6 sm:px-12 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-900/50 dark:to-blue-900/50 px-10 py-8 sm:px-12 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
               <button
                 v-if="currentStep > 0"
                 type="button"
                 @click="handleBack"
-                class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm"
+                class="inline-flex items-center px-8 py-4 border-2 border-gray-300 dark:border-gray-600 text-sm font-semibold rounded-xl text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95"
               >
-                <font-awesome-icon :icon="['fas', 'arrow-left']" class="mr-2" />
+                <font-awesome-icon :icon="['fas', 'arrow-left']" class="mr-3 h-4 w-4" />
                 Back
               </button>
               <div v-else></div>
@@ -280,16 +291,16 @@
               <button
                 type="submit"
                 :disabled="loading || !isStepValid"
-                class="inline-flex items-center px-8 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary-600 to-blue-700 hover:from-primary-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all duration-200 shadow-lg"
+                class="inline-flex items-center px-10 py-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-primary-600 via-primary-700 to-blue-700 hover:from-primary-700 hover:via-primary-800 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl shadow-primary-500/25 hover:shadow-2xl hover:shadow-primary-500/40"
               >
                 <span v-if="!loading">
-                  <font-awesome-icon v-if="currentStep < 3" :icon="['fas', 'arrow-right']" class="mr-2" />
-                  <font-awesome-icon v-else :icon="['fas', 'magic']" class="mr-2" />
-                  {{ currentStep < 3 ? 'Next Step' : 'Generate My Book' }}
+                  <font-awesome-icon v-if="currentStep < 3" :icon="['fas', 'arrow-right']" class="mr-3 h-4 w-4" />
+                  <font-awesome-icon v-else :icon="['fas', 'magic']" class="mr-3 h-4 w-4" />
+                  {{ currentStep < 3 ? 'Continue' : 'Generate My Book' }}
                 </span>
                 <span v-else class="flex items-center">
-                  <font-awesome-icon :icon="['fas', 'spinner']" spin class="mr-2" />
-                  Generating...
+                  <font-awesome-icon :icon="['fas', 'spinner']" spin class="mr-3 h-4 w-4" />
+                  Creating...
                 </span>
               </button>
             </div>
@@ -297,28 +308,45 @@
         </div>
 
         <!-- Trending Niches Info -->
-        <div class="mt-8 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-            <font-awesome-icon :icon="['fas', 'chart-line']" class="mr-2 text-primary-600 dark:text-primary-400" />
+        <div class="mt-12 bg-gradient-to-r from-primary-50 via-blue-50 to-indigo-50 dark:from-primary-900/20 dark:via-blue-900/20 dark:to-indigo-900/20 rounded-3xl p-8 shadow-xl border border-primary-200 dark:border-primary-800 backdrop-blur-sm">
+          <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+            <div class="w-10 h-10 bg-gradient-to-r from-primary-600 to-blue-700 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+              <font-awesome-icon :icon="['fas', 'chart-line']" class="h-5 w-5 text-white" />
+            </div>
             Why These Niches?
           </h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Our 15 sub-niches across 5 domains are carefully curated based on:
+          <p class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+            Our 60+ sub-niches across 15 domains are carefully curated based on proven market research and audience demand.
           </p>
-          <ul class="mt-3 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            <li class="flex items-start">
-              <font-awesome-icon :icon="['fas', 'check']" class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-              <span><strong>Market Research:</strong> Google Trends analysis and audience demand data</span>
-            </li>
-            <li class="flex items-start">
-              <font-awesome-icon :icon="['fas', 'check']" class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-              <span><strong>Proven Demand:</strong> Active communities and high search volumes</span>
-            </li>
-            <li class="flex items-start">
-              <font-awesome-icon :icon="['fas', 'check']" class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-              <span><strong>Monetization Potential:</strong> Strong buyer intent and evergreen topics</span>
-            </li>
-          </ul>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mr-4 shadow-lg flex-shrink-0">
+                <font-awesome-icon :icon="['fas', 'search']" class="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Market Research</h4>
+                <p class="text-gray-600 dark:text-gray-400">Google Trends analysis and audience demand data drive our selections.</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4 shadow-lg flex-shrink-0">
+                <font-awesome-icon :icon="['fas', 'users']" class="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Proven Demand</h4>
+                <p class="text-gray-600 dark:text-gray-400">Active communities and high search volumes ensure market viability.</p>
+              </div>
+            </div>
+            <div class="flex items-start">
+              <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4 shadow-lg flex-shrink-0">
+                <font-awesome-icon :icon="['fas', 'dollar-sign']" class="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Monetization Potential</h4>
+                <p class="text-gray-600 dark:text-gray-400">Strong buyer intent and evergreen topics maximize earning potential.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -328,12 +356,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useBooksStore } from '../../stores/books';
+import { useAuthStore } from '../../stores/auth';
 import Layout from '../../components/Layout.vue';
 import apiClient from '../../services/api';
 
 const router = useRouter();
-const booksStore = useBooksStore();
+const authStore = useAuthStore();
 
 const currentStep = ref(0);
 const loading = ref(false);
@@ -383,6 +411,24 @@ const domainIcons: Record<string, string> = {
   'mindfulness_meditation': 'spa'
 };
 
+const domainDescriptions: Record<string, string> = {
+  'personal_development': 'Self-improvement & growth',
+  'business_entrepreneurship': 'Start & scale businesses',
+  'health_wellness': 'Health & lifestyle guides',
+  'relationships': 'Love & connection advice',
+  'childrens_books': 'Educational kids content',
+  'education_learning': 'Study & skill development',
+  'technology_digital': 'Tech skills & digital tools',
+  'finance_investment': 'Money management & investing',
+  'hobbies_interests': 'Creative hobbies & crafts',
+  'travel_adventure': 'Travel tips & exploration',
+  'productivity_time': 'Efficiency & organization',
+  'creative_writing': 'Writing & storytelling',
+  'sustainability_eco': 'Green living & environment',
+  'ai_future_tech': 'AI & emerging technologies',
+  'mindfulness_meditation': 'Peace & mental wellness'
+};
+
 const allNiches = ref<any>({});
 const pageLengths = [15, 20, 25, 30];
 
@@ -391,12 +437,12 @@ const availableNiches = computed(() => {
     return [];
   }
   
-  const domain = allNiches.value[form.value.domain];
-  if (!domain || !domain.sub_niches) return [];
+  const domainNiches = allNiches.value[form.value.domain];
+  if (!Array.isArray(domainNiches)) return [];
   
-  return Object.keys(domain.sub_niches).map(key => ({
-    value: key,
-    label: domain.sub_niches[key].name || key.replace(/_/g, ' ')
+  return domainNiches.map((niche: any) => ({
+    value: niche.value,
+    label: niche.label
   }));
 });
 
@@ -416,9 +462,16 @@ const isStepValid = computed(() => {
 });
 
 onMounted(async () => {
+  // Check authentication
+  if (!authStore.isAuthenticated) {
+    router.push('/auth/signin');
+    return;
+  }
+
   try {
     const response = await apiClient.get('/config/sub-niches/');
-    allNiches.value = response.data.sub_niches;
+    domains.value = response.data.domains || [];
+    allNiches.value = response.data.sub_niches || {};
     console.log('Loaded niches:', allNiches.value);
   } catch (err) {
     error.value = 'Failed to load book configuration';
@@ -434,6 +487,10 @@ const getDomainLabel = (value: string) => {
 const getNicheLabel = (value: string) => {
   const niche = availableNiches.value.find((n: any) => n.value === value);
   return niche ? niche.label : value;
+};
+
+const getDomainDescription = (value: string) => {
+  return domainDescriptions[value] || 'Trending niche content';
 };
 
 const getEstimatedTime = (pages: number) => {
@@ -463,6 +520,7 @@ const handleSubmit = async () => {
     loading.value = true;
     error.value = '';
 
+    console.log('Submitting book creation with data:', form.value);
     const response = await apiClient.post('/books/', form.value);
     const book = response.data;
 
@@ -474,8 +532,35 @@ const handleSubmit = async () => {
     // Redirect to book details page to monitor progress
     router.push(`/profile/books/${book.id}`);
   } catch (err: any) {
-    error.value = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to create book';
-    console.error('Create book error:', err);
+    console.error('Create book error details:', err.response?.data);
+    console.error('Create book error status:', err.response?.status);
+    console.error('Create book error headers:', err.response?.headers);
+    
+    let errorMessage = 'Failed to create book';
+    if (err.response?.data) {
+      if (typeof err.response.data === 'string') {
+        errorMessage = err.response.data;
+      } else if (err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.response.data.error) {
+        errorMessage = err.response.data.error;
+      } else if (typeof err.response.data === 'object') {
+        // Handle validation errors
+        const errors = [];
+        for (const [field, fieldErrors] of Object.entries(err.response.data)) {
+          if (Array.isArray(fieldErrors)) {
+            errors.push(`${field}: ${fieldErrors.join(', ')}`);
+          } else {
+            errors.push(`${field}: ${fieldErrors}`);
+          }
+        }
+        errorMessage = errors.join('; ');
+      }
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    error.value = errorMessage;
   } finally {
     loading.value = false;
   }
@@ -486,16 +571,7 @@ const handleSubmit = async () => {
 @keyframes fade-in {
   from {
     opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -503,26 +579,93 @@ const handleSubmit = async () => {
   }
 }
 
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.6s ease-out;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.3s ease-out;
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes scale-in {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.8);
   }
   to {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.8s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
+/* Hover effects */
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism effect */
+.glass {
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+/* Custom scrollbar for the component */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8, #6b46c1);
 }
 </style>

@@ -136,14 +136,24 @@ class CoverGenerator:
             return self._elegant_template(title, niche_display, colors)
     
     def _modern_template(self, title, category, colors):
-        """Modern minimalist design with geometric shapes"""
+        """Modern minimalist design with geometric shapes and better typography"""
+        # Split title into lines for better layout
+        words = title.split()
+        if len(words) > 4:
+            mid = len(words) // 2
+            title_line1 = ' '.join(words[:mid])
+            title_line2 = ' '.join(words[mid:])
+        else:
+            title_line1 = title
+            title_line2 = ""
+        
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&family=Poppins:wght@300;600;800&display=swap');
                 
                 * {{
                     margin: 0;
@@ -154,36 +164,49 @@ class CoverGenerator:
                 body {{
                     width: 1600px;
                     height: 2400px;
-                    font-family: 'Inter', sans-serif;
-                    background: linear-gradient(135deg, {colors['primary']} 0%, {colors['secondary']} 100%);
+                    background: linear-gradient(135deg, {colors['primary']} 0%, {colors['secondary']} 50%, {colors['accent']} 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
-                    padding: 100px;
+                    padding: 150px;
                     position: relative;
                     overflow: hidden;
+                    font-family: 'Inter', sans-serif;
                 }}
                 
-                .geometric-bg {{
+                /* Geometric background elements */
+                .bg-shape-1 {{
+                    position: absolute;
+                    width: 800px;
+                    height: 800px;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 50%;
+                    top: -200px;
+                    right: -200px;
+                    backdrop-filter: blur(40px);
+                }}
+                
+                .bg-shape-2 {{
                     position: absolute;
                     width: 600px;
                     height: 600px;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.1);
-                    top: -200px;
-                    right: -200px;
+                    background: rgba(255, 255, 255, 0.08);
+                    border-radius: 30%;
+                    bottom: -150px;
+                    left: -150px;
+                    transform: rotate(45deg);
+                    backdrop-filter: blur(30px);
                 }}
                 
-                .geometric-bg2 {{
+                .bg-shape-3 {{
                     position: absolute;
                     width: 400px;
                     height: 400px;
-                    border-radius: 30%;
-                    background: rgba(255, 255, 255, 0.08);
-                    bottom: -100px;
-                    left: -100px;
-                    transform: rotate(45deg);
+                    border: 3px solid rgba(255, 255, 255, 0.3);
+                    border-radius: 50%;
+                    top: 200px;
+                    left: 100px;
                 }}
                 
                 .content {{
@@ -191,54 +214,88 @@ class CoverGenerator:
                     z-index: 10;
                     text-align: center;
                     color: white;
+                    max-width: 1200px;
                 }}
                 
                 .category {{
-                    font-size: 42px;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 48px;
                     font-weight: 300;
-                    letter-spacing: 8px;
+                    letter-spacing: 12px;
                     text-transform: uppercase;
-                    margin-bottom: 60px;
+                    margin-bottom: 80px;
                     opacity: 0.9;
+                    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
                 }}
                 
                 .title {{
-                    font-size: 120px;
+                    font-family: 'Poppins', sans-serif;
+                    font-size: 140px;
                     font-weight: 800;
-                    line-height: 1.2;
-                    margin-bottom: 100px;
-                    text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                    line-height: 1.1;
+                    margin-bottom: 60px;
+                    text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+                    letter-spacing: -2px;
                 }}
                 
-                .accent-line {{
-                    width: 300px;
-                    height: 8px;
+                .title-line-2 {{
+                    font-size: 100px;
+                    font-weight: 600;
+                    margin-top: 20px;
+                }}
+                
+                .subtitle {{
+                    font-size: 36px;
+                    font-weight: 300;
+                    letter-spacing: 8px;
+                    text-transform: uppercase;
+                    opacity: 0.8;
+                    margin-top: 40px;
+                }}
+                
+                .accent-bar {{
+                    width: 200px;
+                    height: 6px;
                     background: {colors['accent']};
-                    margin: 0 auto;
+                    margin: 60px auto 0;
+                    border-radius: 3px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
                 }}
             </style>
         </head>
         <body>
-            <div class="geometric-bg"></div>
-            <div class="geometric-bg2"></div>
+            <div class="bg-shape-1"></div>
+            <div class="bg-shape-2"></div>
+            <div class="bg-shape-3"></div>
             <div class="content">
                 <div class="category">{category}</div>
-                <h1 class="title">{title}</h1>
-                <div class="accent-line"></div>
+                <div class="title">{title_line1}</div>
+                {f'<div class="title title-line-2">{title_line2}</div>' if title_line2 else ''}
+                <div class="subtitle">Complete Guide</div>
+                <div class="accent-bar"></div>
             </div>
         </body>
         </html>
         """
     
     def _bold_template(self, title, category, colors):
-        """Bold typography-focused design"""
+        """Bold typography-focused design with modern elements"""
+        # Split title for better layout
+        words = title.split()
+        if len(words) > 3:
+            title_main = ' '.join(words[:-2])
+            title_sub = ' '.join(words[-2:])
+        else:
+            title_main = title
+            title_sub = ""
+        
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Roboto:wght@300;700&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;600&family=Raleway:wght@300;600&display=swap');
                 
                 * {{
                     margin: 0;
@@ -255,60 +312,159 @@ class CoverGenerator:
                     justify-content: space-between;
                     padding: 120px 100px;
                     position: relative;
+                    font-family: 'Oswald', sans-serif;
+                }}
+                
+                /* Top accent bar */
+                .top-accent {{
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 80px;
+                    background: {colors['accent']};
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                }}
+                
+                /* Decorative elements */
+                .decorative-line {{
+                    position: absolute;
+                    width: 4px;
+                    height: 200px;
+                    background: {colors['accent']};
+                    left: 120px;
+                    top: 200px;
+                    opacity: 0.8;
+                }}
+                
+                .decorative-circle {{
+                    position: absolute;
+                    width: 100px;
+                    height: 100px;
+                    border: 6px solid {colors['accent']};
+                    border-radius: 50%;
+                    right: 150px;
+                    bottom: 300px;
+                    opacity: 0.6;
                 }}
                 
                 .top-section {{
-                    background: {colors['accent']};
-                    padding: 40px 60px;
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 50px 80px;
                     display: inline-block;
                     align-self: flex-start;
+                    border-radius: 0 20px 20px 0;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    backdrop-filter: blur(10px);
                 }}
                 
                 .category {{
-                    font-family: 'Roboto', sans-serif;
-                    font-size: 38px;
-                    font-weight: 700;
+                    font-family: 'Raleway', sans-serif;
+                    font-size: 42px;
+                    font-weight: 600;
                     color: {colors['primary']};
-                    letter-spacing: 4px;
+                    letter-spacing: 6px;
                     text-transform: uppercase;
+                    margin-bottom: 20px;
+                }}
+                
+                .category-label {{
+                    font-size: 18px;
+                    color: {colors['secondary']};
+                    font-weight: 300;
+                    letter-spacing: 2px;
+                }}
+                
+                .title-section {{
+                    text-align: right;
+                    padding-right: 100px;
+                    margin-top: 100px;
                 }}
                 
                 .title {{
                     font-family: 'Bebas Neue', sans-serif;
-                    font-size: 160px;
-                    line-height: 0.95;
+                    font-size: 180px;
+                    line-height: 0.9;
                     color: white;
                     text-transform: uppercase;
+                    letter-spacing: 6px;
+                    text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+                    margin-bottom: 20px;
+                }}
+                
+                .title-sub {{
+                    font-size: 120px;
+                    font-weight: 300;
+                    margin-left: 100px;
+                }}
+                
+                .tagline {{
+                    font-family: 'Raleway', sans-serif;
+                    font-size: 32px;
+                    font-weight: 300;
+                    color: rgba(255, 255, 255, 0.9);
                     letter-spacing: 4px;
-                    padding: 0 60px;
+                    text-transform: uppercase;
+                    margin-top: 40px;
+                    text-align: right;
+                    padding-right: 100px;
                 }}
                 
                 .bottom-bar {{
                     width: 100%;
-                    height: 40px;
+                    height: 60px;
                     background: {colors['secondary']};
+                    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+                }}
+                
+                .bottom-pattern {{
+                    position: absolute;
+                    bottom: 60px;
+                    left: 0;
+                    right: 0;
+                    height: 20px;
+                    background: repeating-linear-gradient(
+                        90deg,
+                        {colors['accent']},
+                        {colors['accent']} 20px,
+                        transparent 20px,
+                        transparent 40px
+                    );
+                    opacity: 0.3;
                 }}
             </style>
         </head>
         <body>
+            <div class="top-accent"></div>
+            <div class="decorative-line"></div>
+            <div class="decorative-circle"></div>
+            
             <div class="top-section">
                 <div class="category">{category}</div>
+                <div class="category-label">Professional Guide</div>
             </div>
-            <div class="title">{title}</div>
+            
+            <div class="title-section">
+                <div class="title">{title_main}</div>
+                {f'<div class="title title-sub">{title_sub}</div>' if title_sub else ''}
+                <div class="tagline">Master Your Skills</div>
+            </div>
+            
+            <div class="bottom-pattern"></div>
             <div class="bottom-bar"></div>
         </body>
         </html>
         """
     
     def _elegant_template(self, title, category, colors):
-        """Elegant professional design with serif fonts"""
+        """Elegant professional design with serif fonts and sophisticated layout"""
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400;600&display=swap');
                 
                 * {{
                     margin: 0;
@@ -319,31 +475,58 @@ class CoverGenerator:
                 body {{
                     width: 1600px;
                     height: 2400px;
-                    background: white;
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
                     padding: 150px;
                     position: relative;
+                    font-family: 'Lato', sans-serif;
                 }}
                 
-                .border-frame {{
+                /* Elegant border frames */
+                .outer-frame {{
                     position: absolute;
-                    top: 80px;
-                    left: 80px;
-                    right: 80px;
-                    bottom: 80px;
-                    border: 6px solid {colors['primary']};
+                    top: 60px;
+                    left: 60px;
+                    right: 60px;
+                    bottom: 60px;
+                    border: 8px solid {colors['primary']};
+                    border-radius: 20px;
+                    box-shadow: 0 0 50px rgba(0,0,0,0.1);
                 }}
                 
-                .inner-border {{
+                .inner-frame {{
                     position: absolute;
+                    top: 90px;
+                    left: 90px;
+                    right: 90px;
+                    bottom: 90px;
+                    border: 3px solid {colors['secondary']};
+                    border-radius: 15px;
+                }}
+                
+                .decorative-corner {{
+                    position: absolute;
+                    width: 40px;
+                    height: 40px;
+                    border: 4px solid {colors['accent']};
                     top: 100px;
-                    left: 100px;
                     right: 100px;
-                    bottom: 100px;
-                    border: 2px solid {colors['secondary']};
+                    border-radius: 50% 0 50% 0;
+                    transform: rotate(45deg);
+                }}
+                
+                .decorative-corner2 {{
+                    position: absolute;
+                    width: 30px;
+                    height: 30px;
+                    background: {colors['accent']};
+                    bottom: 120px;
+                    left: 120px;
+                    border-radius: 50%;
+                    opacity: 0.7;
                 }}
                 
                 .content {{
@@ -351,43 +534,92 @@ class CoverGenerator:
                     z-index: 10;
                     text-align: center;
                     color: {colors['primary']};
+                    max-width: 1000px;
                 }}
                 
                 .category {{
                     font-family: 'Lato', sans-serif;
-                    font-size: 38px;
+                    font-size: 48px;
                     font-weight: 300;
-                    letter-spacing: 12px;
+                    letter-spacing: 15px;
                     text-transform: uppercase;
-                    margin-bottom: 80px;
+                    margin-bottom: 100px;
                     color: {colors['secondary']};
+                    opacity: 0.8;
                 }}
                 
                 .title {{
                     font-family: 'Playfair Display', serif;
-                    font-size: 110px;
+                    font-size: 120px;
                     font-weight: 900;
-                    line-height: 1.2;
+                    line-height: 1.1;
+                    margin-bottom: 60px;
+                    letter-spacing: 2px;
+                    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                }}
+                
+                .subtitle {{
+                    font-family: 'Crimson Text', serif;
+                    font-size: 32px;
+                    font-style: italic;
+                    color: {colors['secondary']};
                     margin-bottom: 80px;
+                    letter-spacing: 1px;
                 }}
                 
                 .ornament {{
-                    width: 150px;
-                    height: 150px;
-                    margin: 0 auto;
-                    border: 4px solid {colors['accent']};
+                    width: 200px;
+                    height: 4px;
+                    background: linear-gradient(90deg, transparent, {colors['accent']}, transparent);
+                    margin: 0 auto 60px;
+                    position: relative;
+                }}
+                
+                .ornament::before {{
+                    content: '';
+                    position: absolute;
+                    width: 12px;
+                    height: 12px;
+                    background: {colors['accent']};
                     border-radius: 50%;
-                    background: linear-gradient(135deg, {colors['secondary']}, {colors['accent']});
+                    left: -6px;
+                    top: -4px;
+                }}
+                
+                .ornament::after {{
+                    content: '';
+                    position: absolute;
+                    width: 12px;
+                    height: 12px;
+                    background: {colors['accent']};
+                    border-radius: 50%;
+                    right: -6px;
+                    top: -4px;
+                }}
+                
+                .tagline {{
+                    font-family: 'Lato', sans-serif;
+                    font-size: 24px;
+                    font-weight: 300;
+                    letter-spacing: 6px;
+                    text-transform: uppercase;
+                    color: {colors['secondary']};
+                    opacity: 0.7;
                 }}
             </style>
         </head>
         <body>
-            <div class="border-frame"></div>
-            <div class="inner-border"></div>
+            <div class="outer-frame"></div>
+            <div class="inner-frame"></div>
+            <div class="decorative-corner"></div>
+            <div class="decorative-corner2"></div>
+            
             <div class="content">
                 <div class="category">{category}</div>
                 <h1 class="title">{title}</h1>
+                <div class="subtitle">A Comprehensive Guide to Excellence</div>
                 <div class="ornament"></div>
+                <div class="tagline">Professional Insights</div>
             </div>
         </body>
         </html>

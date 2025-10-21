@@ -75,7 +75,7 @@ def test_complete_workflow():
                 # Create book with new categories
                 book_data = {
                     "domain": "personal_development",
-                    "sub_niche": "self_improvement",
+                    "sub_niche": "self_esteem",
                     "page_length": 15
                 }
                 
@@ -98,7 +98,7 @@ def test_complete_workflow():
                             status = book_status['status']
                             print(f"   📊 Status: {status}")
                             
-                            if status == 'content_generated':
+                            if status == 'content_generated' or status == 'cover_pending':
                                 covers = book_status.get('covers', [])
                                 print(f"   ✅ Content generated with {len(covers)} covers")
                                 

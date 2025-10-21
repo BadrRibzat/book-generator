@@ -1,8 +1,9 @@
 <template>
   <router-view />
+  <ToastNotifications />
 </template>
 
 <script setup lang="ts">
-// App entry point - router handles all views
+import ToastNotifications from './components/ToastNotifications.vue'
 </script>
 

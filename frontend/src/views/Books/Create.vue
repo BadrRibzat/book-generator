@@ -10,14 +10,41 @@
           </p>
         </div>
 
-        <!-- Error Message -->
-        <div v-if="booksStore.error || error" class="rounded-lg bg-red-50 dark:bg-red-900/20 p-6 mb-6 border border-red-200 dark:border-red-800 animate-scale-in">
-          <div class="flex">
-            <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="h-5 w-5 text-red-400 dark:text-red-500 mt-0.5" />
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800 dark:text-red-400">
-                {{ booksStore.error || error }}
-              </h3>
+        <!-- Progress Indicator -->
+        <div v-if="creationProgress.show" class="mb-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-slide-up">
+          <div class="px-6 py-4 bg-gradient-to-r from-primary-600 to-blue-700 text-white">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Creating Your Book</h3>
+              <span class="text-sm">{{ creationProgress.currentStep }} of {{ creationProgress.totalSteps }}</span>
+            </div>
+          </div>
+          <div class="p-6">
+            <div class="space-y-4">
+              <div v-for="(step, index) in creationProgress.steps" :key="index" class="flex items-center">
+                <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center" :class="getStepClass(step.status)">
+                  <font-awesome-icon 
+                    :icon="['fas', getStepIcon(step.status)]" 
+                    :spin="step.status === 'loading'"
+                    class="w-4 h-4 text-white" 
+                  />
+                </div>
+                <div class="ml-4 flex-1">
+                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ step.label }}</p>
+                  <p v-if="step.description" class="text-xs text-gray-500 dark:text-gray-400">{{ step.description }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6">
+              <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                <span>Progress</span>
+                <span>{{ Math.round((creationProgress.currentStep / creationProgress.totalSteps) * 100) }}%</span>
+              </div>
+              <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div 
+                  class="bg-gradient-to-r from-primary-600 to-blue-700 h-2 rounded-full transition-all duration-500"
+                  :style="{ width: `${(creationProgress.currentStep / creationProgress.totalSteps) * 100}%` }"
+                ></div>
+              </div>
             </div>
           </div>
         </div>
@@ -160,6 +187,19 @@ const configData = ref<any>({});
 const loading = ref(true);
 const error = ref<string | null>(null);
 
+// Progress tracking
+const creationProgress = ref({
+  show: false,
+  currentStep: 0,
+  totalSteps: 4,
+  steps: [
+    { label: 'Initializing book creation', description: 'Setting up your book parameters', status: 'pending' },
+    { label: 'Generating AI content', description: 'Creating professional content with AI', status: 'pending' },
+    { label: 'Designing covers', description: 'Generating 3 unique cover options', status: 'pending' },
+    { label: 'Finalizing book', description: 'Preparing your book for download', status: 'pending' }
+  ]
+});
+
 // Available domains (15 trending categories)
 const availableDomains = computed(() => {
   if (!configData.value.sub_niches) return [];
@@ -207,10 +247,57 @@ const handleDomainChange = () => {
 const handleSubmit = async () => {
   booksStore.clearError();
   
-  const result = await booksStore.createBook(form.value);
+  // Show progress indicator
+  creationProgress.value.show = true;
+  creationProgress.value.currentStep = 1;
+  if (creationProgress.value.steps[0]) {
+    creationProgress.value.steps[0].status = 'loading';
+  }
   
-  if (result.success && result.data) {
-    router.push(`/profile/books/${result.data.id}`);
+  try {
+    const result = await booksStore.createBook(form.value as any);
+    
+    if (result.success && result.data) {
+      // Update progress as we navigate to the book details page
+      if (creationProgress.value.steps[0]) creationProgress.value.steps[0].status = 'completed';
+      creationProgress.value.currentStep = 2;
+      if (creationProgress.value.steps[1]) creationProgress.value.steps[1].status = 'loading';
+      
+      router.push(`/profile/books/${result.data.id}`);
+    } else {
+      // Hide progress on error
+      creationProgress.value.show = false;
+      resetProgress();
+    }
+  } catch (error) {
+    // Hide progress on error
+    creationProgress.value.show = false;
+    resetProgress();
+  }
+};
+
+const resetProgress = () => {
+  creationProgress.value.currentStep = 0;
+  creationProgress.value.steps.forEach(step => {
+    step.status = 'pending';
+  });
+};
+
+const getStepClass = (status: string) => {
+  switch (status) {
+    case 'completed': return 'bg-green-500';
+    case 'loading': return 'bg-blue-500';
+    case 'error': return 'bg-red-500';
+    default: return 'bg-gray-300';
+  }
+};
+
+const getStepIcon = (status: string) => {
+  switch (status) {
+    case 'completed': return 'check';
+    case 'loading': return 'spinner';
+    case 'error': return 'exclamation-circle';
+    default: return 'circle';
   }
 };
 

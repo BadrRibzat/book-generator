@@ -20,89 +20,334 @@ class BookGenerator:
     
     # Market-optimized, non-editable titles for each sub-niche
     TITLE_TEMPLATES = {
-        # Language and Kids
-        'ai_learning_stories': [
-            '[Child\'s Name]\'s First Adventure: Learning Spanish with Paco the Parrot',
-            'Personalized Learning Tales: Your Child\'s Language Journey',
-            'AI-Powered Stories: Custom Language Adventures for Kids',
+        # Personal Development
+        'productivity_home': [
+            'Boost Your Home Office Productivity: A Complete Guide',
+            'Work From Home Success: Productivity Strategies That Work',
+            'Home Office Mastery: Stay Productive and Focused',
         ],
-        'multilingual_coloring': [
-            'My First Bilingual ABCs: An English and French Coloring Book',
-            'Color & Learn: Multilingual Fun for Little Ones',
-            'Bilingual Coloring Adventures: Learn While You Color',
+        'self_esteem': [
+            'Build Unstoppable Self-Esteem: Your Confidence Blueprint',
+            'The Self-Esteem Revolution: Transform Your Self-Image',
+            'Confidence Unleashed: Master Your Self-Esteem',
         ],
-        'kids_mindful_journals': [
-            'My Feelings Journal: A Kid\'s Guide to Understanding Big Emotions',
-            'The Mindful Kid: Daily Activities for Emotional Wellness',
-            'Big Feelings, Little Hands: A Child\'s Mindfulness Journal',
+        'parenting_guidance': [
+            'Modern Parenting Mastery: Raise Confident Kids',
+            'The Ultimate Parenting Guide for Today\'s World',
+            'Parenting with Purpose: Guide Your Children to Success',
+        ],
+        'mental_health': [
+            'Mental Health Mastery: Take Control of Your Mind',
+            'The Mental Wellness Blueprint: Your Path to Inner Peace',
+            'Mind Matters: Essential Mental Health Strategies',
         ],
         
-        # Technology and AI
+        # Business & Entrepreneurship
+        'online_business': [
+            'Start Your Online Empire: The Complete Business Guide',
+            'Online Business Success: From Idea to Profit',
+            'Digital Entrepreneurship: Build Your Online Business',
+        ],
+        'investing_basics': [
+            'Investing for Beginners: Your Wealth Building Guide',
+            'The Investment Blueprint: Start Building Wealth Today',
+            'Smart Investing: Master the Basics of Wealth Creation',
+        ],
+        'marketing_guide': [
+            'Digital Marketing Mastery: Grow Your Business Online',
+            'Marketing Magic: Strategies That Drive Results',
+            'The Marketing Playbook: Win in the Digital Age',
+        ],
+        'business_planning': [
+            'Business Planning Excellence: Your Success Roadmap',
+            'Strategic Business Planning: Build a Winning Company',
+            'The Business Plan Blueprint: Plan Your Path to Success',
+        ],
+        
+        # Health & Wellness
+        'general_health': [
+            'Total Health Transformation: Your Wellness Journey',
+            'The Complete Health Guide: Body, Mind, and Spirit',
+            'Holistic Health Mastery: Optimize Your Well-Being',
+        ],
+        'autoimmune_living': [
+            'Autoimmune Wellness: Thrive with Autoimmune Conditions',
+            'Living Well with Autoimmunity: Your Complete Guide',
+            'Autoimmune Living Mastery: Health and Happiness',
+        ],
+        'holistic_wellness': [
+            'Holistic Wellness Revolution: Transform Your Health',
+            'The Holistic Health Handbook: Natural Wellness Solutions',
+            'Complete Wellness: Body, Mind, and Spirit Harmony',
+        ],
+        'fitness_nutrition': [
+            'Fitness & Nutrition Mastery: Your Complete Guide',
+            'The Fitness Nutrition Blueprint: Build Your Best Body',
+            'Fit & Fueled: Nutrition Strategies for Peak Performance',
+        ],
+        
+        # Relationships
+        'dating_advice': [
+            'Modern Dating Mastery: Find Love in Today\'s World',
+            'The Dating Success Blueprint: Attract Your Perfect Match',
+            'Love in the Digital Age: Modern Dating Strategies',
+        ],
+        'marriage_tips': [
+            'Marriage Mastery: Build a Lasting, Loving Relationship',
+            'The Marriage Success Guide: Strengthen Your Bond',
+            'Forever Love: Secrets to a Happy Marriage',
+        ],
+        'conflict_resolution': [
+            'Conflict Resolution Mastery: Transform Relationship Challenges',
+            'The Peace Maker\'s Guide: Resolve Conflicts Effectively',
+            'Relationship Harmony: Master Conflict Resolution',
+        ],
+        'communication_skills': [
+            'Communication Excellence: Master the Art of Connection',
+            'The Communication Blueprint: Speak with Confidence',
+            'Effective Communication: Transform Your Relationships',
+        ],
+        
+        # Children's Books
+        'early_readers': [
+            'Adventure Stories for Young Readers: Spark Imagination',
+            'Fun Tales for Early Readers: Learning Through Stories',
+            'Young Reader Adventures: Stories That Inspire',
+        ],
+        'religion_manners': [
+            'Good Manners & Values: Stories for Children',
+            'Character Building Stories: Manners and Morality',
+            'Moral Tales for Kids: Lessons in Goodness',
+        ],
+        'educational_fun': [
+            'Learning Adventures: Fun Educational Stories for Kids',
+            'Educational Fun: Stories That Teach and Entertain',
+            'Smart Kids Stories: Learning Through Play',
+        ],
+        'bedtime_stories': [
+            'Magical Bedtime Stories: Sweet Dreams for Children',
+            'Bedtime Tales: Stories for Peaceful Sleep',
+            'Dreamland Stories: Bedtime Adventures for Kids',
+        ],
+        
+        # Education & Learning
+        'study_techniques': [
+            'Study Smart: Master Effective Learning Techniques',
+            'The Study Success Blueprint: Ace Your Exams',
+            'Learning Mastery: Study Techniques That Work',
+        ],
+        'exam_preparation': [
+            'Exam Success Mastery: Prepare, Perform, Excel',
+            'The Exam Preparation Guide: Your Path to Success',
+            'Test Taking Excellence: Master Exam Strategies',
+        ],
+        'language_learning': [
+            'Language Learning Mastery: Speak Any Language Fluently',
+            'The Language Learning Blueprint: Fast Track to Fluency',
+            'Master Any Language: Proven Learning Strategies',
+        ],
+        'online_learning': [
+            'Online Learning Excellence: Master Digital Education',
+            'The Online Learning Guide: Succeed in Virtual Education',
+            'Digital Learning Mastery: Thrive in Online Courses',
+        ],
+        
+        # Technology & Digital Skills
+        'coding_basics': [
+            'Coding for Beginners: Your Programming Journey Starts Here',
+            'The Coding Blueprint: Learn to Code from Scratch',
+            'Programming Mastery: From Beginner to Developer',
+        ],
+        'graphic_design': [
+            'Graphic Design Mastery: Create Stunning Visuals',
+            'The Design Blueprint: Master Graphic Design Skills',
+            'Visual Design Excellence: From Concept to Creation',
+        ],
+        'social_media_marketing': [
+            'Social Media Marketing Mastery: Grow Your Brand Online',
+            'The Social Media Blueprint: Dominate Digital Marketing',
+            'Social Success: Marketing Strategies That Work',
+        ],
+        'digital_tools': [
+            'Digital Tools Mastery: Boost Productivity with Technology',
+            'The Digital Tools Guide: Essential Software for Success',
+            'Tech Productivity: Master Digital Tools and Apps',
+        ],
+        
+        # Finance & Investment
+        'personal_finance': [
+            'Personal Finance Mastery: Take Control of Your Money',
+            'The Money Management Blueprint: Build Wealth Wisely',
+            'Financial Freedom: Master Personal Finance Skills',
+        ],
+        'investment_strategies': [
+            'Investment Mastery: Strategies for Wealth Creation',
+            'The Investment Guide: Build Your Financial Future',
+            'Smart Investing: Proven Strategies for Success',
+        ],
+        'retirement_planning': [
+            'Retirement Planning Mastery: Secure Your Golden Years',
+            'The Retirement Blueprint: Plan for Financial Freedom',
+            'Retirement Success: Your Complete Planning Guide',
+        ],
+        'financial_independence': [
+            'Financial Independence Mastery: Escape the Rat Race',
+            'The FI Blueprint: Achieve Financial Freedom',
+            'Wealth Building Mastery: Path to Financial Independence',
+        ],
+        
+        # Hobbies & Interests
+        'cooking_recipes': [
+            'Culinary Mastery: Recipes and Techniques for Home Cooks',
+            'The Cooking Blueprint: Master Kitchen Skills',
+            'Cooking Excellence: From Beginner to Gourmet Chef',
+        ],
+        'diy_crafts': [
+            'DIY Crafts Mastery: Create Beautiful Handmade Items',
+            'The Crafting Blueprint: Handmade Projects for Everyone',
+            'Crafting Excellence: DIY Projects That Inspire',
+        ],
+        'gardening_guide': [
+            'Gardening Mastery: Grow Your Own Food and Flowers',
+            'The Gardening Blueprint: Create Your Dream Garden',
+            'Green Thumb Success: Master Gardening Skills',
+        ],
+        'photography_tips': [
+            'Photography Mastery: Capture Stunning Images',
+            'The Photography Blueprint: From Snapshots to Art',
+            'Photo Excellence: Master the Art of Photography',
+        ],
+        
+        # Travel & Adventure
+        'travel_guides': [
+            'Travel Mastery: Explore the World Like a Pro',
+            'The Travel Blueprint: Plan Perfect Adventures',
+            'Wanderlust: Your Ultimate Travel Guide',
+        ],
+        'budget_travel': [
+            'Budget Travel Mastery: Travel the World on a Budget',
+            'The Budget Travel Blueprint: Affordable Adventures',
+            'Smart Travel: Save Money, See the World',
+        ],
+        'adventure_planning': [
+            'Adventure Planning Mastery: Create Unforgettable Experiences',
+            'The Adventure Blueprint: Plan Epic Journeys',
+            'Adventure Excellence: Master Trip Planning Skills',
+        ],
+        'cultural_exploration': [
+            'Cultural Exploration Mastery: Discover World Cultures',
+            'The Culture Blueprint: Immerse Yourself in Global Traditions',
+            'Cultural Journeys: Explore Diverse Cultures and Customs',
+        ],
+        
+        # Productivity & Time Management
+        'time_management': [
+            'Time Management Mastery: Make Every Minute Count',
+            'The Productivity Blueprint: Master Your Time',
+            'Time Excellence: Productivity Strategies That Work',
+        ],
+        'organization_tips': [
+            'Organization Mastery: Declutter and Optimize Your Life',
+            'The Organization Blueprint: Create Order and Efficiency',
+            'Organize Your Life: Systems for Success',
+        ],
+        'goal_setting': [
+            'Goal Setting Mastery: Achieve Your Dreams Systematically',
+            'The Goal Achievement Blueprint: Turn Dreams into Reality',
+            'Goal Success: Strategies for Achievement',
+        ],
+        'workflow_optimization': [
+            'Workflow Mastery: Optimize Processes for Maximum Efficiency',
+            'The Workflow Blueprint: Streamline Your Productivity',
+            'Process Excellence: Optimize Your Workflows',
+        ],
+        
+        # Creative Writing & Storytelling
+        'writing_techniques': [
+            'Writing Mastery: Craft Compelling Stories and Content',
+            'The Writing Blueprint: Master Writing Techniques',
+            'Creative Writing Excellence: From Idea to Publication',
+        ],
+        'creative_prompts': [
+            'Creative Writing Prompts: Spark Your Imagination',
+            'The Creativity Blueprint: Unlock Your Writing Potential',
+            'Writing Inspiration: Prompts for Creative Success',
+        ],
+        'genre_writing': [
+            'Genre Writing Mastery: Excel in Your Chosen Style',
+            'The Genre Blueprint: Master Specific Writing Styles',
+            'Writing by Genre: Techniques for Success',
+        ],
+        'publishing_guide': [
+            'Publishing Mastery: Get Your Work into the World',
+            'The Publishing Blueprint: From Manuscript to Market',
+            'Publishing Success: Your Guide to Getting Published',
+        ],
+        
+        # Sustainability & Eco-Friendly Living
+        'zero_waste': [
+            'Zero Waste Mastery: Live Sustainably and Reduce Waste',
+            'The Zero Waste Blueprint: Eco-Friendly Living Guide',
+            'Waste-Free Living: Master Sustainable Habits',
+        ],
+        'renewable_energy': [
+            'Renewable Energy Mastery: Power Your Home Sustainably',
+            'The Energy Blueprint: Go Green with Renewable Power',
+            'Clean Energy Success: Master Renewable Technologies',
+        ],
+        'sustainable_products': [
+            'Sustainable Products Mastery: Choose Eco-Friendly Options',
+            'The Sustainability Blueprint: Make Conscious Choices',
+            'Green Living: Master Sustainable Product Selection',
+        ],
+        'eco_living': [
+            'Eco-Friendly Living Mastery: Reduce Your Environmental Impact',
+            'The Eco Blueprint: Live Sustainably Every Day',
+            'Green Lifestyle Success: Master Eco-Friendly Living',
+        ],
+        
+        # AI & Future Technologies
+        'ai_concepts': [
+            'AI Mastery: Understand Artificial Intelligence Fundamentals',
+            'The AI Blueprint: Master Artificial Intelligence Concepts',
+            'AI Understanding: From Basics to Advanced Concepts',
+        ],
         'ai_ethics': [
-            'Generative AI: Creating Content in 2025 and Beyond',
-            'AI Ethics Explained: Navigating the Future Responsibly',
-            'The Ethical AI Handbook: A Professional\'s Guide',
+            'AI Ethics Mastery: Navigate the Moral Landscape of Technology',
+            'The Ethics Blueprint: Responsible AI Development',
+            'Ethical AI: Master Technology Ethics and Governance',
         ],
-        'nocode_guides': [
-            'Build Your First App: A No-Code Manual for Creatives',
-            'No-Code Revolution: Create Software Without Programming',
-            'Low-Code Development Made Simple: For Beginners',
+        'future_tech_trends': [
+            'Future Tech Mastery: Stay Ahead of Technology Trends',
+            'The Future Blueprint: Master Emerging Technologies',
+            'Tech Trends: Understanding Tomorrow\'s Innovations',
         ],
-        'smart_home_diy': [
-            'Your Automated Home: A Beginner\'s Guide to HomeKit and Google Home',
-            'Smart Home Setup: DIY Automation for Everyone',
-            'The Complete Smart Home Manual: Step-by-Step Guide',
-        ],
-        
-        # Nutrition and Wellness
-        'specialty_diet': [
-            'The 2025 Keto Diet Air Fryer Cookbook for Beginners',
-            'Specialty Diet Success: Custom Meal Plans for Your Lifestyle',
-            'Dietary Freedom: Delicious Recipes for Every Need',
-        ],
-        'plant_based_cooking': [
-            'The 30-Day Vegan: Simple, Plant-Based Recipes for Beginners',
-            'Plant-Powered Cooking: Easy Vegan Meals',
-            'Beginner\'s Guide to Plant-Based Living',
-        ],
-        'nutrition_mental_health': [
-            'Eating for Happiness: A Guide to Mood-Boosting Foods',
-            'The Mind-Gut Connection: Nutrition for Mental Wellness',
-            'Food & Mood: How Diet Impacts Your Mental Health',
+        'automation_impact': [
+            'Automation Mastery: Understand Technology\'s Impact on Work',
+            'The Automation Blueprint: Navigate the Future of Work',
+            'Future Work: Master Automation and Technological Change',
         ],
         
-        # Meditation
-        'mindfulness_anxiety': [
-            'Anxiety Release: A 30-Day Mindfulness Workbook',
-            'Calm Mind, Happy Life: Practical Anxiety Relief',
-            'The Mindfulness Solution for Anxiety',
+        # Mindfulness & Meditation
+        'mindfulness_practices': [
+            'Mindfulness Mastery: Cultivate Present-Moment Awareness',
+            'The Mindfulness Blueprint: Daily Practices for Inner Peace',
+            'Present Moment Success: Master Mindfulness Techniques',
         ],
-        'sleep_meditation': [
-            'Journey Through the Sleepy Forest: A Guided Meditation Book',
-            'Restful Nights: Sleep Meditation Stories',
-            'Bedtime Calm: Guided Stories for Deep Sleep',
+        'meditation_techniques': [
+            'Meditation Mastery: Deepen Your Practice and Inner Peace',
+            'The Meditation Blueprint: Techniques for Spiritual Growth',
+            'Meditation Excellence: Master Various Meditation Styles',
         ],
-        'gratitude_journals': [
-            'My Daily Gratitude Practice: 365 Days of Mindful Prompts',
-            'The Gratitude Journal: Daily Reflections for Joy',
-            'Thankful Every Day: A Year of Gratitude',
+        'stress_reduction': [
+            'Stress Reduction Mastery: Find Calm in a Busy World',
+            'The Calm Blueprint: Proven Stress Management Techniques',
+            'Stress-Free Living: Master Relaxation and Peace',
         ],
-        
-        # Home Workout
-        'equipment_free': [
-            '20-Minute Bodyweight Workouts: High-Intensity Training at Home',
-            'No Equipment Needed: Complete Home Fitness Guide',
-            'Bodyweight Mastery: Get Fit Anywhere',
-        ],
-        'yoga_remote_workers': [
-            'Desk Stretch: A Yoga Guide for Relieving Pain and Tension at Your Desk',
-            'The Remote Worker\'s Yoga Manual',
-            'Office Yoga: Stay Flexible While Working',
-        ],
-        'mobility_training': [
-            'Unlock Your Body: A Beginner\'s Guide to Mobility and Flexibility',
-            'Mobility First: Easy Exercises for Better Movement',
-            'The Flexibility Blueprint: Improve Range of Motion',
+        'inner_peace': [
+            'Inner Peace Mastery: Find Tranquility and Spiritual Balance',
+            'The Peace Blueprint: Journey to Inner Harmony',
+            'Spiritual Wellness: Master Inner Peace Practices',
         ],
     }
     
@@ -209,14 +454,19 @@ Make this a book people would actually want to read and implement. Focus on prac
         lines = content.split('\n')
         for line in lines:
             line = line.strip()
-            if line.startswith('CHAPTER '):
+            # Handle both formats: "CHAPTER 1:" and "**CHAPTER 1:**"
+            if line.startswith('CHAPTER ') or ('**CHAPTER ' in line and '**' in line):
                 if current_chapter:
                     chapters.append(current_chapter)
+                
+                # Clean up the title
+                title = line.replace('**', '').replace(':', '').strip()
                 current_chapter = {
-                    'title': line,
+                    'title': title,
                     'content': []
                 }
-            elif current_chapter and line:
+            elif current_chapter and line and not line.startswith('**') and not line.startswith('*'):
+                # Skip markdown formatting lines, only add actual content
                 current_chapter['content'].append(line)
         
         if current_chapter:

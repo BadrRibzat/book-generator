@@ -37,79 +37,94 @@ class Book(models.Model):
     
     SUB_NICHE_CHOICES = [
         # Personal Development
-        ('self_improvement', 'Self-Improvement & Motivation'),
-        ('goal_setting', 'Goal Setting & Achievement'),
-        ('confidence_building', 'Confidence Building'),
+        ('productivity_home', 'Boosting Productivity When Working From Home'),
+        ('self_esteem', 'Building Self-Esteem and Confidence'),
+        ('parenting_guidance', 'Modern Parenting Guidance'),
+        ('mental_health', 'Mental Health and Mindset'),
         
         # Business & Entrepreneurship
-        ('startup_guide', 'Startup Guides'),
-        ('marketing_basics', 'Marketing Basics'),
-        ('leadership_skills', 'Leadership Skills'),
+        ('online_business', 'Starting an Online Business'),
+        ('investing_basics', 'Investment Strategies for Beginners'),
+        ('marketing_guide', 'Digital Marketing Step-by-Step'),
+        ('business_planning', 'Business Planning Tools and Resources'),
         
         # Health & Wellness
-        ('mental_health', 'Mental Health & Wellbeing'),
-        ('fitness_nutrition', 'Fitness & Nutrition'),
-        ('healthy_habits', 'Healthy Habits'),
+        ('general_health', 'General Health and Nutrition'),
+        ('autoimmune_living', 'Living with Autoimmune Diseases'),
+        ('holistic_wellness', 'Holistic Wellness Approaches'),
+        ('fitness_nutrition', 'Fitness and Nutrition Basics'),
         
         # Relationships
-        ('communication', 'Communication Skills'),
-        ('dating_advice', 'Dating & Relationships'),
-        ('family_dynamics', 'Family Dynamics'),
+        ('dating_advice', 'Modern Dating Advice'),
+        ('marriage_tips', 'Marriage and Partnership Tips'),
+        ('conflict_resolution', 'Handling Relationship Conflicts'),
+        ('communication_skills', 'Effective Communication Skills'),
         
         # Children's Books
-        ('educational_stories', 'Educational Stories'),
-        ('bedtime_stories', 'Bedtime Stories'),
-        ('activity_books', 'Activity Books'),
+        ('early_readers', 'Short Stories for Early Readers'),
+        ('religion_manners', 'Religion and Good Manners'),
+        ('educational_fun', 'Fun Educational Activities'),
+        ('bedtime_stories', 'Bedtime Stories and Morals'),
         
-        # Education
-        ('study_skills', 'Study Skills & Techniques'),
-        ('career_guidance', 'Career Guidance'),
-        ('skill_development', 'Skill Development'),
+        # Education & Learning
+        ('study_techniques', 'Study Techniques and Methods'),
+        ('exam_preparation', 'Exam Preparation Strategies'),
+        ('language_learning', 'Language Learning Guides'),
+        ('online_learning', 'Online Learning Best Practices'),
         
-        # Technology
-        ('coding_basics', 'Coding Basics'),
-        ('digital_literacy', 'Digital Literacy'),
-        ('tech_trends', 'Technology Trends'),
+        # Technology & Digital Skills
+        ('coding_basics', 'Coding for Beginners'),
+        ('graphic_design', 'Graphic Design Fundamentals'),
+        ('social_media_marketing', 'Social Media Marketing'),
+        ('digital_tools', 'Digital Tools and Productivity'),
         
-        # Finance
-        ('personal_finance', 'Personal Finance'),
-        ('investing_basics', 'Investing Basics'),
-        ('budgeting', 'Budgeting & Saving'),
+        # Finance & Investment
+        ('personal_finance', 'Personal Finance Management'),
+        ('investment_strategies', 'Investment Strategies'),
+        ('retirement_planning', 'Retirement Planning Guide'),
+        ('financial_independence', 'Path to Financial Independence'),
         
-        # Hobbies
-        ('arts_crafts', 'Arts & Crafts'),
-        ('gardening', 'Gardening'),
-        ('cooking', 'Cooking & Recipes'),
+        # Hobbies & Interests
+        ('cooking_recipes', 'Cooking and Recipe Collections'),
+        ('diy_crafts', 'DIY Crafts and Projects'),
+        ('gardening_guide', 'Gardening for Beginners'),
+        ('photography_tips', 'Photography Tips and Techniques'),
         
-        # Travel
-        ('travel_guides', 'Travel Guides'),
-        ('cultural_exploration', 'Cultural Exploration'),
-        ('budget_travel', 'Budget Travel'),
+        # Travel & Adventure
+        ('travel_guides', 'Destination Travel Guides'),
+        ('budget_travel', 'Budget Travel Tips'),
+        ('adventure_planning', 'Adventure and Trip Planning'),
+        ('cultural_exploration', 'Cultural Exploration Guides'),
         
-        # Productivity
-        ('time_management', 'Time Management'),
-        ('organization', 'Organization Systems'),
+        # Productivity & Time Management
+        ('time_management', 'Effective Time Management'),
+        ('organization_tips', 'Organization and Decluttering'),
+        ('goal_setting_achievement', 'Goal Setting and Achievement'),
         ('workflow_optimization', 'Workflow Optimization'),
         
-        # Creative Writing
-        ('storytelling', 'Storytelling Techniques'),
-        ('poetry', 'Poetry & Verse'),
-        ('creative_exercises', 'Creative Writing Exercises'),
+        # Creative Writing & Storytelling
+        ('writing_techniques', 'Writing Techniques and Style'),
+        ('creative_prompts', 'Creative Writing Prompts'),
+        ('genre_writing', 'Genre-Specific Writing Advice'),
+        ('publishing_guide', 'Publishing and Marketing for Authors'),
         
-        # Sustainability
-        ('eco_living', 'Eco-Friendly Living'),
-        ('renewable_energy', 'Renewable Energy'),
-        ('sustainable_practices', 'Sustainable Practices'),
+        # Sustainability & Eco-Friendly Living
+        ('zero_waste', 'Zero Waste Lifestyle'),
+        ('renewable_energy', 'Renewable Energy for Homes'),
+        ('sustainable_products', 'Sustainable Product Choices'),
+        ('eco_living', 'Eco-Friendly Living Tips'),
         
-        # AI & Future Tech
-        ('ai_basics', 'AI Fundamentals'),
-        ('future_tech', 'Future Technology'),
-        ('digital_transformation', 'Digital Transformation'),
+        # AI & Future Technologies
+        ('ai_concepts', 'Understanding AI Concepts'),
+        ('ai_ethics', 'AI Ethics and Considerations'),
+        ('future_tech_trends', 'Future Technology Trends'),
+        ('automation_impact', 'Automation and Its Impact'),
         
-        # Mindfulness
-        ('meditation_basics', 'Meditation Basics'),
-        ('stress_reduction', 'Stress Reduction'),
-        ('mindful_living', 'Mindful Living'),
+        # Mindfulness & Meditation
+        ('mindfulness_practices', 'Daily Mindfulness Practices'),
+        ('meditation_techniques', 'Meditation Techniques for Beginners'),
+        ('stress_reduction', 'Stress Reduction Methods'),
+        ('inner_peace', 'Finding Inner Peace and Balance'),
     ]
     
     PAGE_LENGTH_CHOICES = [
@@ -287,9 +302,10 @@ class Book(models.Model):
     def generate_referral_link(self):
         """Generate referral link for this book"""
         if hasattr(self.user, 'profile') and self.user.profile.referral_code:
-            from django.urls import reverse
-            book_url = reverse('books:detail', kwargs={'pk': self.pk})
-            referral_url = f"{request.build_absolute_uri(book_url)}?ref={self.user.profile.referral_code}"
+            # This would need request context to build absolute URI
+            # For now, return relative URL
+            book_url = f"/books/{self.pk}/"
+            referral_url = f"{book_url}?ref={self.user.profile.referral_code}"
             return referral_url
         return None
 

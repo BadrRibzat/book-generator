@@ -74,7 +74,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useBooksStore } from '../stores/books';
-import type { Cover } from '../types';
 import apiClient from '../services/api';
 
 const props = defineProps<{
@@ -98,7 +97,7 @@ onMounted(async () => {
     
     try {
       await booksStore.fetchBook(props.bookId);
-      if (booksStore.currentBook?.covers && booksStore.currentBook?.covers.length > 0) {
+      if (booksStore.currentBook?.covers && booksStore.currentBook.covers.length > 0 && booksStore.currentBook.covers[0]) {
         // Auto-select first cover if available
         selectedCoverId.value = booksStore.currentBook.covers[0].id;
       }
@@ -107,7 +106,7 @@ onMounted(async () => {
     } finally {
       loading.value = false;
     }
-  } else if (booksStore.currentBook.covers?.length > 0) {
+  } else if (booksStore.currentBook.covers && booksStore.currentBook.covers.length > 0 && booksStore.currentBook.covers[0]) {
     // Use existing covers
     selectedCoverId.value = booksStore.currentBook.covers[0].id;
   }

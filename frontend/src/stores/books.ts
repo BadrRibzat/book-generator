@@ -81,6 +81,12 @@ export const useBooksStore = defineStore('books', () => {
       const response = await apiClient.post<Book>('/books/', bookData);
       books.value.unshift(response.data);
       currentBook.value = response.data;
+      
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Book Created', 'Your AI book generation has started!');
+      }
+      
       return { success: true, data: response.data };
     } catch (err: any) {
       const message = err.response?.data?.error || 'Failed to create book';
@@ -107,6 +113,11 @@ export const useBooksStore = defineStore('books', () => {
         currentBook.value = response.data;
       }
       
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Cover Selected', 'Your book is now being finalized!');
+      }
+      
       return { success: true, data: response.data };
     } catch (err: any) {
       const message = err.response?.data?.error || 'Failed to select cover';
@@ -128,6 +139,11 @@ export const useBooksStore = defineStore('books', () => {
       
       if (currentBook.value?.id === id) {
         currentBook.value = null;
+      }
+      
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Book Deleted', 'The book has been successfully deleted');
       }
       
       return { success: true };

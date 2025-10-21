@@ -37,7 +37,7 @@
             <ul class="space-y-4 mb-8">
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">3 books per month</span>
+                <span class="text-gray-700">1 book per day</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
@@ -49,7 +49,7 @@
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">Up to 20 pages</span>
+                <span class="text-gray-700">Up to 30 pages</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
@@ -71,22 +71,22 @@
             </button>
           </div>
 
-          <!-- Pro Plan (Popular) -->
+          <!-- Basic Plan -->
           <div class="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-8 transform scale-105 shadow-2xl relative">
             <div class="absolute top-0 right-0 bg-yellow-400 text-gray-900 px-4 py-1 rounded-bl-lg rounded-tr-lg text-sm font-bold">
-              POPULAR
+              MOST POPULAR
             </div>
-            <h3 class="text-2xl font-bold text-white mb-2">Pro</h3>
+            <h3 class="text-2xl font-bold text-white mb-2">Basic</h3>
             <div class="mb-6">
-              <span class="text-5xl font-extrabold text-white">$29</span>
+              <span class="text-5xl font-extrabold text-white">$15</span>
               <span class="text-primary-100">/month</span>
             </div>
-            <p class="text-primary-100 mb-6">For serious authors and entrepreneurs</p>
+            <p class="text-primary-100 mb-6">Perfect for individual authors and content creators</p>
             
             <ul class="space-y-4 mb-8">
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mt-1 mr-3" />
-                <span class="text-white">Unlimited books</span>
+                <span class="text-white">1 book per day</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mt-1 mr-3" />
@@ -106,75 +106,103 @@
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mt-1 mr-3" />
-                <span class="text-white">Advanced customization</span>
-              </li>
-              <li class="flex items-start">
-                <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mt-1 mr-3" />
-                <span class="text-white">API access</span>
-              </li>
-              <li class="flex items-start">
-                <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mt-1 mr-3" />
                 <span class="text-white">Email support</span>
               </li>
             </ul>
 
             <button
-              @click="selectPlan('premium')"
+              @click="selectPlan('basic')"
               class="block w-full text-center px-6 py-3 border-2 text-base font-medium rounded-lg transition-all"
-              :class="(currentPlan === 'basic' || currentPlan === 'premium') ? 'border-green-300 text-green-800 bg-green-100 cursor-default' : 'border-white text-primary-600 bg-white hover:bg-primary-50'"
-              :disabled="currentPlan === 'basic' || currentPlan === 'premium'"
+              :class="currentPlan === 'basic' ? 'border-green-300 text-green-800 bg-green-100 cursor-default' : 'border-white text-primary-600 bg-white hover:bg-primary-50'"
+              :disabled="currentPlan === 'basic'"
             >
-              {{ (currentPlan === 'basic' || currentPlan === 'premium') ? '✓ Current Plan' : 'Start Pro Trial' }}
+              {{ currentPlan === 'basic' ? '✓ Current Plan' : 'Start Basic Plan' }}
             </button>
           </div>
 
-          <!-- Enterprise Plan -->
+          <!-- Premium Plan -->
           <div class="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:shadow-xl transition-shadow">
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Premium</h3>
             <div class="mb-6">
-              <span class="text-5xl font-extrabold text-gray-900">Custom</span>
+              <span class="text-5xl font-extrabold text-gray-900">$45</span>
+              <span class="text-gray-600">/month</span>
             </div>
-            <p class="text-gray-600 mb-6">For teams and large-scale operations</p>
+            <p class="text-gray-600 mb-6">For prolific authors and growing businesses</p>
             
             <ul class="space-y-4 mb-8">
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">Everything in Pro</span>
+                <span class="text-gray-700">3 books per day</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">Custom niches</span>
+                <span class="text-gray-700">All 15 trending niches</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">White-label options</span>
+                <span class="text-gray-700">3 cover styles per book</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">Custom AI training</span>
+                <span class="text-gray-700">Up to 30 pages</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">Dedicated support</span>
+                <span class="text-gray-700">Priority generation</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">SLA guarantee</span>
+                <span class="text-gray-700">Advanced customization</span>
               </li>
               <li class="flex items-start">
                 <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">On-premise deployment</span>
+                <span class="text-gray-700">Priority support</span>
               </li>
-              <li class="flex items-start">
-                <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3" />
-                <span class="text-gray-700">Team management</span>
+            </ul>
+
+            <button
+              @click="selectPlan('premium')"
+              class="block w-full text-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg transition-all"
+              :class="currentPlan === 'premium' ? 'bg-green-100 text-green-800 border-green-300 cursor-default' : 'text-gray-700 bg-white hover:bg-gray-50'"
+              :disabled="currentPlan === 'premium'"
+            >
+              {{ currentPlan === 'premium' ? '✓ Current Plan' : 'Start Premium Plan' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Enterprise Plan -->
+        <div class="mt-12 max-w-md mx-auto">
+          <div class="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 text-center text-white">
+            <h3 class="text-2xl font-bold mb-2">Enterprise</h3>
+            <div class="mb-4">
+              <span class="text-4xl font-extrabold">$60</span>
+              <span class="text-purple-100">/month</span>
+            </div>
+            <p class="text-purple-100 mb-6">For teams and high-volume publishers</p>
+            
+            <ul class="space-y-2 mb-6 text-sm">
+              <li class="flex items-center justify-center">
+                <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mr-2" />
+                <span>5 books per day</span>
+              </li>
+              <li class="flex items-center justify-center">
+                <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mr-2" />
+                <span>Everything in Premium</span>
+              </li>
+              <li class="flex items-center justify-center">
+                <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mr-2" />
+                <span>Custom niches & AI training</span>
+              </li>
+              <li class="flex items-center justify-center">
+                <font-awesome-icon :icon="['fas', 'check']" class="text-green-300 mr-2" />
+                <span>Dedicated support</span>
               </li>
             </ul>
 
             <button
               @click="selectPlan('enterprise')"
-              class="block w-full text-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg transition-all"
-              :class="currentPlan === 'enterprise' ? 'bg-green-100 text-green-800 border-green-300 cursor-default' : 'text-gray-700 bg-white hover:bg-gray-50'"
+              class="block w-full text-center px-6 py-3 border-2 border-white text-base font-medium rounded-lg bg-white text-purple-600 hover:bg-purple-50 transition-all"
               :disabled="currentPlan === 'enterprise'"
             >
               {{ currentPlan === 'enterprise' ? '✓ Current Plan' : 'Contact Sales' }}

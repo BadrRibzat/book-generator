@@ -19,6 +19,29 @@
         </div>
 
         <div v-else-if="book" class="space-y-6">
+          <!-- Generation Progress Bar (only show when generating or cover_pending) -->
+          <div v-if="book.status !== 'ready' && book.status !== 'error' && book.status !== 'content_generated'" class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+              <h3 class="text-lg leading-6 font-medium text-gray-900">Generation Progress</h3>
+              <div class="mt-4">
+                <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                  <span>{{ getCurrentStepText(book.status) }}</span>
+                  <span>{{ getProgressPercentage(book.status) }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                  <div 
+                    class="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-1000 ease-out"
+                    :style="{ width: `${getProgressPercentage(book.status)}%` }"
+                  ></div>
+                </div>
+                <div class="mt-3 flex items-center text-sm text-gray-500">
+                  <font-awesome-icon :icon="['fas', 'clock']" class="mr-2" />
+                  <span>{{ getEstimatedTime(book.status) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <!-- Cover Selection Modal -->
           <CoverSelectionModal
             v-if="showCoverModal && bookId > 0"
@@ -89,7 +112,7 @@
                       <p class="text-sm text-red-700">You need to select a cover for your book before it can be finalized.</p>
                       <div class="flex space-x-3 mt-2">
                         <button
-                          @click="handleRegenerateCovers"
+                          @click="showCoverModal = true"
                           class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700"
                         >
                           <font-awesome-icon :icon="['fas', 'redo']" class="mr-2" />
@@ -129,31 +152,46 @@
             </div>
           </div>
 
-          <!-- Cover Selection Card -->
-          <div v-if="book.status === 'content_generated' && book.covers.length > 0" class="bg-white shadow sm:rounded-lg border-l-4 border-yellow-500">
-            <div class="px-4 py-5 sm:p-6">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-                <font-awesome-icon :icon="['fas', 'palette']" class="mr-2 text-primary-600" />
-                Action Required: Select a Cover
-              </h3>
-              <p class="text-sm text-gray-500 mb-6">
-                <strong>Important:</strong> Your book content is ready! You must now choose one of the generated covers for your book before it can be finalized. Each design has been AI-optimized for your niche.
-              </p>
-              <div class="flex space-x-3">
-                <router-link
-                  :to="`/profile/books/${book.id}/covers`"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 shadow-md"
-                >
-                  <font-awesome-icon :icon="['fas', 'hand-pointer']" class="mr-2" />
-                  Choose Cover Now
-                </router-link>
-                <button
-                  @click="showCoverModal = true"
-                  class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  <font-awesome-icon :icon="['fas', 'external-link']" class="mr-2" />
-                  Choose in Modal
-                </button>
+          <!-- Cover Selection Card (show when covers are ready) -->
+          <div v-if="(book.status === 'content_generated' || book.status === 'cover_pending') && book.covers && book.covers.length > 0" class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+            <div class="flex items-start">
+              <div class="flex-shrink-0">
+                <font-awesome-icon :icon="['fas', 'palette']" class="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div class="ml-4 flex-1">
+                <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-2">🎨 Cover Options Ready!</h3>
+                <p class="text-sm text-yellow-800 dark:text-yellow-200 mb-4">
+                  Your book content is complete! We've generated 3 professional cover designs for you. Choose your favorite to finalize your book.
+                </p>
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                  <div 
+                    v-for="cover in book.covers.slice(0, 3)" 
+                    :key="cover.id"
+                    class="border-2 border-yellow-300 dark:border-yellow-600 rounded-lg overflow-hidden cursor-pointer hover:border-yellow-500 dark:hover:border-yellow-400 transition-colors"
+                    @click="selectCoverFromCard(cover.id)"
+                  >
+                    <img :src="cover.image_url" :alt="cover.template_style" class="w-full h-32 object-cover" />
+                    <div class="p-2 bg-yellow-100 dark:bg-yellow-900/50 text-center">
+                      <p class="text-xs font-medium text-yellow-900 dark:text-yellow-100 capitalize">{{ cover.template_style }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex space-x-3">
+                  <button
+                    @click="showCoverModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 shadow-md"
+                  >
+                    <font-awesome-icon :icon="['fas', 'expand']" class="mr-2" />
+                    View Larger & Select
+                  </button>
+                  <button
+                    @click="showCoverModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-yellow-300 dark:border-yellow-600 text-sm font-medium rounded-md text-yellow-900 dark:text-yellow-100 bg-yellow-100 dark:bg-yellow-900/50 hover:bg-yellow-200 dark:hover:bg-yellow-900/70"
+                  >
+                    <font-awesome-icon :icon="['fas', 'hand-pointer']" class="mr-2" />
+                    Choose Cover
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -230,7 +268,6 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
-import apiClient from '../../services/api';
 import CoverSelectionModal from '../../components/CoverSelectionModal.vue';
 import type { BookStatus, Domain, SubNiche } from '../../types';
 
@@ -261,9 +298,16 @@ onMounted(async () => {
   
   await booksStore.fetchBook(bookId.value);
   
-  // Start polling if book is generating
-  if (booksStore.currentBook?.status === 'generating') {
+  // Start polling if book is not in a final state
+  const currentStatus = booksStore.currentBook?.status;
+  if (currentStatus && ['generating', 'content_generated', 'cover_pending'].includes(currentStatus)) {
     startPolling();
+  }
+  
+  // If covers are already available, show the modal immediately
+  if (booksStore.currentBook?.covers && booksStore.currentBook.covers.length > 0 && 
+      ['content_generated', 'cover_pending'].includes(currentStatus || '')) {
+    showCoverModal.value = true;
   }
 });
 
@@ -281,31 +325,45 @@ const startPolling = () => {
   
   pollingInterval.value = window.setInterval(async () => {
     if (bookId.value > 0) {
-      await booksStore.fetchBook(bookId.value);
-      
-      // Get current status
-      const status = booksStore.currentBook?.status;
-      
-      // Show cover selection when content is generated
-      if (status === 'content_generated' && booksStore.currentBook?.covers.length > 0) {
-        if (pollingInterval.value) {
-          clearInterval(pollingInterval.value);
-          pollingInterval.value = null;
+      try {
+        await booksStore.fetchBook(bookId.value);
+        
+        // Get current status
+        const status = booksStore.currentBook?.status;
+        
+        // Show cover selection when content is generated or covers are pending selection
+        if ((status === 'content_generated' || status === 'cover_pending') && 
+            booksStore.currentBook?.covers && booksStore.currentBook.covers.length > 0) {
+          if (pollingInterval.value) {
+            clearInterval(pollingInterval.value);
+            pollingInterval.value = null;
+          }
+          // Show cover selection modal
+          showCoverModal.value = true;
+          return;
         }
-        // Show cover selection modal instead of redirecting
-        showCoverModal.value = true;
-        return;
-      }
-      
-      // Stop polling for final statuses
-      if (status === 'ready' || status === 'error') {
-        if (pollingInterval.value) {
-          clearInterval(pollingInterval.value);
-          pollingInterval.value = null;
+        
+        // Stop polling for final statuses
+        if (status === 'ready' || status === 'error') {
+          if (pollingInterval.value) {
+            clearInterval(pollingInterval.value);
+            pollingInterval.value = null;
+          }
+        }
+      } catch (error: any) {
+        console.error('Error during polling:', error);
+        // If we get an authentication error, stop polling
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          if (pollingInterval.value) {
+            clearInterval(pollingInterval.value);
+            pollingInterval.value = null;
+          }
+          // Redirect to login if session expired
+          router.push('/auth/signin');
         }
       }
     }
-  }, 3000); // Poll every 3 seconds (less frequent)
+  }, 3000); // Poll every 3 seconds
 };
 
 const getStatusClass = (status: BookStatus) => {
@@ -356,24 +414,57 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleString();
 };
 
-const handleRegenerateCovers = async () => {
+const getCurrentStepText = (status: BookStatus) => {
+  const steps: Record<BookStatus, string> = {
+    draft: 'Initializing...',
+    generating: 'Generating AI content',
+    content_generated: 'Content ready - generating covers',
+    cover_pending: 'Covers ready - select your favorite',
+    ready: 'Book completed and ready to download',
+    error: 'Generation failed'
+  };
+  return steps[status] || 'Processing...';
+};
+
+const getProgressPercentage = (status: BookStatus) => {
+  const percentages: Record<BookStatus, number> = {
+    draft: 10,
+    generating: 40,
+    content_generated: 70,
+    cover_pending: 85,
+    ready: 100,
+    error: 0
+  };
+  return percentages[status] || 0;
+};
+
+const getEstimatedTime = (status: BookStatus) => {
+  const times: Record<BookStatus, string> = {
+    draft: 'Starting soon...',
+    generating: '2-3 minutes remaining',
+    content_generated: '1-2 minutes remaining',
+    cover_pending: 'Almost done!',
+    ready: 'Completed',
+    error: 'Please try again'
+  };
+  return times[status] || 'Processing...';
+};
+
+const selectCoverFromCard = async (coverId: number) => {
   if (!bookId.value) return;
   
   try {
-    booksStore.loading = true;
-    const response = await apiClient.post(`/books/${bookId.value}/regenerate-covers/`);
-    
-    // Refresh book data
-    await booksStore.fetchBook(bookId.value);
-    
-    // Redirect to cover selection if covers are ready
-    if (booksStore.currentBook?.covers.length > 0) {
-      router.push(`/profile/books/${bookId.value}/covers`);
+    const result = await booksStore.selectCover(bookId.value, { cover_id: coverId });
+    if (result.success) {
+      // Refresh book data
+      await booksStore.fetchBook(bookId.value);
+      // Show success message
+      if (typeof window !== 'undefined' && (window as any).$toast) {
+        (window as any).$toast.success('Cover Selected!', 'Your book is now being finalized with the selected cover.');
+      }
     }
   } catch (error) {
-    console.error('Failed to regenerate covers:', error);
-  } finally {
-    booksStore.loading = false;
+    console.error('Failed to select cover:', error);
   }
 };
 

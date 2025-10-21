@@ -1,8 +1,9 @@
 # books/services/book_generator.py
 import os
+import json
+import requests
 from pathlib import Path
 from django.conf import settings
-from groq import Groq
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -11,348 +12,135 @@ from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import random
+from .usage_tracker import UsageTracker
 
 class BookGenerator:
     """
-    Generates complete book interior content using Groq LLM
-    Creates professional PDF with proper formatting
+    Generates complete book interior content using OpenRouter DeepSeek R1T2 Chimera
+    Creates professional PDF with proper formatting and enhanced content quality
     """
     
-    # Market-optimized, non-editable titles for each sub-niche
+    # Professional book titles optimized for market trends
     TITLE_TEMPLATES = {
-        # Personal Development
-        'productivity_home': [
-            'Boost Your Home Office Productivity: A Complete Guide',
-            'Work From Home Success: Productivity Strategies That Work',
-            'Home Office Mastery: Stay Productive and Focused',
+        # AI & Digital Transformation
+        'ai_productivity_tools': [
+            'AI Productivity Revolution: Transform Your Workflow with Smart Tools',
+            'The AI Productivity Blueprint: Master Tools That Work for You',
+            'Smart Work Revolution: AI Tools for Maximum Productivity',
         ],
-        'self_esteem': [
-            'Build Unstoppable Self-Esteem: Your Confidence Blueprint',
-            'The Self-Esteem Revolution: Transform Your Self-Image',
-            'Confidence Unleashed: Master Your Self-Esteem',
+        'digital_nomad_guides': [
+            'Digital Nomad Mastery: Build Freedom Through Remote Work',
+            'Location Independence: The Complete Digital Nomad Guide',
+            'Remote Work Revolution: Your Path to Digital Nomad Success',
         ],
-        'parenting_guidance': [
-            'Modern Parenting Mastery: Raise Confident Kids',
-            'The Ultimate Parenting Guide for Today\'s World',
-            'Parenting with Purpose: Guide Your Children to Success',
+        'automation_business': [
+            'Business Automation Mastery: Scale with AI and Technology',
+            'The Automation Blueprint: Transform Your Business Operations',
+            'Smart Business Automation: Tools and Strategies for Growth',
         ],
-        'mental_health': [
-            'Mental Health Mastery: Take Control of Your Mind',
-            'The Mental Wellness Blueprint: Your Path to Inner Peace',
-            'Mind Matters: Essential Mental Health Strategies',
+        'chatgpt_prompts_mastery': [
+            'ChatGPT Mastery: Advanced Prompt Engineering for Professionals',
+            'The Prompt Engineering Blueprint: Master AI Communication',
+            'AI Prompt Engineering: Unlock ChatGPT\'s Full Potential',
         ],
-        
-        # Business & Entrepreneurship
-        'online_business': [
-            'Start Your Online Empire: The Complete Business Guide',
-            'Online Business Success: From Idea to Profit',
-            'Digital Entrepreneurship: Build Your Online Business',
+        'ai_content_creation': [
+            'AI Content Creation Revolution: Generate, Optimize, Dominate',
+            'The AI Content Blueprint: Master Digital Content Creation',
+            'Content AI Mastery: Tools and Strategies for Creators',
         ],
-        'investing_basics': [
-            'Investing for Beginners: Your Wealth Building Guide',
-            'The Investment Blueprint: Start Building Wealth Today',
-            'Smart Investing: Master the Basics of Wealth Creation',
-        ],
-        'marketing_guide': [
-            'Digital Marketing Mastery: Grow Your Business Online',
-            'Marketing Magic: Strategies That Drive Results',
-            'The Marketing Playbook: Win in the Digital Age',
-        ],
-        'business_planning': [
-            'Business Planning Excellence: Your Success Roadmap',
-            'Strategic Business Planning: Build a Winning Company',
-            'The Business Plan Blueprint: Plan Your Path to Success',
+        'remote_work_optimization': [
+            'Remote Work Optimization: Thrive in the Digital Workplace',
+            'The Remote Work Blueprint: Productivity and Balance',
+            'Digital Workplace Mastery: Optimize Your Remote Work Life',
         ],
         
-        # Health & Wellness
-        'general_health': [
-            'Total Health Transformation: Your Wellness Journey',
-            'The Complete Health Guide: Body, Mind, and Spirit',
-            'Holistic Health Mastery: Optimize Your Well-Being',
+        # Sustainability & Green Tech
+        'green_tech_startups': [
+            'Green Tech Startup Revolution: Build Sustainable Businesses',
+            'The Green Tech Blueprint: Innovation for a Better Planet',
+            'Sustainable Startup Mastery: Green Technology Ventures',
         ],
-        'autoimmune_living': [
-            'Autoimmune Wellness: Thrive with Autoimmune Conditions',
-            'Living Well with Autoimmunity: Your Complete Guide',
-            'Autoimmune Living Mastery: Health and Happiness',
+        'sustainable_living': [
+            'Sustainable Living Mastery: Your Complete Eco-Friendly Guide',
+            'The Green Living Blueprint: Reduce, Reuse, Thrive',
+            'Eco-Living Revolution: Sustainable Habits for Modern Life',
         ],
-        'holistic_wellness': [
-            'Holistic Wellness Revolution: Transform Your Health',
-            'The Holistic Health Handbook: Natural Wellness Solutions',
-            'Complete Wellness: Body, Mind, and Spirit Harmony',
+        'climate_tech': [
+            'Climate Tech Innovation: Solutions for a Changing Planet',
+            'The Climate Tech Blueprint: Technology Against Climate Change',
+            'Climate Technology Mastery: Build Solutions That Matter',
         ],
-        'fitness_nutrition': [
-            'Fitness & Nutrition Mastery: Your Complete Guide',
-            'The Fitness Nutrition Blueprint: Build Your Best Body',
-            'Fit & Fueled: Nutrition Strategies for Peak Performance',
+        'eco_entrepreneurship': [
+            'Eco-Entrepreneurship: Build Profitable Green Businesses',
+            'The Green Business Blueprint: Sustainable Entrepreneurship',
+            'Eco-Business Mastery: Profit with Purpose',
         ],
-        
-        # Relationships
-        'dating_advice': [
-            'Modern Dating Mastery: Find Love in Today\'s World',
-            'The Dating Success Blueprint: Attract Your Perfect Match',
-            'Love in the Digital Age: Modern Dating Strategies',
-        ],
-        'marriage_tips': [
-            'Marriage Mastery: Build a Lasting, Loving Relationship',
-            'The Marriage Success Guide: Strengthen Your Bond',
-            'Forever Love: Secrets to a Happy Marriage',
-        ],
-        'conflict_resolution': [
-            'Conflict Resolution Mastery: Transform Relationship Challenges',
-            'The Peace Maker\'s Guide: Resolve Conflicts Effectively',
-            'Relationship Harmony: Master Conflict Resolution',
-        ],
-        'communication_skills': [
-            'Communication Excellence: Master the Art of Connection',
-            'The Communication Blueprint: Speak with Confidence',
-            'Effective Communication: Transform Your Relationships',
+        'carbon_footprint_reduction': [
+            'Carbon Footprint Mastery: Reduce Your Environmental Impact',
+            'The Carbon Reduction Blueprint: Practical Climate Action',
+            'Climate Action Guide: Minimize Your Carbon Footprint',
         ],
         
-        # Children's Books
-        'early_readers': [
-            'Adventure Stories for Young Readers: Spark Imagination',
-            'Fun Tales for Early Readers: Learning Through Stories',
-            'Young Reader Adventures: Stories That Inspire',
+        # Mental Health Technology
+        'digital_detox': [
+            'Digital Detox Mastery: Reclaim Your Life from Technology',
+            'The Digital Wellness Blueprint: Balance Tech and Life',
+            'Tech-Life Balance: Master Digital Detox Strategies',
         ],
-        'religion_manners': [
-            'Good Manners & Values: Stories for Children',
-            'Character Building Stories: Manners and Morality',
-            'Moral Tales for Kids: Lessons in Goodness',
+        'mindfulness_apps': [
+            'Mindfulness Apps Revolution: Technology for Inner Peace',
+            'The Digital Mindfulness Blueprint: Apps for Mental Wellness',
+            'Mindful Tech: Apps and Tools for Mental Health',
         ],
-        'educational_fun': [
-            'Learning Adventures: Fun Educational Stories for Kids',
-            'Educational Fun: Stories That Teach and Entertain',
-            'Smart Kids Stories: Learning Through Play',
+        'mental_health_at_work': [
+            'Workplace Mental Health: Technology Solutions for Well-being',
+            'The Mental Health at Work Blueprint: Support Employee Wellness',
+            'Corporate Wellness Tech: Mental Health in the Workplace',
         ],
-        'bedtime_stories': [
-            'Magical Bedtime Stories: Sweet Dreams for Children',
-            'Bedtime Tales: Stories for Peaceful Sleep',
-            'Dreamland Stories: Bedtime Adventures for Kids',
+        'stress_management_tech': [
+            'Stress Management Technology: Digital Tools for Calm',
+            'The Stress Tech Blueprint: Apps and Gadgets for Relaxation',
+            'Digital Stress Relief: Technology for Mental Wellness',
         ],
-        
-        # Education & Learning
-        'study_techniques': [
-            'Study Smart: Master Effective Learning Techniques',
-            'The Study Success Blueprint: Ace Your Exams',
-            'Learning Mastery: Study Techniques That Work',
-        ],
-        'exam_preparation': [
-            'Exam Success Mastery: Prepare, Perform, Excel',
-            'The Exam Preparation Guide: Your Path to Success',
-            'Test Taking Excellence: Master Exam Strategies',
-        ],
-        'language_learning': [
-            'Language Learning Mastery: Speak Any Language Fluently',
-            'The Language Learning Blueprint: Fast Track to Fluency',
-            'Master Any Language: Proven Learning Strategies',
-        ],
-        'online_learning': [
-            'Online Learning Excellence: Master Digital Education',
-            'The Online Learning Guide: Succeed in Virtual Education',
-            'Digital Learning Mastery: Thrive in Online Courses',
+        'sleep_optimization': [
+            'Sleep Optimization Technology: Master Rest with Smart Tools',
+            'The Sleep Tech Blueprint: Gadgets for Better Sleep',
+            'Smart Sleep Solutions: Technology for Restful Nights',
         ],
         
-        # Technology & Digital Skills
-        'coding_basics': [
-            'Coding for Beginners: Your Programming Journey Starts Here',
-            'The Coding Blueprint: Learn to Code from Scratch',
-            'Programming Mastery: From Beginner to Developer',
-        ],
-        'graphic_design': [
-            'Graphic Design Mastery: Create Stunning Visuals',
-            'The Design Blueprint: Master Graphic Design Skills',
-            'Visual Design Excellence: From Concept to Creation',
-        ],
-        'social_media_marketing': [
-            'Social Media Marketing Mastery: Grow Your Brand Online',
-            'The Social Media Blueprint: Dominate Digital Marketing',
-            'Social Success: Marketing Strategies That Work',
-        ],
-        'digital_tools': [
-            'Digital Tools Mastery: Boost Productivity with Technology',
-            'The Digital Tools Guide: Essential Software for Success',
-            'Tech Productivity: Master Digital Tools and Apps',
-        ],
-        
-        # Finance & Investment
-        'personal_finance': [
-            'Personal Finance Mastery: Take Control of Your Money',
-            'The Money Management Blueprint: Build Wealth Wisely',
-            'Financial Freedom: Master Personal Finance Skills',
-        ],
-        'investment_strategies': [
-            'Investment Mastery: Strategies for Wealth Creation',
-            'The Investment Guide: Build Your Financial Future',
-            'Smart Investing: Proven Strategies for Success',
-        ],
-        'retirement_planning': [
-            'Retirement Planning Mastery: Secure Your Golden Years',
-            'The Retirement Blueprint: Plan for Financial Freedom',
-            'Retirement Success: Your Complete Planning Guide',
-        ],
-        'financial_independence': [
-            'Financial Independence Mastery: Escape the Rat Race',
-            'The FI Blueprint: Achieve Financial Freedom',
-            'Wealth Building Mastery: Path to Financial Independence',
-        ],
-        
-        # Hobbies & Interests
-        'cooking_recipes': [
-            'Culinary Mastery: Recipes and Techniques for Home Cooks',
-            'The Cooking Blueprint: Master Kitchen Skills',
-            'Cooking Excellence: From Beginner to Gourmet Chef',
-        ],
-        'diy_crafts': [
-            'DIY Crafts Mastery: Create Beautiful Handmade Items',
-            'The Crafting Blueprint: Handmade Projects for Everyone',
-            'Crafting Excellence: DIY Projects That Inspire',
-        ],
-        'gardening_guide': [
-            'Gardening Mastery: Grow Your Own Food and Flowers',
-            'The Gardening Blueprint: Create Your Dream Garden',
-            'Green Thumb Success: Master Gardening Skills',
-        ],
-        'photography_tips': [
-            'Photography Mastery: Capture Stunning Images',
-            'The Photography Blueprint: From Snapshots to Art',
-            'Photo Excellence: Master the Art of Photography',
-        ],
-        
-        # Travel & Adventure
-        'travel_guides': [
-            'Travel Mastery: Explore the World Like a Pro',
-            'The Travel Blueprint: Plan Perfect Adventures',
-            'Wanderlust: Your Ultimate Travel Guide',
-        ],
-        'budget_travel': [
-            'Budget Travel Mastery: Travel the World on a Budget',
-            'The Budget Travel Blueprint: Affordable Adventures',
-            'Smart Travel: Save Money, See the World',
-        ],
-        'adventure_planning': [
-            'Adventure Planning Mastery: Create Unforgettable Experiences',
-            'The Adventure Blueprint: Plan Epic Journeys',
-            'Adventure Excellence: Master Trip Planning Skills',
-        ],
-        'cultural_exploration': [
-            'Cultural Exploration Mastery: Discover World Cultures',
-            'The Culture Blueprint: Immerse Yourself in Global Traditions',
-            'Cultural Journeys: Explore Diverse Cultures and Customs',
-        ],
-        
-        # Productivity & Time Management
-        'time_management': [
-            'Time Management Mastery: Make Every Minute Count',
-            'The Productivity Blueprint: Master Your Time',
-            'Time Excellence: Productivity Strategies That Work',
-        ],
-        'organization_tips': [
-            'Organization Mastery: Declutter and Optimize Your Life',
-            'The Organization Blueprint: Create Order and Efficiency',
-            'Organize Your Life: Systems for Success',
-        ],
-        'goal_setting': [
-            'Goal Setting Mastery: Achieve Your Dreams Systematically',
-            'The Goal Achievement Blueprint: Turn Dreams into Reality',
-            'Goal Success: Strategies for Achievement',
-        ],
-        'workflow_optimization': [
-            'Workflow Mastery: Optimize Processes for Maximum Efficiency',
-            'The Workflow Blueprint: Streamline Your Productivity',
-            'Process Excellence: Optimize Your Workflows',
-        ],
-        
-        # Creative Writing & Storytelling
-        'writing_techniques': [
-            'Writing Mastery: Craft Compelling Stories and Content',
-            'The Writing Blueprint: Master Writing Techniques',
-            'Creative Writing Excellence: From Idea to Publication',
-        ],
-        'creative_prompts': [
-            'Creative Writing Prompts: Spark Your Imagination',
-            'The Creativity Blueprint: Unlock Your Writing Potential',
-            'Writing Inspiration: Prompts for Creative Success',
-        ],
-        'genre_writing': [
-            'Genre Writing Mastery: Excel in Your Chosen Style',
-            'The Genre Blueprint: Master Specific Writing Styles',
-            'Writing by Genre: Techniques for Success',
-        ],
-        'publishing_guide': [
-            'Publishing Mastery: Get Your Work into the World',
-            'The Publishing Blueprint: From Manuscript to Market',
-            'Publishing Success: Your Guide to Getting Published',
-        ],
-        
-        # Sustainability & Eco-Friendly Living
-        'zero_waste': [
-            'Zero Waste Mastery: Live Sustainably and Reduce Waste',
-            'The Zero Waste Blueprint: Eco-Friendly Living Guide',
-            'Waste-Free Living: Master Sustainable Habits',
-        ],
-        'renewable_energy': [
-            'Renewable Energy Mastery: Power Your Home Sustainably',
-            'The Energy Blueprint: Go Green with Renewable Power',
-            'Clean Energy Success: Master Renewable Technologies',
-        ],
-        'sustainable_products': [
-            'Sustainable Products Mastery: Choose Eco-Friendly Options',
-            'The Sustainability Blueprint: Make Conscious Choices',
-            'Green Living: Master Sustainable Product Selection',
-        ],
-        'eco_living': [
-            'Eco-Friendly Living Mastery: Reduce Your Environmental Impact',
-            'The Eco Blueprint: Live Sustainably Every Day',
-            'Green Lifestyle Success: Master Eco-Friendly Living',
-        ],
-        
-        # AI & Future Technologies
-        'ai_concepts': [
-            'AI Mastery: Understand Artificial Intelligence Fundamentals',
-            'The AI Blueprint: Master Artificial Intelligence Concepts',
-            'AI Understanding: From Basics to Advanced Concepts',
+        # Future Skills & Learning
+        'prompt_engineering': [
+            'Prompt Engineering Mastery: The Art of AI Communication',
+            'The Prompt Engineering Blueprint: Master AI Interactions',
+            'AI Communication: Advanced Prompt Engineering Techniques',
         ],
         'ai_ethics': [
-            'AI Ethics Mastery: Navigate the Moral Landscape of Technology',
-            'The Ethics Blueprint: Responsible AI Development',
-            'Ethical AI: Master Technology Ethics and Governance',
+            'AI Ethics Revolution: Responsible Artificial Intelligence',
+            'The AI Ethics Blueprint: Navigate Technology\'s Moral Landscape',
+            'Ethical AI Mastery: Responsible Technology Development',
         ],
-        'future_tech_trends': [
-            'Future Tech Mastery: Stay Ahead of Technology Trends',
-            'The Future Blueprint: Master Emerging Technologies',
-            'Tech Trends: Understanding Tomorrow\'s Innovations',
+        'digital_literacy': [
+            'Digital Literacy Mastery: Essential Skills for the Modern World',
+            'The Digital Skills Blueprint: Technology Proficiency Guide',
+            'Tech Literacy Revolution: Master Digital Tools and Concepts',
         ],
-        'automation_impact': [
-            'Automation Mastery: Understand Technology\'s Impact on Work',
-            'The Automation Blueprint: Navigate the Future of Work',
-            'Future Work: Master Automation and Technological Change',
+        'remote_collaboration': [
+            'Remote Collaboration Mastery: Tools and Strategies for Success',
+            'The Remote Work Blueprint: Effective Virtual Teamwork',
+            'Digital Collaboration: Tools for Remote Team Success',
         ],
-        
-        # Mindfulness & Meditation
-        'mindfulness_practices': [
-            'Mindfulness Mastery: Cultivate Present-Moment Awareness',
-            'The Mindfulness Blueprint: Daily Practices for Inner Peace',
-            'Present Moment Success: Master Mindfulness Techniques',
-        ],
-        'meditation_techniques': [
-            'Meditation Mastery: Deepen Your Practice and Inner Peace',
-            'The Meditation Blueprint: Techniques for Spiritual Growth',
-            'Meditation Excellence: Master Various Meditation Styles',
-        ],
-        'stress_reduction': [
-            'Stress Reduction Mastery: Find Calm in a Busy World',
-            'The Calm Blueprint: Proven Stress Management Techniques',
-            'Stress-Free Living: Master Relaxation and Peace',
-        ],
-        'inner_peace': [
-            'Inner Peace Mastery: Find Tranquility and Spiritual Balance',
-            'The Peace Blueprint: Journey to Inner Harmony',
-            'Spiritual Wellness: Master Inner Peace Practices',
+        'future_job_skills': [
+            'Future Job Skills: Prepare for Tomorrow\'s Workplace',
+            'The Future Skills Blueprint: Essential Competencies for 2025',
+            'Workforce of Tomorrow: Skills for Future Career Success',
         ],
     }
     
     def __init__(self):
-        self.client = Groq(api_key=settings.GROQ_API_KEY)
+        self.api_key = settings.OPENROUTER_API_KEY
+        self.base_url = "https://openrouter.ai/api/v1"
+        self.model = "deepseek/deepseek-chat"  # DeepSeek R1T2 Chimera via OpenRouter
+        self.usage_tracker = UsageTracker()
         self.media_root = Path(settings.MEDIA_ROOT)
         self.books_dir = self.media_root / 'books'
         self.books_dir.mkdir(parents=True, exist_ok=True)
@@ -364,98 +152,283 @@ class BookGenerator:
     
     def generate_book_content(self, book):
         """
-        Generate complete book content using Groq LLM
+        Generate complete book content using OpenRouter DeepSeek R1T2 Chimera
         Returns dict with chapters and content
         """
-        prompt = self._create_generation_prompt(book)
+        prompt = self._create_professional_prompt(book)
         
         try:
-            response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",  # Fast, available model
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a professional book writer specializing in creating high-quality, publish-ready digital books. Write engaging, informative content that provides real value to readers."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.7,
-                max_tokens=8000,
-                top_p=0.9,
+            # Make API call to OpenRouter
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://book-generator.com",
+                    "X-Title": "Book Generator SaaS"
+                },
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are a professional book author and content strategist specializing in creating high-quality, publish-ready digital books. Write engaging, informative content that provides real value to readers with professional insights and actionable advice."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 8000,
+                    "top_p": 0.9,
+                },
+                timeout=120  # 2 minute timeout for long content generation
             )
             
-            content = response.choices[0].message.content
+            response.raise_for_status()
+            data = response.json()
+            
+            # Track token usage
+            if 'usage' in data:
+                input_tokens = data['usage'].get('prompt_tokens', 0)
+                output_tokens = data['usage'].get('completion_tokens', 0)
+                self.usage_tracker.record_usage(input_tokens, output_tokens)
+            
+            content = data['choices'][0]['message']['content']
             return self._parse_book_content(content, book.page_length)
             
+        except requests.exceptions.RequestException as e:
+            error_msg = f"OpenRouter API error: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
         except Exception as e:
-            raise Exception(f"Failed to generate book content: {str(e)}")
+            error_msg = f"Content generation failed: {str(e)}"
+            print(error_msg)
+            raise Exception(error_msg)
     
-    def _create_generation_prompt(self, book):
-        """Create detailed prompt for LLM"""
-        niche_context = {
-            'yoga_beginners': 'beginner-friendly yoga poses, breathing techniques, and getting started tips',
-            'home_workouts': 'effective home exercises, workout routines, and equipment-free fitness',
-            'mental_wellness': 'mental health practices, mindfulness, stress management, and emotional well-being',
-            'vegan_recipes': 'plant-based recipes, nutrition tips, and cooking techniques',
-            'meal_prep': 'meal planning strategies, batch cooking, and healthy eating habits',
-            'smoothie_recipes': 'nutritious smoothie recipes, ingredient combinations, and health benefits',
-            'productivity': 'productivity systems, time management, and efficiency hacks',
-            'morning_routines': 'morning habits, routines of successful people, and starting the day right',
-            'goal_setting': 'goal-setting frameworks, achievement strategies, and motivation techniques',
-            'gardening': 'home gardening basics, plant care, and growing your own food',
-            'photography': 'photography basics, camera settings, composition, and lighting',
-            'diy_crafts': 'DIY project ideas, crafting techniques, and creative home decor',
-            'minimalism': 'minimalist lifestyle, decluttering, and intentional living',
-            'sustainable_living': 'eco-friendly practices, reducing waste, and green living',
-            'travel_hacks': 'travel tips, budget travel, and destination guides',
-        }
+    def _create_professional_prompt(self, book):
+        """Create professional prompt for high-quality book content generation"""
         
-        context = niche_context.get(book.sub_niche, 'practical tips and advice')
+        # Get trending context based on sub_niche
+        trending_context = self._get_trending_context(book.sub_niche)
         
-        return f"""
-Write a complete {book.page_length}-page digital book titled "{book.title}".
+        professional_prompt = f"""
+You are a professional book author and content strategist. Create a comprehensive, engaging, and professionally structured book about: {book.sub_niche.replace('_', ' ').title()}
 
-TOPIC: {context}
+BOOK REQUIREMENTS:
+- Target audience: Modern professionals and lifelong learners
+- Tone: Professional yet accessible, actionable insights
+- Structure: Introduction, 5-7 chapters, conclusion, actionable takeaways
+- Style: Mix of research-backed insights and practical applications
+- Length: {book.page_length} pages of substantial content
 
-REQUIREMENTS:
-- Create {book.page_length // 5} main chapters (each 4-6 pages when formatted)
-- Each chapter should have:
-  * Engaging chapter title
-  * Introduction paragraph
-  * 3-5 main sections with subheadings
-  * Practical tips, examples, or action steps
-  * Brief conclusion
-- Write in a conversational yet professional tone
-- Include actionable advice readers can implement immediately
-- Use clear, concise language
-- Make it valuable and publish-ready
+TRENDING ELEMENTS TO INCLUDE ({trending_context['year']}):
+- Current market trends and statistics
+- Real-world case studies from {trending_context['industry']}
+- Actionable frameworks and templates
+- Future predictions and opportunities
+- Resource recommendations
+
+CONTENT STRUCTURE:
+1. Introduction (2-3 pages)
+   - Hook with compelling statistic or story
+   - Overview of the {book.sub_niche.replace('_', ' ')} landscape
+   - What readers will learn
+   - Target audience benefits
+
+2. Core Chapters (4-5 chapters, 3-4 pages each)
+   - Chapter 1: Foundation and Fundamentals
+   - Chapter 2: Current Trends and Best Practices
+   - Chapter 3: Practical Implementation Strategies
+   - Chapter 4: Advanced Techniques and Case Studies
+   - Chapter 5: Future Outlook and Innovation
+
+3. Conclusion (1-2 pages)
+   - Key takeaways summary
+   - Action plan for implementation
+   - Resources for continued learning
+
+4. Actionable Takeaways
+   - Step-by-step implementation guide
+   - Common pitfalls to avoid
+   - Success metrics and measurement
+
+Ensure the content is original, valuable, and positions the reader as an informed expert in this niche.
 
 FORMAT your response as:
 
+INTRODUCTION
+[Compelling introduction content]
+
 CHAPTER 1: [Title]
-[Content with clear sections and subheadings]
+[Professional chapter content with actionable insights]
 
 CHAPTER 2: [Title]
-[Content]
+[Chapter content]
 
 ... continue for all chapters
 
-Make this a book people would actually want to read and implement. Focus on practical value.
+CONCLUSION
+[Strong conclusion with takeaways]
+
+ACTIONABLE TAKEAWAYS
+[Practical implementation steps]
 """
+        return professional_prompt
+    
+    def _get_trending_context(self, sub_niche):
+        """Get trending context for different niches"""
+        trending_data = {
+            # AI & Digital Transformation
+            'ai_productivity_tools': {
+                'year': '2024-2025',
+                'industry': 'AI productivity software companies',
+                'trends': ['AI automation', 'workflow optimization', 'smart assistants']
+            },
+            'digital_nomad_guides': {
+                'year': '2024-2025', 
+                'industry': 'remote work technology',
+                'trends': ['hybrid work models', 'digital collaboration', 'work-life balance']
+            },
+            'automation_business': {
+                'year': '2024-2025',
+                'industry': 'business process automation',
+                'trends': ['RPA', 'AI workflow automation', 'process optimization']
+            },
+            'chatgpt_prompts_mastery': {
+                'year': '2024-2025',
+                'industry': 'AI prompt engineering',
+                'trends': ['advanced prompting', 'AI-human collaboration', 'custom GPTs']
+            },
+            'ai_content_creation': {
+                'year': '2024-2025',
+                'industry': 'AI content tools',
+                'trends': ['generative AI', 'content automation', 'personalized marketing']
+            },
+            'remote_work_optimization': {
+                'year': '2024-2025',
+                'industry': 'remote work solutions',
+                'trends': ['async communication', 'virtual collaboration', 'productivity metrics']
+            },
+            
+            # Sustainability & Green Tech
+            'green_tech_startups': {
+                'year': '2024-2025',
+                'industry': 'clean technology',
+                'trends': ['renewable energy', 'carbon capture', 'sustainable materials']
+            },
+            'sustainable_living': {
+                'year': '2024-2025',
+                'industry': 'eco-friendly products',
+                'trends': ['circular economy', 'zero waste', 'sustainable consumption']
+            },
+            'climate_tech': {
+                'year': '2024-2025',
+                'industry': 'climate technology',
+                'trends': ['carbon reduction', 'climate adaptation', 'green innovation']
+            },
+            'eco_entrepreneurship': {
+                'year': '2024-2025',
+                'industry': 'green business',
+                'trends': ['impact investing', 'sustainable business models', 'B Corp movement']
+            },
+            'carbon_footprint_reduction': {
+                'year': '2024-2025',
+                'industry': 'carbon management',
+                'trends': ['carbon accounting', 'offset programs', 'net-zero strategies']
+            },
+            
+            # Mental Health Technology
+            'digital_detox': {
+                'year': '2024-2025',
+                'industry': 'digital wellness',
+                'trends': ['screen time management', 'mindful technology use', 'digital balance']
+            },
+            'mindfulness_apps': {
+                'year': '2024-2025',
+                'industry': 'mental health technology',
+                'trends': ['meditation apps', 'mental health tracking', 'digital therapeutics']
+            },
+            'mental_health_at_work': {
+                'year': '2024-2025',
+                'industry': 'workplace wellness',
+                'trends': ['employee mental health', 'workplace culture', 'stress management']
+            },
+            'stress_management_tech': {
+                'year': '2024-2025',
+                'industry': 'stress reduction technology',
+                'trends': ['biofeedback', 'wearable stress monitors', 'relaxation apps']
+            },
+            'sleep_optimization': {
+                'year': '2024-2025',
+                'industry': 'sleep technology',
+                'trends': ['sleep tracking', 'smart sleep aids', 'circadian rhythm optimization']
+            },
+            
+            # Future Skills & Learning
+            'prompt_engineering': {
+                'year': '2024-2025',
+                'industry': 'AI education',
+                'trends': ['AI literacy', 'prompt design', 'human-AI interaction']
+            },
+            'ai_ethics': {
+                'year': '2024-2025',
+                'industry': 'AI governance',
+                'trends': ['responsible AI', 'AI bias mitigation', 'ethical frameworks']
+            },
+            'digital_literacy': {
+                'year': '2024-2025',
+                'industry': 'digital education',
+                'trends': ['online learning', 'digital skills', 'technology adaptation']
+            },
+            'remote_collaboration': {
+                'year': '2024-2025',
+                'industry': 'collaboration technology',
+                'trends': ['virtual teams', 'async communication', 'global collaboration']
+            },
+            'future_job_skills': {
+                'year': '2024-2025',
+                'industry': 'workforce development',
+                'trends': ['emerging skills', 'career transition', 'lifelong learning']
+            },
+        }
+        
+        return trending_data.get(sub_niche, {
+            'year': '2024-2025',
+            'industry': 'modern professional development',
+            'trends': ['innovation', 'digital transformation', 'professional growth']
+        })
     
     def _parse_book_content(self, content, page_length):
-        """Parse LLM output into structured format"""
+        """Parse professional book content into structured format"""
         chapters = []
         current_chapter = None
+        introduction = None
+        conclusion = None
+        actionable_takeaways = None
         
         lines = content.split('\n')
+        current_section = None
+        
         for line in lines:
             line = line.strip()
-            # Handle both formats: "CHAPTER 1:" and "**CHAPTER 1:**"
-            if line.startswith('CHAPTER ') or ('**CHAPTER ' in line and '**' in line):
+            
+            # Handle different sections
+            if line.upper() == 'INTRODUCTION':
+                current_section = 'introduction'
+                introduction = {'title': 'Introduction', 'content': []}
+                continue
+            elif line.upper() == 'CONCLUSION':
+                current_section = 'conclusion'
+                conclusion = {'title': 'Conclusion', 'content': []}
+                continue
+            elif 'ACTIONABLE TAKEAWAYS' in line.upper():
+                current_section = 'takeaways'
+                actionable_takeaways = {'title': 'Actionable Takeaways', 'content': []}
+                continue
+            elif line.startswith('CHAPTER ') or ('CHAPTER ' in line.upper() and ':' in line):
+                # Save previous chapter if exists
                 if current_chapter:
                     chapters.append(current_chapter)
                 
@@ -465,105 +438,181 @@ Make this a book people would actually want to read and implement. Focus on prac
                     'title': title,
                     'content': []
                 }
-            elif current_chapter and line and not line.startswith('**') and not line.startswith('*'):
-                # Skip markdown formatting lines, only add actual content
+                current_section = 'chapter'
+                continue
+            
+            # Add content to appropriate section
+            if current_section == 'introduction' and introduction and line:
+                introduction['content'].append(line)
+            elif current_section == 'conclusion' and conclusion and line:
+                conclusion['content'].append(line)
+            elif current_section == 'takeaways' and actionable_takeaways and line:
+                actionable_takeaways['content'].append(line)
+            elif current_section == 'chapter' and current_chapter and line:
                 current_chapter['content'].append(line)
         
+        # Add final chapter
         if current_chapter:
             chapters.append(current_chapter)
         
+        # Structure the response
+        structured_content = []
+        
+        if introduction:
+            structured_content.append(introduction)
+        
+        structured_content.extend(chapters)
+        
+        if conclusion:
+            structured_content.append(conclusion)
+            
+        if actionable_takeaways:
+            structured_content.append(actionable_takeaways)
+        
         return {
-            'chapters': chapters,
-            'total_chapters': len(chapters)
+            'chapters': structured_content,
+            'total_chapters': len(structured_content),
+            'structure': {
+                'has_introduction': introduction is not None,
+                'has_conclusion': conclusion is not None,
+                'has_takeaways': actionable_takeaways is not None,
+                'chapter_count': len(chapters)
+            }
         }
     
     def create_pdf(self, book, content_data):
         """
-        Create formatted PDF from book content
+        Create professional PDF from book content with enhanced formatting
         Returns path to generated PDF
         """
         filename = f"book_{book.id}_interior.pdf"
         pdf_path = self.books_dir / filename
         
-        # Create PDF document
+        # Create PDF document with professional settings
         doc = SimpleDocTemplate(
             str(pdf_path),
             pagesize=letter,
             rightMargin=72,
             leftMargin=72,
             topMargin=72,
-            bottomMargin=72
+            bottomMargin=72,
+            title=book.title,
+            author="AI Book Generator"
         )
         
         # Container for PDF elements
         story = []
         styles = getSampleStyleSheet()
         
-        # Custom styles
+        # Enhanced professional styles
         title_style = ParagraphStyle(
-            'CustomTitle',
+            'ProfessionalTitle',
             parent=styles['Heading1'],
-            fontSize=24,
-            textColor='#2C3E50',
-            spaceAfter=30,
+            fontSize=28,
+            textColor='#1a365d',
+            spaceAfter=40,
             alignment=TA_CENTER,
-            fontName='Helvetica-Bold'
+            fontName='Helvetica-Bold',
+            leading=32
         )
         
         chapter_style = ParagraphStyle(
             'ChapterTitle',
             parent=styles['Heading1'],
-            fontSize=18,
-            textColor='#34495E',
-            spaceAfter=20,
-            spaceBefore=30,
-            fontName='Helvetica-Bold'
+            fontSize=20,
+            textColor='#2d3748',
+            spaceAfter=25,
+            spaceBefore=40,
+            fontName='Helvetica-Bold',
+            leading=24
         )
         
-        heading_style = ParagraphStyle(
-            'CustomHeading',
+        section_style = ParagraphStyle(
+            'SectionHeading',
             parent=styles['Heading2'],
-            fontSize=14,
-            textColor='#2C3E50',
-            spaceAfter=12,
-            spaceBefore=12,
-            fontName='Helvetica-Bold'
+            fontSize=16,
+            textColor='#4a5568',
+            spaceAfter=15,
+            spaceBefore=20,
+            fontName='Helvetica-Bold',
+            leading=20
         )
         
         body_style = ParagraphStyle(
-            'CustomBody',
+            'ProfessionalBody',
             parent=styles['BodyText'],
             fontSize=11,
-            leading=16,
+            leading=18,
             alignment=TA_JUSTIFY,
             spaceAfter=12,
-            fontName='Helvetica'
+            fontName='Helvetica',
+            textColor='#2d3748'
         )
         
-        # Title page
-        story.append(Spacer(1, 2*inch))
+        # Add title page
+        story.append(Spacer(1, 3*inch))
         story.append(Paragraph(book.title, title_style))
         story.append(Spacer(1, 0.5*inch))
         story.append(PageBreak())
         
-        # Add chapters
+        # Add table of contents
+        toc_style = ParagraphStyle(
+            'TOC',
+            parent=styles['BodyText'],
+            fontSize=12,
+            leading=16,
+            spaceAfter=8,
+            fontName='Helvetica'
+        )
+        
+        story.append(Paragraph("Table of Contents", chapter_style))
+        story.append(Spacer(1, 0.3*inch))
+        
+        for i, chapter in enumerate(content_data['chapters'], 1):
+            toc_entry = f"{i}. {chapter['title']}"
+            story.append(Paragraph(toc_entry, toc_style))
+        
+        story.append(PageBreak())
+        
+        # Add chapters with professional formatting
         for chapter in content_data['chapters']:
             # Chapter title
             story.append(Paragraph(chapter['title'], chapter_style))
             story.append(Spacer(1, 0.2*inch))
             
-            # Chapter content
+            # Chapter content with enhanced formatting
             for paragraph in chapter['content']:
                 if paragraph:
-                    # Detect if it's a heading (all caps or starts with number)
-                    if paragraph.isupper() or (len(paragraph) < 60 and ':' in paragraph):
-                        story.append(Paragraph(paragraph, heading_style))
+                    # Detect headings (all caps, numbered sections, or specific patterns)
+                    if (paragraph.isupper() and len(paragraph) < 80) or \
+                       (paragraph[0].isdigit() and paragraph[1:3] in ['. ', ') ']) or \
+                       any(phrase in paragraph.lower() for phrase in ['key points:', 'summary:', 'action steps:']):
+                        story.append(Paragraph(paragraph, section_style))
                     else:
-                        story.append(Paragraph(paragraph, body_style))
+                        # Clean up and format body text
+                        formatted_text = self._format_body_text(paragraph)
+                        story.append(Paragraph(formatted_text, body_style))
             
             story.append(PageBreak())
         
-        # Build PDF
-        doc.build(story)
+        # Build PDF with error handling
+        try:
+            doc.build(story)
+            print(f"Successfully created professional PDF: {pdf_path}")
+            return str(pdf_path)
+        except Exception as e:
+            print(f"PDF creation error: {str(e)}")
+            raise Exception(f"Failed to create PDF: {str(e)}")
+    
+    def _format_body_text(self, text):
+        """Format body text for professional appearance"""
+        # Clean up common formatting issues
+        text = text.strip()
         
-        return str(pdf_path)
+        # Remove excessive asterisks or markdown
+        text = text.replace('**', '').replace('*', '')
+        
+        # Ensure proper spacing
+        text = ' '.join(text.split())
+        
+        return text

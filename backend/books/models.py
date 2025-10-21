@@ -18,113 +18,52 @@ class Book(models.Model):
     ]
     
     DOMAIN_CHOICES = [
-        ('personal_development', 'Personal Development'),
-        ('business_entrepreneurship', 'Business & Entrepreneurship'),
-        ('health_wellness', 'Health & Wellness'),
-        ('relationships', 'Relationships'),
-        ('childrens_books', "Children's Books"),
-        ('education', 'Education'),
-        ('technology', 'Technology'),
-        ('finance', 'Finance'),
-        ('hobbies', 'Hobbies'),
-        ('travel', 'Travel'),
-        ('productivity', 'Productivity'),
-        ('creative_writing', 'Creative Writing'),
-        ('sustainability', 'Sustainability'),
-        ('ai_future_tech', 'AI & Future Tech'),
-        ('mindfulness', 'Mindfulness'),
+        ('ai_digital_transformation', 'AI & Digital Transformation'),
+        ('sustainability_green_tech', 'Sustainability & Green Tech'),
+        ('mental_health_tech', 'Mental Health Technology'),
+        ('future_skills', 'Future Skills & Digital Economy'),
     ]
     
     SUB_NICHE_CHOICES = [
-        # Personal Development
-        ('productivity_home', 'Boosting Productivity When Working From Home'),
-        ('self_esteem', 'Building Self-Esteem and Confidence'),
-        ('parenting_guidance', 'Modern Parenting Guidance'),
-        ('mental_health', 'Mental Health and Mindset'),
+        # AI & Digital Transformation
+        ('ai_business_automation', 'AI-Powered Business Automation'),
+        ('machine_learning_basics', 'Machine Learning for Non-Technical Professionals'),
+        ('digital_transformation_strategy', 'Digital Transformation Strategy'),
+        ('ai_ethics_governance', 'AI Ethics and Responsible AI Governance'),
+        ('chatgpt_productivity', 'ChatGPT and AI Tools for Productivity'),
+        ('data_driven_decisions', 'Data-Driven Decision Making'),
+        ('ai_content_creation', 'AI-Powered Content Creation'),
+        ('automation_workflows', 'Building Automation Workflows'),
         
-        # Business & Entrepreneurship
-        ('online_business', 'Starting an Online Business'),
-        ('investing_basics', 'Investment Strategies for Beginners'),
-        ('marketing_guide', 'Digital Marketing Step-by-Step'),
-        ('business_planning', 'Business Planning Tools and Resources'),
+        # Sustainability & Green Tech
+        ('renewable_energy_solutions', 'Renewable Energy Solutions for Homes'),
+        ('circular_economy_principles', 'Circular Economy and Sustainable Business'),
+        ('green_technology_innovations', 'Green Technology Innovations'),
+        ('carbon_neutral_living', 'Carbon Neutral Living Guide'),
+        ('sustainable_supply_chain', 'Building Sustainable Supply Chains'),
+        ('eco_friendly_investing', 'Eco-Friendly Investing Strategies'),
+        ('green_building_design', 'Green Building and Architecture'),
+        ('climate_tech_startups', 'Climate Tech Startups and Innovation'),
         
-        # Health & Wellness
-        ('general_health', 'General Health and Nutrition'),
-        ('autoimmune_living', 'Living with Autoimmune Diseases'),
-        ('holistic_wellness', 'Holistic Wellness Approaches'),
-        ('fitness_nutrition', 'Fitness and Nutrition Basics'),
+        # Mental Health Technology
+        ('ai_mental_health_apps', 'AI-Powered Mental Health Applications'),
+        ('digital_wellness_tools', 'Digital Wellness and Mindfulness Tech'),
+        ('teletherapy_platforms', 'Teletherapy and Online Counseling'),
+        ('mental_health_ai_diagnostics', 'AI Diagnostics for Mental Health'),
+        ('stress_management_apps', 'Stress Management Mobile Applications'),
+        ('cognitive_behavioral_tech', 'Technology in Cognitive Behavioral Therapy'),
+        ('mental_health_wearables', 'Mental Health Wearables and Biofeedback'),
+        ('workplace_mental_health_tech', 'Workplace Mental Health Technology Solutions'),
         
-        # Relationships
-        ('dating_advice', 'Modern Dating Advice'),
-        ('marriage_tips', 'Marriage and Partnership Tips'),
-        ('conflict_resolution', 'Handling Relationship Conflicts'),
-        ('communication_skills', 'Effective Communication Skills'),
-        
-        # Children's Books
-        ('early_readers', 'Short Stories for Early Readers'),
-        ('religion_manners', 'Religion and Good Manners'),
-        ('educational_fun', 'Fun Educational Activities'),
-        ('bedtime_stories', 'Bedtime Stories and Morals'),
-        
-        # Education & Learning
-        ('study_techniques', 'Study Techniques and Methods'),
-        ('exam_preparation', 'Exam Preparation Strategies'),
-        ('language_learning', 'Language Learning Guides'),
-        ('online_learning', 'Online Learning Best Practices'),
-        
-        # Technology & Digital Skills
-        ('coding_basics', 'Coding for Beginners'),
-        ('graphic_design', 'Graphic Design Fundamentals'),
-        ('social_media_marketing', 'Social Media Marketing'),
-        ('digital_tools', 'Digital Tools and Productivity'),
-        
-        # Finance & Investment
-        ('personal_finance', 'Personal Finance Management'),
-        ('investment_strategies', 'Investment Strategies'),
-        ('retirement_planning', 'Retirement Planning Guide'),
-        ('financial_independence', 'Path to Financial Independence'),
-        
-        # Hobbies & Interests
-        ('cooking_recipes', 'Cooking and Recipe Collections'),
-        ('diy_crafts', 'DIY Crafts and Projects'),
-        ('gardening_guide', 'Gardening for Beginners'),
-        ('photography_tips', 'Photography Tips and Techniques'),
-        
-        # Travel & Adventure
-        ('travel_guides', 'Destination Travel Guides'),
-        ('budget_travel', 'Budget Travel Tips'),
-        ('adventure_planning', 'Adventure and Trip Planning'),
-        ('cultural_exploration', 'Cultural Exploration Guides'),
-        
-        # Productivity & Time Management
-        ('time_management', 'Effective Time Management'),
-        ('organization_tips', 'Organization and Decluttering'),
-        ('goal_setting_achievement', 'Goal Setting and Achievement'),
-        ('workflow_optimization', 'Workflow Optimization'),
-        
-        # Creative Writing & Storytelling
-        ('writing_techniques', 'Writing Techniques and Style'),
-        ('creative_prompts', 'Creative Writing Prompts'),
-        ('genre_writing', 'Genre-Specific Writing Advice'),
-        ('publishing_guide', 'Publishing and Marketing for Authors'),
-        
-        # Sustainability & Eco-Friendly Living
-        ('zero_waste', 'Zero Waste Lifestyle'),
-        ('renewable_energy', 'Renewable Energy for Homes'),
-        ('sustainable_products', 'Sustainable Product Choices'),
-        ('eco_living', 'Eco-Friendly Living Tips'),
-        
-        # AI & Future Technologies
-        ('ai_concepts', 'Understanding AI Concepts'),
-        ('ai_ethics', 'AI Ethics and Considerations'),
-        ('future_tech_trends', 'Future Technology Trends'),
-        ('automation_impact', 'Automation and Its Impact'),
-        
-        # Mindfulness & Meditation
-        ('mindfulness_practices', 'Daily Mindfulness Practices'),
-        ('meditation_techniques', 'Meditation Techniques for Beginners'),
-        ('stress_reduction', 'Stress Reduction Methods'),
-        ('inner_peace', 'Finding Inner Peace and Balance'),
+        # Future Skills & Digital Economy
+        ('remote_work_mastery', 'Remote Work Mastery and Digital Nomad Skills'),
+        ('blockchain_cryptocurrency', 'Blockchain and Cryptocurrency Fundamentals'),
+        ('metaverse_virtual_reality', 'Metaverse and Virtual Reality Skills'),
+        ('cybersecurity_essentials', 'Cybersecurity Essentials for Everyone'),
+        ('digital_entrepreneurship', 'Digital Entrepreneurship in the 2020s'),
+        ('quantum_computing_basics', 'Quantum Computing for Business Leaders'),
+        ('iot_smart_homes', 'IoT and Smart Home Technology'),
+        ('nft_digital_assets', 'NFTs and Digital Asset Management'),
     ]
     
     PAGE_LENGTH_CHOICES = [

@@ -7,6 +7,8 @@ from django.http import FileResponse, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.utils import timezone
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from pathlib import Path
 import os
 import json
@@ -582,6 +584,7 @@ def logout_user(request):
 )
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@method_decorator(csrf_exempt, name='dispatch')
 def current_user(request):
     """Get current user info"""
     # Debug: Print session and auth info
@@ -614,135 +617,63 @@ def current_user(request):
 def get_sub_niches(request):
     """
     Get available sub-niches organized by domain
-    
-    Returns 15 trending categories that serve as guidance for SaaS digital book generator:
-    1. Personal Development and Self-Help
-    2. Business and Entrepreneurship  
-    3. Health and Wellness
-    4. Relationships
-    5. Children's Books
-    6. Education and Learning
-    7. Technology and Digital Skills
-    8. Finance and Investment
-    9. Hobbies and Interests
-    10. Travel and Adventure
-    11. Productivity and Time Management
-    12. Creative Writing and Storytelling
-    13. Sustainability and Eco-Friendly Living
-    14. AI and Future Technologies
-    15. Mindfulness and Meditation
+
+    Returns 4 trending categories for 2024-2025 that align with current market demands:
+    1. AI/Digital Transformation - Leveraging AI for business and personal growth
+    2. Sustainability/Green Tech - Eco-friendly solutions and green technology
+    3. Mental Health Tech - Technology solutions for mental wellness
+    4. Future Skills - Essential skills for the digital economy
     """
     niches = {
-        'personal_development': [
-            {'value': 'productivity_home', 'label': 'Boosting Productivity When Working From Home'},
-            {'value': 'self_esteem', 'label': 'Building Self-Esteem and Confidence'},
-            {'value': 'parenting_guidance', 'label': 'Modern Parenting Guidance'},
-            {'value': 'mental_health', 'label': 'Mental Health and Mindset'},
+        'ai_digital_transformation': [
+            {'value': 'ai_business_automation', 'label': 'AI-Powered Business Automation'},
+            {'value': 'machine_learning_basics', 'label': 'Machine Learning for Non-Technical Professionals'},
+            {'value': 'digital_transformation_strategy', 'label': 'Digital Transformation Strategy'},
+            {'value': 'ai_ethics_governance', 'label': 'AI Ethics and Responsible AI Governance'},
+            {'value': 'chatgpt_productivity', 'label': 'ChatGPT and AI Tools for Productivity'},
+            {'value': 'data_driven_decisions', 'label': 'Data-Driven Decision Making'},
+            {'value': 'ai_content_creation', 'label': 'AI-Powered Content Creation'},
+            {'value': 'automation_workflows', 'label': 'Building Automation Workflows'},
         ],
-        'business_entrepreneurship': [
-            {'value': 'online_business', 'label': 'Starting an Online Business'},
-            {'value': 'investing_basics', 'label': 'Investment Strategies for Beginners'},
-            {'value': 'marketing_guide', 'label': 'Digital Marketing Step-by-Step'},
-            {'value': 'business_planning', 'label': 'Business Planning Tools and Resources'},
+        'sustainability_green_tech': [
+            {'value': 'renewable_energy_solutions', 'label': 'Renewable Energy Solutions for Homes'},
+            {'value': 'circular_economy_principles', 'label': 'Circular Economy and Sustainable Business'},
+            {'value': 'green_technology_innovations', 'label': 'Green Technology Innovations'},
+            {'value': 'carbon_neutral_living', 'label': 'Carbon Neutral Living Guide'},
+            {'value': 'sustainable_supply_chain', 'label': 'Building Sustainable Supply Chains'},
+            {'value': 'eco_friendly_investing', 'label': 'Eco-Friendly Investing Strategies'},
+            {'value': 'green_building_design', 'label': 'Green Building and Architecture'},
+            {'value': 'climate_tech_startups', 'label': 'Climate Tech Startups and Innovation'},
         ],
-        'health_wellness': [
-            {'value': 'general_health', 'label': 'General Health and Nutrition'},
-            {'value': 'autoimmune_living', 'label': 'Living with Autoimmune Diseases'},
-            {'value': 'holistic_wellness', 'label': 'Holistic Wellness Approaches'},
-            {'value': 'fitness_nutrition', 'label': 'Fitness and Nutrition Basics'},
+        'mental_health_tech': [
+            {'value': 'ai_mental_health_apps', 'label': 'AI-Powered Mental Health Applications'},
+            {'value': 'digital_wellness_tools', 'label': 'Digital Wellness and Mindfulness Tech'},
+            {'value': 'teletherapy_platforms', 'label': 'Teletherapy and Online Counseling'},
+            {'value': 'mental_health_ai_diagnostics', 'label': 'AI Diagnostics for Mental Health'},
+            {'value': 'stress_management_apps', 'label': 'Stress Management Mobile Applications'},
+            {'value': 'cognitive_behavioral_tech', 'label': 'Technology in Cognitive Behavioral Therapy'},
+            {'value': 'mental_health_wearables', 'label': 'Mental Health Wearables and Biofeedback'},
+            {'value': 'workplace_mental_health_tech', 'label': 'Workplace Mental Health Technology Solutions'},
         ],
-        'relationships': [
-            {'value': 'dating_advice', 'label': 'Modern Dating Advice'},
-            {'value': 'marriage_tips', 'label': 'Marriage and Partnership Tips'},
-            {'value': 'conflict_resolution', 'label': 'Handling Relationship Conflicts'},
-            {'value': 'communication_skills', 'label': 'Effective Communication Skills'},
-        ],
-        'childrens_books': [
-            {'value': 'early_readers', 'label': 'Short Stories for Early Readers'},
-            {'value': 'religion_manners', 'label': 'Religion and Good Manners'},
-            {'value': 'educational_fun', 'label': 'Fun Educational Activities'},
-            {'value': 'bedtime_stories', 'label': 'Bedtime Stories and Morals'},
-        ],
-        'education_learning': [
-            {'value': 'study_techniques', 'label': 'Study Techniques and Methods'},
-            {'value': 'exam_preparation', 'label': 'Exam Preparation Strategies'},
-            {'value': 'language_learning', 'label': 'Language Learning Guides'},
-            {'value': 'online_learning', 'label': 'Online Learning Best Practices'},
-        ],
-        'technology_digital': [
-            {'value': 'coding_basics', 'label': 'Coding for Beginners'},
-            {'value': 'graphic_design', 'label': 'Graphic Design Fundamentals'},
-            {'value': 'social_media_marketing', 'label': 'Social Media Marketing'},
-            {'value': 'digital_tools', 'label': 'Digital Tools and Productivity'},
-        ],
-        'finance_investment': [
-            {'value': 'personal_finance', 'label': 'Personal Finance Management'},
-            {'value': 'investment_strategies', 'label': 'Investment Strategies'},
-            {'value': 'retirement_planning', 'label': 'Retirement Planning Guide'},
-            {'value': 'financial_independence', 'label': 'Path to Financial Independence'},
-        ],
-        'hobbies_interests': [
-            {'value': 'cooking_recipes', 'label': 'Cooking and Recipe Collections'},
-            {'value': 'diy_crafts', 'label': 'DIY Crafts and Projects'},
-            {'value': 'gardening_guide', 'label': 'Gardening for Beginners'},
-            {'value': 'photography_tips', 'label': 'Photography Tips and Techniques'},
-        ],
-        'travel_adventure': [
-            {'value': 'travel_guides', 'label': 'Destination Travel Guides'},
-            {'value': 'budget_travel', 'label': 'Budget Travel Tips'},
-            {'value': 'adventure_planning', 'label': 'Adventure and Trip Planning'},
-            {'value': 'cultural_exploration', 'label': 'Cultural Exploration Guides'},
-        ],
-        'productivity_time': [
-            {'value': 'time_management', 'label': 'Effective Time Management'},
-            {'value': 'organization_tips', 'label': 'Organization and Decluttering'},
-            {'value': 'goal_setting', 'label': 'Goal Setting and Achievement'},
-            {'value': 'workflow_optimization', 'label': 'Workflow Optimization'},
-        ],
-        'creative_writing': [
-            {'value': 'writing_techniques', 'label': 'Writing Techniques and Style'},
-            {'value': 'creative_prompts', 'label': 'Creative Writing Prompts'},
-            {'value': 'genre_writing', 'label': 'Genre-Specific Writing Advice'},
-            {'value': 'publishing_guide', 'label': 'Publishing and Marketing for Authors'},
-        ],
-        'sustainability_eco': [
-            {'value': 'zero_waste', 'label': 'Zero Waste Lifestyle'},
-            {'value': 'renewable_energy', 'label': 'Renewable Energy for Homes'},
-            {'value': 'sustainable_products', 'label': 'Sustainable Product Choices'},
-            {'value': 'eco_living', 'label': 'Eco-Friendly Living Tips'},
-        ],
-        'ai_future_tech': [
-            {'value': 'ai_concepts', 'label': 'Understanding AI Concepts'},
-            {'value': 'ai_ethics', 'label': 'AI Ethics and Considerations'},
-            {'value': 'future_tech_trends', 'label': 'Future Technology Trends'},
-            {'value': 'automation_impact', 'label': 'Automation and Its Impact'},
-        ],
-        'mindfulness_meditation': [
-            {'value': 'mindfulness_practices', 'label': 'Daily Mindfulness Practices'},
-            {'value': 'meditation_techniques', 'label': 'Meditation Techniques for Beginners'},
-            {'value': 'stress_reduction', 'label': 'Stress Reduction Methods'},
-            {'value': 'inner_peace', 'label': 'Finding Inner Peace and Balance'},
+        'future_skills': [
+            {'value': 'remote_work_mastery', 'label': 'Remote Work Mastery and Digital Nomad Skills'},
+            {'value': 'blockchain_cryptocurrency', 'label': 'Blockchain and Cryptocurrency Fundamentals'},
+            {'value': 'metaverse_virtual_reality', 'label': 'Metaverse and Virtual Reality Skills'},
+            {'value': 'cybersecurity_essentials', 'label': 'Cybersecurity Essentials for Everyone'},
+            {'value': 'digital_entrepreneurship', 'label': 'Digital Entrepreneurship in the 2020s'},
+            {'value': 'quantum_computing_basics', 'label': 'Quantum Computing for Business Leaders'},
+            {'value': 'iot_smart_homes', 'label': 'IoT and Smart Home Technology'},
+            {'value': 'nft_digital_assets', 'label': 'NFTs and Digital Asset Management'},
         ],
     }
-    
+
     domains = [
-        {'value': 'personal_development', 'label': 'Personal Development and Self-Help'},
-        {'value': 'business_entrepreneurship', 'label': 'Business and Entrepreneurship'},
-        {'value': 'health_wellness', 'label': 'Health and Wellness'},
-        {'value': 'relationships', 'label': 'Relationships'},
-        {'value': 'childrens_books', 'label': 'Children\'s Books'},
-        {'value': 'education_learning', 'label': 'Education and Learning'},
-        {'value': 'technology_digital', 'label': 'Technology and Digital Skills'},
-        {'value': 'finance_investment', 'label': 'Finance and Investment'},
-        {'value': 'hobbies_interests', 'label': 'Hobbies and Interests'},
-        {'value': 'travel_adventure', 'label': 'Travel and Adventure'},
-        {'value': 'productivity_time', 'label': 'Productivity and Time Management'},
-        {'value': 'creative_writing', 'label': 'Creative Writing and Storytelling'},
-        {'value': 'sustainability_eco', 'label': 'Sustainability and Eco-Friendly Living'},
-        {'value': 'ai_future_tech', 'label': 'AI and Future Technologies'},
-        {'value': 'mindfulness_meditation', 'label': 'Mindfulness and Meditation'},
+        {'value': 'ai_digital_transformation', 'label': 'AI & Digital Transformation'},
+        {'value': 'sustainability_green_tech', 'label': 'Sustainability & Green Tech'},
+        {'value': 'mental_health_tech', 'label': 'Mental Health Technology'},
+        {'value': 'future_skills', 'label': 'Future Skills & Digital Economy'},
     ]
-    
+
     return Response({
         'domains': domains,
         'sub_niches': niches,

@@ -8,7 +8,8 @@ import requests
 import time
 import sys
 
-BASE_URL = "http://127.0.0.1:8000/api/users"
+BASE_URL = "http://127.0.0.1:8000/api"
+USERS_BASE_URL = "http://127.0.0.1:8000/api/users"
 session = requests.Session()
 
 def print_step(step, message):
@@ -21,7 +22,7 @@ def test_registration():
     """Test user registration"""
     print_step(1, "Registering User")
     
-    response = session.post(f"{BASE_URL}/auth/register/", json={
+    response = session.post(f"{USERS_BASE_URL}/auth/register/", json={
         "username": "testuser",
         "email": "test@example.com",
         "password": "testpass123",
@@ -40,7 +41,7 @@ def test_login():
     """Test user login"""
     print_step(2, "Logging In User")
     
-    response = session.post(f"{BASE_URL}/auth/login/", json={
+    response = session.post(f"{USERS_BASE_URL}/auth/login/", json={
         "username": "testuser",
         "password": "testpass123"
     })
@@ -75,8 +76,8 @@ def test_create_book():
     print_step(4, "Creating Book")
     
     response = session.post("http://127.0.0.1:8000/api/books/", json={
-        "domain": "health_wellness",
-        "sub_niche": "general_health",
+        "domain": "ai_digital_transformation",
+        "sub_niche": "ai_business_automation",
         "page_length": 15
     })
     

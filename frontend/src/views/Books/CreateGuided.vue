@@ -316,7 +316,7 @@
             Why These Niches?
           </h3>
           <p class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-            Our 60+ sub-niches across 15 domains are carefully curated based on proven market research and audience demand.
+            Our 32 sub-niches across 4 trending domains are carefully curated based on 2025 market research and audience demand.
           </p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex items-start">
@@ -325,7 +325,7 @@
               </div>
               <div>
                 <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Market Research</h4>
-                <p class="text-gray-600 dark:text-gray-400">Google Trends analysis and audience demand data drive our selections.</p>
+                <p class="text-gray-600 dark:text-gray-400">2025 Google Trends analysis and audience demand data drive our selections.</p>
               </div>
             </div>
             <div class="flex items-start">
@@ -376,57 +376,24 @@ const form = ref({
 });
 
 const domains = ref([
-  { value: 'personal_development', label: 'Personal Development and Self-Help' },
-  { value: 'business_entrepreneurship', label: 'Business and Entrepreneurship' },
-  { value: 'health_wellness', label: 'Health and Wellness' },
-  { value: 'relationships', label: 'Relationships' },  
-  { value: 'childrens_books', label: 'Children\'s Books' },
-  { value: 'education_learning', label: 'Education and Learning' },
-  { value: 'technology_digital', label: 'Technology and Digital Skills' },
-  { value: 'finance_investment', label: 'Finance and Investment' },
-  { value: 'hobbies_interests', label: 'Hobbies and Interests' },
-  { value: 'travel_adventure', label: 'Travel and Adventure' },
-  { value: 'productivity_time', label: 'Productivity and Time Management' },
-  { value: 'creative_writing', label: 'Creative Writing and Storytelling' },
-  { value: 'sustainability_eco', label: 'Sustainability and Eco-Friendly Living' },
-  { value: 'ai_future_tech', label: 'AI and Future Technologies' },
-  { value: 'mindfulness_meditation', label: 'Mindfulness and Meditation' }
+  { value: 'ai_digital_transformation', label: 'AI & Digital Transformation' },
+  { value: 'sustainability_green_tech', label: 'Sustainability & Green Tech' },
+  { value: 'mental_health_tech', label: 'Mental Health Technology' },
+  { value: 'future_skills', label: 'Future Skills & Technologies' }
 ]);
 
 const domainIcons: Record<string, string> = {
-  'personal_development': 'user-graduate',
-  'business_entrepreneurship': 'briefcase',
-  'health_wellness': 'heartbeat', 
-  'relationships': 'heart',
-  'childrens_books': 'child',
-  'education_learning': 'graduation-cap',
-  'technology_digital': 'laptop-code',
-  'finance_investment': 'chart-line',
-  'hobbies_interests': 'palette',
-  'travel_adventure': 'plane',
-  'productivity_time': 'clock',
-  'creative_writing': 'pen-fancy',
-  'sustainability_eco': 'leaf', 
-  'ai_future_tech': 'robot',
-  'mindfulness_meditation': 'spa'
+  'ai_digital_transformation': 'robot',
+  'sustainability_green_tech': 'leaf',
+  'mental_health_tech': 'brain',
+  'future_skills': 'rocket'
 };
 
 const domainDescriptions: Record<string, string> = {
-  'personal_development': 'Self-improvement & growth',
-  'business_entrepreneurship': 'Start & scale businesses',
-  'health_wellness': 'Health & lifestyle guides',
-  'relationships': 'Love & connection advice',
-  'childrens_books': 'Educational kids content',
-  'education_learning': 'Study & skill development',
-  'technology_digital': 'Tech skills & digital tools',
-  'finance_investment': 'Money management & investing',
-  'hobbies_interests': 'Creative hobbies & crafts',
-  'travel_adventure': 'Travel tips & exploration',
-  'productivity_time': 'Efficiency & organization',
-  'creative_writing': 'Writing & storytelling',
-  'sustainability_eco': 'Green living & environment',
-  'ai_future_tech': 'AI & emerging technologies',
-  'mindfulness_meditation': 'Peace & mental wellness'
+  'ai_digital_transformation': 'AI automation & digital innovation',
+  'sustainability_green_tech': 'Green tech & eco-innovation',
+  'mental_health_tech': 'Digital mental wellness solutions',
+  'future_skills': 'Emerging tech & future-ready skills'
 };
 
 const allNiches = ref<any>({});

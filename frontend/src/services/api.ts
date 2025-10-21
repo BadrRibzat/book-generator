@@ -13,8 +13,8 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  // Add timeout to avoid hanging requests
-  timeout: 30000,
+  // Extended timeout for long-running operations like book generation
+  timeout: 1200000, // 20 minutes (1200000ms) to handle 30+ page books
 });
 
 // Response interceptor

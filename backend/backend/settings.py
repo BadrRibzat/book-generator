@@ -27,8 +27,9 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # API Keys
-GROQ_API_KEY = config('GROQ_API_KEY')
+# GROQ_API_KEY = config('GROQ_API_KEY')  # Deprecated - now using OpenRouter
 
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY')
 
 # Application definition
 INSTALLED_APPS = [

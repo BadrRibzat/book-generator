@@ -75,21 +75,26 @@ class BookCreateSerializer(serializers.ModelSerializer):
         
         # Map domains to their valid sub-niches (updated to match API)
         domain_niches = {
-            'personal_development': ['productivity_home', 'self_esteem', 'parenting_guidance', 'mental_health'],
-            'business_entrepreneurship': ['online_business', 'investing_basics', 'marketing_guide', 'business_planning'],
-            'health_wellness': ['general_health', 'autoimmune_living', 'holistic_wellness', 'fitness_nutrition'],
-            'relationships': ['dating_advice', 'marriage_tips', 'conflict_resolution', 'communication_skills'],
-            'childrens_books': ['early_readers', 'religion_manners', 'educational_fun', 'bedtime_stories'],
-            'education_learning': ['study_techniques', 'exam_preparation', 'language_learning', 'online_learning'],
-            'technology_digital': ['coding_basics', 'graphic_design', 'social_media_marketing', 'digital_tools'],
-            'finance_investment': ['personal_finance', 'investment_strategies', 'retirement_planning', 'financial_independence'],
-            'hobbies_interests': ['cooking_recipes', 'diy_crafts', 'gardening_guide', 'photography_tips'],
-            'travel_adventure': ['travel_guides', 'budget_travel', 'adventure_planning', 'cultural_exploration'],
-            'productivity_time': ['time_management', 'organization_tips', 'goal_setting', 'workflow_optimization'],
-            'creative_writing': ['writing_techniques', 'creative_prompts', 'genre_writing', 'publishing_guide'],
-            'sustainability_eco': ['zero_waste', 'renewable_energy', 'sustainable_products', 'eco_living'],
-            'ai_future_tech': ['ai_concepts', 'ai_ethics', 'future_tech_trends', 'automation_impact'],
-            'mindfulness_meditation': ['mindfulness_practices', 'meditation_techniques', 'stress_reduction', 'inner_peace'],
+            'ai_digital_transformation': [
+                'ai_business_automation', 'machine_learning_basics', 'digital_transformation_strategy',
+                'ai_ethics_governance', 'chatgpt_productivity', 'data_driven_decisions',
+                'ai_content_creation', 'automation_workflows'
+            ],
+            'sustainability_green_tech': [
+                'renewable_energy_solutions', 'circular_economy_principles', 'green_technology_innovations',
+                'carbon_neutral_living', 'sustainable_supply_chain', 'eco_friendly_investing',
+                'green_building_design', 'climate_tech_startups'
+            ],
+            'mental_health_tech': [
+                'ai_mental_health_apps', 'digital_wellness_tools', 'teletherapy_platforms',
+                'mental_health_ai_diagnostics', 'stress_management_apps', 'cognitive_behavioral_tech',
+                'mental_health_wearables', 'workplace_mental_health_tech'
+            ],
+            'future_skills': [
+                'remote_work_mastery', 'blockchain_cryptocurrency', 'metaverse_virtual_reality',
+                'cybersecurity_essentials', 'digital_entrepreneurship', 'quantum_computing_basics',
+                'iot_smart_homes', 'nft_digital_assets'
+            ],
         }
         
         if value not in domain_niches.get(domain, []):

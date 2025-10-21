@@ -1,0 +1,40 @@
+{
+  "total_tokens": 2704,
+  "total_cost": 0.004667159999999999,
+  "total_input_tokens": 765,
+  "total_output_tokens": 1939,
+  "monthly_usage": {
+    "2025-10": {
+      "total_tokens": 2704,
+      "total_cost": 0.004667159999999999,
+      "input_tokens": 765,
+      "output_tokens": 1939,
+      "operations": {
+        "generation": 2
+      },
+      "models": {
+        "deepseek/deepseek-r1-turbo": 2704
+      }
+    }
+  },
+  "operations": [
+    {
+      "timestamp": "2025-10-21T18:52:37.361644",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 444,
+      "output_tokens": 1387,
+      "total_tokens": 1831,
+      "cost": 0.0032817299999999996
+    },
+    {
+      "timestamp": "2025-10-21T18:52:58.334832",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 321,
+      "output_tokens": 552,
+      "total_tokens": 873,
+      "cost": 0.0013854299999999998
+    }
+  ]
+}

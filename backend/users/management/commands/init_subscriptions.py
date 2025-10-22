@@ -14,13 +14,13 @@ class Command(BaseCommand):
         free_plan, created = SubscriptionPlan.objects.get_or_create(
             tier='free',
             defaults={
-                'name': 'Free Plan',
-                'description': 'Get started with basic book generation',
+                'name': 'Free Tier',
+                'description': 'Everyone starts here - 2 books per month with 5 limited niches',
                 'price_monthly': 0.00,
                 'price_annual': 0.00,
                 'currency': 'USD',
-                'max_books_per_month': 30,  # 1 book per day = ~30 per month
-                'max_pages_per_book': 30,
+                'max_books_per_month': 2,
+                'max_pages_per_book': 15,
                 'priority_generation': False,
                 'commercial_license': False,
                 'ai_enhancement': True,
@@ -38,17 +38,17 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"Free Plan already exists: ${free_plan.price_monthly}/month")
         
-        # Basic Plan - $15/month
-        basic_plan, created = SubscriptionPlan.objects.get_or_create(
-            tier='basic',
+        # Parents Plan - $12/month
+        parents_plan, created = SubscriptionPlan.objects.get_or_create(
+            tier='parents',
             defaults={
-                'name': 'Basic Plan',
-                'description': 'Perfect for individual creators starting their journey',
-                'price_monthly': 15.00,
-                'price_annual': 165.00,  # 15% discount
+                'name': 'For Parents',
+                'description': 'Perfect for parents creating educational content for preschoolers',
+                'price_monthly': 12.00,
+                'price_annual': 144.00,  # No discount mentioned
                 'currency': 'USD',
-                'max_books_per_month': 30,  # 1 book per day = ~30 per month
-                'max_pages_per_book': 30,
+                'max_books_per_month': 8,
+                'max_pages_per_book': 20,
                 'priority_generation': False,
                 'commercial_license': False,
                 'ai_enhancement': True,
@@ -62,20 +62,20 @@ class Command(BaseCommand):
         )
         
         if created:
-            self.stdout.write(self.style.SUCCESS(f"Created Basic Plan: ${basic_plan.price_monthly}/month"))
+            self.stdout.write(self.style.SUCCESS(f"Created Parents Plan: ${parents_plan.price_monthly}/month"))
         else:
-            self.stdout.write(f"Basic Plan already exists: ${basic_plan.price_monthly}/month")
+            self.stdout.write(f"Parents Plan already exists: ${parents_plan.price_monthly}/month")
 
-        # Premium Plan - $45/month
-        premium_plan, created = SubscriptionPlan.objects.get_or_create(
-            tier='premium',
+        # Creators Plan - $29/month
+        creators_plan, created = SubscriptionPlan.objects.get_or_create(
+            tier='creators',
             defaults={
-                'name': 'Premium Plan',
-                'description': 'For serious creators with higher volume needs',
-                'price_monthly': 45.00,
-                'price_annual': 495.00,  # 15% discount
+                'name': 'For Creators',
+                'description': 'For digital marketers and content creators needing high volume',
+                'price_monthly': 29.00,
+                'price_annual': 348.00,  # No discount mentioned
                 'currency': 'USD',
-                'max_books_per_month': 90,  # 3 books per day = ~90 per month
+                'max_books_per_month': 12,
                 'max_pages_per_book': 30,
                 'priority_generation': True,
                 'commercial_license': True,
@@ -90,37 +90,11 @@ class Command(BaseCommand):
         )
         
         if created:
-            self.stdout.write(self.style.SUCCESS(f"Created Premium Plan: ${premium_plan.price_monthly}/month"))
+            self.stdout.write(self.style.SUCCESS(f"Created Creators Plan: ${creators_plan.price_monthly}/month"))
         else:
-            self.stdout.write(f"Premium Plan already exists: ${premium_plan.price_monthly}/month")
+            self.stdout.write(f"Creators Plan already exists: ${creators_plan.price_monthly}/month")
 
-        # Enterprise Plan - $60/month
-        enterprise_plan, created = SubscriptionPlan.objects.get_or_create(
-            tier='enterprise',
-            defaults={
-                'name': 'Enterprise Plan',
-                'description': 'For power users and teams',
-                'price_monthly': 60.00,
-                'price_annual': 660.00,  # 15% discount
-                'currency': 'USD',
-                'max_books_per_month': 150,  # 5 books per day = ~150 per month
-                'max_pages_per_book': 30,
-                'priority_generation': True,
-                'commercial_license': True,
-                'ai_enhancement': True,
-                'custom_templates': True,
-                'team_collaboration': True,
-                'priority_support': True,
-                'is_active': True,
-                'sort_order': 3,
-                'featured': True,
-            }
-        )
-        
-        if created:
-            self.stdout.write(self.style.SUCCESS(f"Created Enterprise Plan: ${enterprise_plan.price_monthly}/month"))
-        else:
-            self.stdout.write(f"Enterprise Plan already exists: ${enterprise_plan.price_monthly}/month")
+
 
         # Update existing user profiles with default plan settings
         self.stdout.write("Updating user profiles with subscription limits...")
@@ -129,15 +103,13 @@ class Command(BaseCommand):
         updated_count = 0
         
         for profile in profiles:
-            # Set default books per day based on subscription tier
+            # Set default books per month based on subscription tier
             if profile.subscription_tier == 'free':
-                profile.books_per_day = 1
-            elif profile.subscription_tier == 'basic':
-                profile.books_per_day = 1
-            elif profile.subscription_tier == 'premium':
-                profile.books_per_day = 3
-            elif profile.subscription_tier == 'enterprise':
-                profile.books_per_day = 5
+                profile.books_per_month = 2
+            elif profile.subscription_tier == 'parents':
+                profile.books_per_month = 8
+            elif profile.subscription_tier == 'creators':
+                profile.books_per_month = 12
             
             # Generate referral code if not exists
             if not profile.referral_code:

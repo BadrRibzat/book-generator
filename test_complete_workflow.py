@@ -74,8 +74,8 @@ def test_complete_workflow():
                 
                 # Create book with new categories
                 book_data = {
-                    "domain": "personal_development",
-                    "sub_niche": "self_esteem",
+                    "domain": "ai_digital_transformation",
+                    "sub_niche": "ai_business_automation",
                     "page_length": 15
                 }
                 

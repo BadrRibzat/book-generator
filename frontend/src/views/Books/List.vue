@@ -7,7 +7,7 @@
           <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Books</h1>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Manage and track your generated books
+              Professional AI-generated books with 15-30 pages and custom covers
             </p>
           </div>
           <router-link

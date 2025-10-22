@@ -42,9 +42,8 @@ class UserProfile(models.Model):
         max_length=20,
         choices=[
             ('free', 'Free'),
-            ('basic', 'Basic - $15/month - 1 book/day'),
-            ('premium', 'Premium - $45/month - 3 books/day'),
-            ('enterprise', 'Enterprise - $60/month - 5 books/day'),
+            ('parents', 'For Parents'),
+            ('creators', 'For Creators'),
         ],
         default='free'
     )
@@ -74,9 +73,9 @@ class UserProfile(models.Model):
     stripe_subscription_id = models.CharField(max_length=100, blank=True, null=True)
     
     # Usage Limits
-    books_per_day = models.IntegerField(default=1)
-    books_used_today = models.IntegerField(default=0)
-    daily_reset_date = models.DateField(default=timezone.now)
+    books_per_month = models.IntegerField(default=2)
+    books_used_this_month = models.IntegerField(default=0)
+    monthly_reset_date = models.DateField(default=timezone.now)
     
     # Referral Information
     referral_code = models.CharField(max_length=20, unique=True, blank=True, null=True)
@@ -95,31 +94,29 @@ class UserProfile(models.Model):
         return f"{self.user.username} - {self.subscription_tier}"
     
     def can_create_book(self):
-        """Check if user can create a new book based on their limits"""
+        """Check if user can create a new book based on their monthly limits"""
         if self.subscription_tier == 'free':
-            return self.books_used_today < 1
-        elif self.subscription_tier == 'basic':
-            return self.books_used_today < 1
-        elif self.subscription_tier == 'premium':
-            return self.books_used_today < 3
-        elif self.subscription_tier == 'enterprise':
-            return self.books_used_today < 5
+            return self.books_used_this_month < 2
+        elif self.subscription_tier == 'parents':
+            return self.books_used_this_month < 8
+        elif self.subscription_tier == 'creators':
+            return self.books_used_this_month < 12
         return False
     
     def increment_book_usage(self):
-        """Increment the daily book usage"""
-        self.books_used_today += 1
+        """Increment the monthly book usage"""
+        self.books_used_this_month += 1
         self.save()
     
-    def reset_daily_usage(self):
-        """Reset daily usage at the start of new day"""
+    def reset_monthly_usage(self):
+        """Reset monthly usage at the start of new month"""
         import datetime
         today = timezone.now().date()
         
-        # Check if we need to reset (new day)
-        if self.daily_reset_date != today:
-            self.books_used_today = 0
-            self.daily_reset_date = today
+        # Check if we need to reset (new month)
+        if self.monthly_reset_date.month != today.month or self.monthly_reset_date.year != today.year:
+            self.books_used_this_month = 0
+            self.monthly_reset_date = today
             self.save()
 
 

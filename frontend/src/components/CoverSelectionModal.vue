@@ -8,11 +8,11 @@
         <font-awesome-icon :icon="['fas', 'times']" class="h-5 w-5" />
       </button>
       
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Select a Cover for Your Book</h2>
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Choose Your Professional AI Cover</h2>
       
       <div v-if="loading" class="text-center py-8">
         <font-awesome-icon :icon="['fas', 'spinner']" spin class="h-12 w-12 text-primary-600" />
-        <p class="mt-4 text-gray-600">Loading covers...</p>
+        <p class="mt-4 text-gray-600">Loading AI-generated covers...</p>
       </div>
       
       <div v-else-if="error" class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
@@ -21,13 +21,14 @@
       
       <div v-else-if="covers.length === 0" class="text-center py-8">
         <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="h-12 w-12 text-yellow-500" />
-        <p class="mt-4 text-gray-800">No covers are available yet.</p>
+        <p class="mt-4 text-gray-800">No AI covers are available yet.</p>
+        <p class="mt-2 text-sm text-gray-600">Professional AI covers are being generated...</p>
         <button 
           @click="handleGenerateCovers" 
           class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700"
         >
           <font-awesome-icon :icon="['fas', 'redo']" class="mr-2" />
-          Generate Covers
+          Regenerate AI Covers
         </button>
       </div>
       

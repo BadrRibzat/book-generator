@@ -102,15 +102,15 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         """Get current usage limits"""
         profile = request.user.profile
         
-        # Check if we need to reset daily usage
-        profile.reset_daily_usage()
+        # Check if we need to reset monthly usage
+        profile.reset_monthly_usage()
         
         return Response({
             'subscription_tier': profile.subscription_tier,
-            'books_per_day': profile.books_per_day,
-            'books_used_today': profile.books_used_today,
+            'books_per_month': profile.books_per_month,
+            'books_used_this_month': profile.books_used_this_month,
             'can_create_book': profile.can_create_book(),
-            'reset_date': profile.daily_reset_date
+            'reset_date': profile.monthly_reset_date
         })
 
 
@@ -500,7 +500,7 @@ class DashboardView(APIView):
         profile = request.user.profile
         
         # Reset monthly usage if needed
-        profile.reset_daily_usage()
+        profile.reset_monthly_usage()
         
         # Get recent activity
         recent_activity = UserActivity.objects.filter(

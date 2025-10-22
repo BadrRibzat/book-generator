@@ -36,38 +36,34 @@
       <!-- Pricing Cards with Glassmorphism -->
       <section class="py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Free Plan -->
             <div class="card-modern interactive-card relative">
               <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Free</h3>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Free Tier</h3>
                 <div class="mb-4">
                   <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$0</span>
                   <span class="text-gray-600 dark:text-gray-400">/month</span>
                 </div>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">Perfect for getting started</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">Everyone starts here</p>
               </div>
 
               <ul class="space-y-3 mb-8">
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">1 book per day</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">2 books per month</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">32 trending niches</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">15 pages max per book</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">3 AI cover designs</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">5 limited niches</span>
                 </li>
                 <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Up to 30 pages</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">PDF downloads</span>
+                  <font-awesome-icon :icon="['fas', 'xmark']" class="text-red-500 mt-1 mr-3 flex-shrink-0" />
+                  <span class="text-gray-700 dark:text-gray-300 text-sm line-through">Commercial license</span>
                 </li>
               </ul>
 
@@ -81,7 +77,7 @@
               </button>
             </div>
 
-            <!-- Basic Plan -->
+            <!-- Parents Plan -->
             <div class="card-modern interactive-card relative transform scale-105 shadow-glass-lg">
               <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
@@ -89,143 +85,114 @@
                 </div>
               </div>
               <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Basic</h3>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">For Parents</h3>
                 <div class="mb-4">
-                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$15</span>
+                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$12</span>
                   <span class="text-gray-600 dark:text-gray-400">/month</span>
                 </div>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">Perfect for individual authors</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">Perfect for parents of preschoolers</p>
               </div>
 
               <ul class="space-y-3 mb-8">
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">1 book per day</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">8 books per month</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">32 trending niches</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">15-20 pages per book</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">3 AI cover designs</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">All parent domains & niches</span>
                 </li>
                 <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Up to 30 pages</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Priority generation</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Email support</span>
+                  <font-awesome-icon :icon="['fas', 'xmark']" class="text-red-500 mt-1 mr-3 flex-shrink-0" />
+                  <span class="text-gray-700 dark:text-gray-300 text-sm line-through">Commercial license</span>
                 </li>
               </ul>
 
               <button
-                @click="selectPlan('basic')"
+                @click="selectPlan('parents')"
                 class="block w-full text-center px-6 py-3 btn-primary text-base font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
-                :disabled="currentPlan === 'basic'"
+                :disabled="currentPlan === 'parents'"
               >
-                {{ currentPlan === 'basic' ? '✓ Current Plan' : 'Start Basic Plan' }}
+                {{ currentPlan === 'parents' ? '✓ Current Plan' : 'Start Parents Plan' }}
               </button>
             </div>
 
-            <!-- Premium Plan -->
+            <!-- Creators Plan -->
             <div class="card-modern interactive-card relative">
               <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Premium</h3>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">For Creators</h3>
                 <div class="mb-4">
-                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$45</span>
+                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$29</span>
                   <span class="text-gray-600 dark:text-gray-400">/month</span>
                 </div>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">For prolific authors</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">For digital marketers & content creators</p>
               </div>
 
               <ul class="space-y-3 mb-8">
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">3 books per day</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">12 books per month</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">32 trending niches</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">15-30 pages per book</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">3 AI cover designs</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">All domains & niches</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Up to 30 pages</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Priority generation</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Advanced customization</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">Commercial license included</span>
                 </li>
               </ul>
 
               <button
-                @click="selectPlan('premium')"
-                class="block w-full text-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-base font-medium rounded-xl transition-all"
-                :class="currentPlan === 'premium' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300 cursor-default' : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'"
-                :disabled="currentPlan === 'premium'"
-              >
-                {{ currentPlan === 'premium' ? '✓ Current Plan' : 'Start Premium Plan' }}
-              </button>
-            </div>
-
-            <!-- Enterprise Plan -->
-            <div class="card-modern interactive-card relative">
-              <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Enterprise</h3>
-                <div class="mb-4">
-                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$60</span>
-                  <span class="text-gray-600 dark:text-gray-400">/month</span>
-                </div>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">For teams & publishers</p>
-              </div>
-
-              <ul class="space-y-3 mb-8">
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">5 books per day</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Everything in Premium</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Custom niches & training</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Dedicated support</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">API access</span>
-                </li>
-              </ul>
-
-              <button
-                @click="selectPlan('enterprise')"
+                @click="notifyAtLaunch('creators')"
                 class="block w-full text-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-base font-medium rounded-xl transition-all shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-indigo-700"
-                :disabled="currentPlan === 'enterprise'"
               >
-                {{ currentPlan === 'enterprise' ? '✓ Current Plan' : 'Contact Sales' }}
+                Notify Me at Launch
               </button>
+            </div>
+
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Referral CTA Section -->
+      <section class="py-20 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div class="glass-card p-8">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6 display-font">
+              <span class="text-gradient">Refer a friend → Get 15% off</span>
+            </h2>
+            <p class="text-xl text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+              When subscriptions launch, you'll get 15% off your first year for every friend who signs up using your referral link.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button
+                @click="generateReferralCode"
+                class="btn-primary inline-flex items-center justify-center group text-lg px-8 py-4"
+              >
+                <font-awesome-icon :icon="['fas', 'gift']" class="mr-3 group-hover:animate-bounce" />
+                Get My Referral Code
+              </button>
+
+              <div v-if="referralCode" class="glass-card p-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Your referral code:</p>
+                <div class="flex items-center gap-2">
+                  <code class="bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded text-lg font-mono">{{ referralCode }}</code>
+                  <button @click="copyReferralCode" class="text-blue-600 hover:text-blue-800">
+                    <font-awesome-icon :icon="['fas', 'copy']" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -305,6 +272,7 @@ const router = useRouter()
 const subscriptionPlans = ref<any[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
+const referralCode = ref<string | null>(null)
 
 // FAQs data
 const faqs = ref([
@@ -342,9 +310,8 @@ const currentPlan = computed(() => {
 // Get current plan display name
 const currentPlanName = computed(() => {
   const tier = currentPlan.value
-  if (tier === 'basic') return 'Pro'
-  if (tier === 'premium') return 'Pro'
-  if (tier === 'enterprise') return 'Enterprise'
+  if (tier === 'parents') return 'Parents'
+  if (tier === 'creators') return 'Creators'
   return 'Free'
 })
 
@@ -379,6 +346,33 @@ async function selectPlan(planTier: string) {
   
   // Placeholder for now - in production this would redirect to Stripe Checkout
   alert(`Plan selection for ${planTier} will be implemented with Stripe integration. Current plan: ${currentPlanName.value}`)
+}
+
+async function notifyAtLaunch(planTier: string) {
+  // Placeholder for launch notification signup
+  alert(`You'll be notified when the ${planTier} plan launches!`)
+}
+
+async function generateReferralCode() {
+  if (!authStore.isAuthenticated) {
+    router.push('/auth/login')
+    return
+  }
+
+  try {
+    const response = await apiClient.get('/users/referrals/generate_code/')
+    referralCode.value = response.data.referral_code
+  } catch (err: any) {
+    console.error('Failed to generate referral code:', err)
+    alert('Failed to generate referral code. Please try again.')
+  }
+}
+
+async function copyReferralCode() {
+  if (referralCode.value) {
+    await navigator.clipboard.writeText(referralCode.value)
+    alert('Referral code copied to clipboard!')
+  }
 }
 
 // Lifecycle

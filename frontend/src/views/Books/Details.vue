@@ -138,9 +138,10 @@
             <div class="flex items-start">
               <font-awesome-icon :icon="['fas', 'spinner']" spin class="h-6 w-6 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div class="ml-4">
-                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">Book Generation in Progress</h3>
+                <h3 class="text-sm font-medium text-blue-900 dark:text-blue-100">Professional Book Generation in Progress</h3>
                 <p class="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                  Our AI is generating your book content. This typically takes 6-15 minutes depending on the page count. You can stay on this page and we'll update automatically.
+                  DeepSeek R1 AI is generating your book with {{ book.page_length }}+ pages of professional content. 
+                  This typically takes 2-3 minutes. The page will update automatically when complete.
                 </p>
                 <div class="mt-4 flex items-center">
                   <div class="flex-1 bg-blue-200 dark:bg-blue-800 rounded-full h-2">
@@ -159,9 +160,10 @@
                 <font-awesome-icon :icon="['fas', 'palette']" class="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div class="ml-4 flex-1">
-                <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-2">🎨 Cover Options Ready!</h3>
+                <h3 class="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-2">🎨 Professional AI Covers Ready!</h3>
                 <p class="text-sm text-yellow-800 dark:text-yellow-200 mb-4">
-                  Your book content is complete! We've generated 3 professional cover designs for you. Choose your favorite to finalize your book.
+                  Your book content is complete! We've generated 3 professional AI cover designs 
+                  (no template fallbacks). Choose your favorite to finalize your book.
                 </p>
                 <div class="grid grid-cols-3 gap-4 mb-4">
                   <div 
@@ -201,9 +203,9 @@
             <div class="flex items-start">
               <font-awesome-icon :icon="['fas', 'spinner']" spin class="h-6 w-6 text-yellow-600 dark:text-yellow-400 mt-0.5" />
               <div class="ml-4">
-                <h3 class="text-sm font-medium text-yellow-900 dark:text-yellow-100">Generating Cover Options</h3>
+                <h3 class="text-sm font-medium text-yellow-900 dark:text-yellow-100">Generating Professional AI Covers</h3>
                 <p class="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
-                  We're creating 3 professional cover designs for your book. This usually takes 2-5 minutes.
+                  Creating 3 unique professional cover designs using AI (no template fallbacks). This usually takes 1-2 minutes.
                 </p>
               </div>
             </div>

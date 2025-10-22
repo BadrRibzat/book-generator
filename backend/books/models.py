@@ -198,13 +198,11 @@ class Book(models.Model):
             profile = self.user.profile
             base_cost_per_page = 0.50  # Base cost per page
             
-            # Apply subscription discounts
-            if profile.subscription_tier == 'basic':
-                discount = 0.1  # 10% discount
-            elif profile.subscription_tier == 'premium':
-                discount = 0.2  # 20% discount
-            elif profile.subscription_tier == 'enterprise':
-                discount = 0.3  # 30% discount
+            # Apply subscription discounts - free tier has no discount, paid tiers get discounts
+            if profile.subscription_tier == 'parents':
+                discount = 0.1  # 10% discount for parents tier
+            elif profile.subscription_tier == 'creators':
+                discount = 0.2  # 20% discount for creators tier
             else:
                 discount = 0  # No discount for free tier
             

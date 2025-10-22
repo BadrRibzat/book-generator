@@ -19,8 +19,8 @@
                 <font-awesome-icon :icon="['fas', 'magic-wand-sparkles']" class="text-white text-2xl" />
               </div>
               <div>
-                <h1 class="text-3xl font-bold text-white display-font">Create Your AI Book</h1>
-                <p class="text-primary-100 text-lg">Transform ideas into professional books with DeepSeek R1T2 Chimera AI</p>
+                <h1 class="text-3xl font-bold text-white display-font">Create Your Professional Book</h1>
+                <p class="text-primary-100 text-lg">AI-powered book generation with DeepSeek R1 · Professional covers · 15-30 pages guaranteed</p>
               </div>
             </div>
             <div class="text-right">
@@ -41,8 +41,8 @@
                 <font-awesome-icon :icon="['fas', 'brain']" class="text-white text-xl" />
               </div>
               <div>
-                <h3 class="text-xl font-bold text-white display-font">Creating Your Book</h3>
-                <p class="text-blue-100">AI is working its magic...</p>
+                <h3 class="text-xl font-bold text-white display-font">Creating Your Professional Book</h3>
+                <p class="text-blue-100">DeepSeek R1 AI is generating your content...</p>
               </div>
             </div>
             <div class="text-right">
@@ -121,7 +121,7 @@
         <div v-if="!loading" class="glass-card p-8 animate-slide-up">
           <div class="mb-8">
             <h2 class="text-2xl font-bold text-white display-font mb-2">Choose Your Content</h2>
-            <p class="text-gray-300">Select from 15 trending categories and 32+ sub-niches for 2025</p>
+            <p class="text-gray-300">Select from trending 2025-2027 categories with professional AI-generated content</p>
           </div>
 
           <form @submit.prevent="handleSubmit" class="space-y-8">
@@ -207,23 +207,37 @@
                   <font-awesome-icon :icon="['fas', 'robot']" class="text-white text-xl" />
                 </div>
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-white mb-2">DeepSeek R1T2 Chimera AI</h3>
-                  <p class="text-gray-300 text-sm mb-3">
-                    Your book will be generated using cutting-edge AI technology with professional prompts,
-                    structured content, and modern design trends.
-                  </p>
-                  <div class="flex items-center space-x-4 text-xs text-gray-400">
+                  <h3 class="text-lg font-semibold text-white mb-2">Professional Book Generation Features</h3>
+                  <div class="space-y-2 text-sm text-gray-300">
+                    <p class="flex items-start">
+                      <font-awesome-icon :icon="['fas', 'check-circle']" class="mr-2 mt-0.5 text-green-400" />
+                      <span><strong>15-30 Pages Guaranteed:</strong> Books generate at minimum the selected page count</span>
+                    </p>
+                    <p class="flex items-start">
+                      <font-awesome-icon :icon="['fas', 'check-circle']" class="mr-2 mt-0.5 text-green-400" />
+                      <span><strong>AI Professional Covers:</strong> 3 unique designs, no template fallbacks</span>
+                    </p>
+                    <p class="flex items-start">
+                      <font-awesome-icon :icon="['fas', 'check-circle']" class="mr-2 mt-0.5 text-green-400" />
+                      <span><strong>2025-2027 Trending Content:</strong> Context-aware with current market data</span>
+                    </p>
+                    <p class="flex items-start">
+                      <font-awesome-icon :icon="['fas', 'check-circle']" class="mr-2 mt-0.5 text-green-400" />
+                      <span><strong>Proper Title Naming:</strong> PDFs download with your actual book title</span>
+                    </p>
+                  </div>
+                  <div class="flex items-center space-x-4 text-xs text-gray-400 mt-4 pt-4 border-t border-white/20">
                     <span class="flex items-center">
                       <font-awesome-icon :icon="['fas', 'clock']" class="mr-1" />
                       2-3 minutes
                     </span>
                     <span class="flex items-center">
                       <font-awesome-icon :icon="['fas', 'brain']" class="mr-1" />
-                      AI-powered
+                      DeepSeek R1
                     </span>
                     <span class="flex items-center">
                       <font-awesome-icon :icon="['fas', 'palette']" class="mr-1" />
-                      3 cover designs
+                      7 design trends
                     </span>
                   </div>
                 </div>
@@ -263,7 +277,7 @@
             <font-awesome-icon :icon="['fas', 'brain']" class="text-white text-3xl animate-pulse" />
           </div>
           <h3 class="text-xl font-semibold text-white mb-2">Loading Content Categories</h3>
-          <p class="text-gray-300">Preparing 15 trending categories for 2025...</p>
+          <p class="text-gray-300">Preparing trending 2025-2027 categories...</p>
         </div>
       </main>
     </div>
@@ -309,25 +323,25 @@ const creationProgress = ref({
   steps: [
     {
       label: 'Initializing book creation',
-      description: 'Setting up your book parameters and AI configuration',
+      description: 'Loading 2025-2027 trending data and AI configuration',
       status: 'pending',
       statusText: 'Waiting'
     },
     {
-      label: 'Generating AI content',
-      description: 'Creating professional content with DeepSeek R1T2 Chimera',
+      label: 'Generating professional content',
+      description: `Creating ${form.value.page_length}+ pages with DeepSeek R1 AI`,
       status: 'pending',
       statusText: 'Waiting'
     },
     {
-      label: 'Designing covers',
-      description: 'Generating 3 unique cover options with modern trends',
+      label: 'Designing AI covers',
+      description: 'Generating 3 professional cover designs (no templates)',
       status: 'pending',
       statusText: 'Waiting'
     },
     {
       label: 'Finalizing book',
-      description: 'Preparing your book for download and storage',
+      description: 'Creating PDF with proper title naming',
       status: 'pending',
       statusText: 'Waiting'
     }

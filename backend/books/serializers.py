@@ -70,52 +70,46 @@ class BookCreateSerializer(serializers.ModelSerializer):
         fields = ['domain', 'sub_niche', 'page_length']
     
     def validate_sub_niche(self, value):
-        """Ensure sub_niche matches the selected domain"""
-        domain = self.initial_data.get('domain')
+        """Validate sub-niche using trending taxonomy"""
+        from books.services.trending import TRENDING_NICHES_2025_2027
         
-        # Map domains to their valid sub-niches (updated to match API)
-        domain_niches = {
-            'ai_digital_transformation': [
-                'ai_business_automation', 'machine_learning_basics', 'digital_transformation_strategy',
-                'ai_ethics_governance', 'chatgpt_productivity', 'data_driven_decisions',
-                'ai_content_creation', 'automation_workflows'
-            ],
-            'sustainability_green_tech': [
-                'renewable_energy_solutions', 'circular_economy_principles', 'green_technology_innovations',
-                'carbon_neutral_living', 'sustainable_supply_chain', 'eco_friendly_investing',
-                'green_building_design', 'climate_tech_startups'
-            ],
-            'mental_health_tech': [
-                'ai_mental_health_apps', 'digital_wellness_tools', 'teletherapy_platforms',
-                'mental_health_ai_diagnostics', 'stress_management_apps', 'cognitive_behavioral_tech',
-                'mental_health_wearables', 'workplace_mental_health_tech'
-            ],
-            'future_skills': [
-                'remote_work_mastery', 'blockchain_cryptocurrency', 'metaverse_virtual_reality',
-                'cybersecurity_essentials', 'digital_entrepreneurship', 'quantum_computing_basics',
-                'iot_smart_homes', 'nft_digital_assets'
-            ],
+        # Map taxonomy domain names to API keys
+        DOMAIN_KEY_MAP = {
+            'AI & Digital Transformation': 'ai_digital_transformation',
+            'Sustainability & Green Tech': 'sustainability_green_tech',
+            'Mental Health Technology': 'mental_health_tech',
+            'Future Skills & Digital Economy': 'future_skills'
         }
         
-        if value not in domain_niches.get(domain, []):
-            raise serializers.ValidationError(
-                f"Sub-niche '{value}' not valid for domain '{domain}'"
-            )
+        # Get domain from initial_data
+        domain = self.initial_data.get('domain')
+        if not domain:
+            raise serializers.ValidationError("Domain is required to validate sub-niche")
         
-        return value
+        # Find matching domain in taxonomy
+        for domain_name, sub_niches_dict in TRENDING_NICHES_2025_2027.items():
+            domain_key = DOMAIN_KEY_MAP.get(domain_name, domain_name.lower().replace(' ', '_').replace('&', '').replace('__', '_').strip('_'))
+            
+            if domain_key == domain:
+                valid_sub_niches = list(sub_niches_dict.keys())
+                if value not in valid_sub_niches:
+                    raise serializers.ValidationError(
+                        f"Invalid sub-niche '{value}' for domain '{domain}'. "
+                        f"Valid sub-niches: {', '.join(valid_sub_niches)}"
+                    )
+                return value
+        
+        raise serializers.ValidationError(f"Invalid domain: {domain}")
     
     def create(self, validated_data):
         # Import here to avoid circular imports
-        from books.services.book_generator import BookGenerator
+        from books.services.book_generator import BookGeneratorProfessional
         
-        # Auto-generate title
-        generator = BookGenerator()
-        title = generator.generate_title(validated_data['sub_niche'])
-        
-        # Create book with auto-generated title
+        # Create book with placeholder title first
+        # The actual title will be extracted during content generation
         book = Book.objects.create(
             user=self.context['request'].user,
-            title=title,
+            title="Generating...",  # Placeholder, will be updated during generation
             **validated_data
         )
         

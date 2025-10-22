@@ -21,9 +21,9 @@ from .serializers import (
     UserSerializer,
     UserRegistrationSerializer
 )
-from .services.book_generator import BookGenerator
+from .services.book_generator import BookGeneratorProfessional
 from .services.pdf_merger import PDFMerger
-from covers.services import CoverGenerator
+from covers.services import CoverGeneratorProfessional
 from backend.utils.mongodb import get_mongodb_db
 
 class BookViewSet(viewsets.ModelViewSet):
@@ -68,8 +68,8 @@ class BookViewSet(viewsets.ModelViewSet):
             book.status = 'generating'
             book.save()
             
-            # Generate content using Groq
-            generator = BookGenerator()
+            # Generate content using OpenRouter DeepSeek R1
+            generator = BookGeneratorProfessional()
             content_data = generator.generate_book_content(book)
             
             # Create PDF
@@ -113,7 +113,7 @@ class BookViewSet(viewsets.ModelViewSet):
                 raise Exception(f"Database connection error: {str(mongo_err)}")
             
             print(f"Generating covers for book {book.id}: {book.title}")
-            cover_gen = CoverGenerator()
+            cover_gen = CoverGeneratorProfessional()
             covers = cover_gen.generate_three_covers(book)
             
             # Check if covers were successfully generated
@@ -310,8 +310,7 @@ class BookViewSet(viewsets.ModelViewSet):
             if not Path(interior_pdf_path).exists():
                 print(f"Interior PDF file not found at: {interior_pdf_path}")
                 # Try to regenerate the PDF
-                from .services.book_generator import BookGenerator
-                generator = BookGenerator()
+                generator = BookGeneratorProfessional()
                 content_data = content_doc.get('content', {})
                 if content_data:
                     interior_pdf_path = generator.create_pdf(book, content_data)
@@ -617,63 +616,52 @@ def current_user(request):
 def get_sub_niches(request):
     """
     Get available sub-niches organized by domain
-
-    Returns 4 trending categories for 2024-2025 that align with current market demands:
-    1. AI/Digital Transformation - Leveraging AI for business and personal growth
-    2. Sustainability/Green Tech - Eco-friendly solutions and green technology
-    3. Mental Health Tech - Technology solutions for mental wellness
-    4. Future Skills - Essential skills for the digital economy
+    
+    Returns trending 2025-2027 categories from the professional taxonomy:
+    - AI & Digital Transformation (8 sub-niches)
+    - Sustainability & Green Tech (8 sub-niches) 
+    - Mental Health Technology (8 sub-niches)
+    - Future Skills & Digital Economy (8 sub-niches)
+    
+    Total: 32 sub-niches with market trends, tools, and audience data
     """
-    niches = {
-        'ai_digital_transformation': [
-            {'value': 'ai_business_automation', 'label': 'AI-Powered Business Automation'},
-            {'value': 'machine_learning_basics', 'label': 'Machine Learning for Non-Technical Professionals'},
-            {'value': 'digital_transformation_strategy', 'label': 'Digital Transformation Strategy'},
-            {'value': 'ai_ethics_governance', 'label': 'AI Ethics and Responsible AI Governance'},
-            {'value': 'chatgpt_productivity', 'label': 'ChatGPT and AI Tools for Productivity'},
-            {'value': 'data_driven_decisions', 'label': 'Data-Driven Decision Making'},
-            {'value': 'ai_content_creation', 'label': 'AI-Powered Content Creation'},
-            {'value': 'automation_workflows', 'label': 'Building Automation Workflows'},
-        ],
-        'sustainability_green_tech': [
-            {'value': 'renewable_energy_solutions', 'label': 'Renewable Energy Solutions for Homes'},
-            {'value': 'circular_economy_principles', 'label': 'Circular Economy and Sustainable Business'},
-            {'value': 'green_technology_innovations', 'label': 'Green Technology Innovations'},
-            {'value': 'carbon_neutral_living', 'label': 'Carbon Neutral Living Guide'},
-            {'value': 'sustainable_supply_chain', 'label': 'Building Sustainable Supply Chains'},
-            {'value': 'eco_friendly_investing', 'label': 'Eco-Friendly Investing Strategies'},
-            {'value': 'green_building_design', 'label': 'Green Building and Architecture'},
-            {'value': 'climate_tech_startups', 'label': 'Climate Tech Startups and Innovation'},
-        ],
-        'mental_health_tech': [
-            {'value': 'ai_mental_health_apps', 'label': 'AI-Powered Mental Health Applications'},
-            {'value': 'digital_wellness_tools', 'label': 'Digital Wellness and Mindfulness Tech'},
-            {'value': 'teletherapy_platforms', 'label': 'Teletherapy and Online Counseling'},
-            {'value': 'mental_health_ai_diagnostics', 'label': 'AI Diagnostics for Mental Health'},
-            {'value': 'stress_management_apps', 'label': 'Stress Management Mobile Applications'},
-            {'value': 'cognitive_behavioral_tech', 'label': 'Technology in Cognitive Behavioral Therapy'},
-            {'value': 'mental_health_wearables', 'label': 'Mental Health Wearables and Biofeedback'},
-            {'value': 'workplace_mental_health_tech', 'label': 'Workplace Mental Health Technology Solutions'},
-        ],
-        'future_skills': [
-            {'value': 'remote_work_mastery', 'label': 'Remote Work Mastery and Digital Nomad Skills'},
-            {'value': 'blockchain_cryptocurrency', 'label': 'Blockchain and Cryptocurrency Fundamentals'},
-            {'value': 'metaverse_virtual_reality', 'label': 'Metaverse and Virtual Reality Skills'},
-            {'value': 'cybersecurity_essentials', 'label': 'Cybersecurity Essentials for Everyone'},
-            {'value': 'digital_entrepreneurship', 'label': 'Digital Entrepreneurship in the 2020s'},
-            {'value': 'quantum_computing_basics', 'label': 'Quantum Computing for Business Leaders'},
-            {'value': 'iot_smart_homes', 'label': 'IoT and Smart Home Technology'},
-            {'value': 'nft_digital_assets', 'label': 'NFTs and Digital Asset Management'},
-        ],
+    from books.services.trending import TRENDING_NICHES_2025_2027
+    
+    # Map taxonomy domain names to API keys for backwards compatibility
+    DOMAIN_KEY_MAP = {
+        'AI & Digital Transformation': 'ai_digital_transformation',
+        'Sustainability & Green Tech': 'sustainability_green_tech',
+        'Mental Health Technology': 'mental_health_tech',
+        'Future Skills & Digital Economy': 'future_skills'
     }
-
-    domains = [
-        {'value': 'ai_digital_transformation', 'label': 'AI & Digital Transformation'},
-        {'value': 'sustainability_green_tech', 'label': 'Sustainability & Green Tech'},
-        {'value': 'mental_health_tech', 'label': 'Mental Health Technology'},
-        {'value': 'future_skills', 'label': 'Future Skills & Digital Economy'},
-    ]
-
+    
+    # Build API response from trending taxonomy
+    domains = []
+    niches = {}
+    
+    for domain_name, sub_niches_dict in TRENDING_NICHES_2025_2027.items():
+        # Use mapped key for API compatibility
+        domain_key = DOMAIN_KEY_MAP.get(domain_name, domain_name.lower().replace(' ', '_').replace('&', '').replace('__', '_').strip('_'))
+        
+        # Add domain to list
+        domains.append({
+            'value': domain_key,
+            'label': domain_name
+        })
+        
+        # Add sub-niches for this domain
+        niches[domain_key] = []
+        for sub_niche_key, sub_niche_data in sub_niches_dict.items():
+            # Create readable label from key
+            label = ' '.join(word.capitalize() for word in sub_niche_key.split('_'))
+            
+            niches[domain_key].append({
+                'value': sub_niche_key,
+                'label': label,
+                'audience': sub_niche_data.get('audience', ''),
+                'market_size': sub_niche_data.get('market_size', '')
+            })
+    
     return Response({
         'domains': domains,
         'sub_niches': niches,

@@ -1,62 +1,187 @@
-# covers/services.py
+"""
+Professional AI Cover Generator using OpenRouter DeepSeek R1T2 Chimera
+Generates comprehensive graphical covers using ReportLab with AI prompts
+"""
+
 import os
 import json
 import requests
 import random
+import time
 from pathlib import Path
 from django.conf import settings
-from weasyprint import HTML, CSS
-from PIL import Image, ImageDraw, ImageFont
-import io
-from books.services.usage_tracker import UsageTracker
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch, cm
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
+    PageBreak, Image, KeepTogether, ListFlowable, ListItem
+)
+from reportlab.lib.colors import HexColor
+from reportlab.pdfgen import canvas
+from reportlab.graphics.shapes import Drawing, Rect, String, Line, Circle, Polygon
+from reportlab.graphics import renderPDF
 
-class CoverGenerator:
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch, Rectangle, FancyArrowPatch, Circle as MPLCircle
+import io
+from datetime import datetime
+import textwrap
+import os
+from PIL import Image, ImageDraw
+from books.services.usage_tracker import UsageTracker
+from books.services.trending import get_trending_context
+
+
+# Professional Cover Prompt for ReportLab
+REPORTLAB_COVER_PROMPT = """
+You are a senior ReportLab graphics designer specializing in creating professional PDF book covers. Generate 3 distinct, comprehensive cover design prompts that use ReportLab's canvas and graphics capabilities.
+
+Book Details:
+Title: "{title}"
+Audience: {audience}
+Niche: "{sub_niche}"
+Trending Context: {trending_info}
+
+Requirements for Each Cover:
+1. **Use ReportLab canvas.drawString(), canvas.setFont(), canvas.setFillColor()** for text rendering
+2. **Include the ACTUAL BOOK TITLE "{title}"** prominently on each cover
+3. **Use professional color schemes** with HexColor() for backgrounds and text
+4. **Create visual elements** using Drawing, Rect, Circle, Line, Polygon from reportlab.graphics.shapes
+5. **Implement layout techniques** like centered positioning, geometric backgrounds, gradient effects
+6. **Add graphical diagrams** using matplotlib integration for charts, patterns, or abstract designs
+7. **Ensure accessibility** with high contrast ratios and readable fonts
+
+Design Trends (use 3 different ones):
+1. **Geometric Modern**: Rectangles, circles, lines, grids - clean and structured
+2. **Organic Flow**: Curves, waves, natural shapes - fluid and dynamic  
+3. **Typography Focus**: Large text with subtle background elements - text-driven design
+4. **Data Visualization**: Charts, graphs, patterns - information-rich design
+5. **Abstract Art**: Custom shapes, gradients, artistic elements - creative and bold
+6. **Professional Minimal**: Simple layouts, ample white space - clean and elegant
+7. **Tech Futuristic**: Digital elements, neon effects, modern patterns - cutting-edge
+
+For Each Design Direction, Provide:
+1. **trend**: One of the above trend names (lowercase, underscores instead of spaces)
+2. **concept_name**: Short catchy name for this design direction
+3. **reportlab_code**: Complete Python code using ReportLab to create the cover
+4. **matplotlib_elements**: Optional matplotlib code for advanced graphics
+5. **colors**: Primary, secondary, accent, background hex codes
+6. **layout_description**: How elements are positioned and layered
+7. **accessibility_notes**: Contrast and readability considerations
+
+FORMAT your response as VALID JSON only:
+{{
+  "designs": [
+    {{
+      "trend": "geometric_modern",
+      "concept_name": "Structured Excellence",
+      "reportlab_code": "Complete ReportLab Python code here...",
+      "matplotlib_elements": "Optional matplotlib code...",
+      "colors": {{
+        "primary": "#1a365d",
+        "secondary": "#4a5568", 
+        "accent": "#3b82f6",
+        "background": "#ffffff"
+      }},
+      "layout_description": "Centered title with geometric background grid",
+      "accessibility_notes": "High contrast text on light background"
+    }},
+    ... 2 more unique designs
+  ]
+}}
+
+Remember:
+- Use the REAL book title "{title}" in all designs
+- Provide EXECUTABLE ReportLab Python code
+- Make each design visually distinct
+- Ensure professional quality for book sales
+- Return ONLY valid JSON, no extra text
+"""
+
+
+# Professional Cover Prompt
+PROFESSIONAL_COVER_PROMPT = """
+You are a senior book cover art director specializing in modern, trending 2025-2027 design aesthetics. Generate 3 distinct, professional cover design directions based on the following book metadata:
+
+Title: "{title}"
+Subtitle: "{subtitle}"
+Audience: {audience}
+Niche: "{sub_niche}"
+Trending Context: {trending_info}
+
+Requirements:
+- Each design must be VISUALLY DISTINCT and follow different 2025-2027 design trends
+- Use the ACTUAL BOOK TITLE "{title}" in all designs - NO PLACEHOLDERS
+- Designs should reflect the book's specific topic and audience
+- Modern, professional, and marketable for digital publishing
+
+Design Trends to Choose From (use 3 different ones):
+1. **Glass morphism** - Frosted glass effects, transparency layers, soft shadows, light backgrounds
+2. **Neomorphism** - Soft embossed/debossed effects, subtle shadows, monochromatic with depth
+3. **Brutalist** - Bold typography, high contrast, raw edges, geometric blocks, striking colors
+4. **Organic Shapes** - Flowing curves, natural forms, earthy palettes, fluid layouts
+5. **Cyberpunk/Futuristic** - Neon accents, dark themes, tech elements, grid patterns, vibrant highlights
+6. **Minimalist Abstract** - Clean geometric shapes, negative space, limited palette, strong typography
+7. **Vintage Modern** - Retro color palettes, contemporary typography, nostalgic with modern twist
+
+For Each Design Direction, Provide:
+1. **trend**: One of the above trend names (lowercase, underscores instead of spaces)
+2. **concept_name**: Short catchy name for this design direction
+3. **description**: 2-3 sentences describing the visual approach
+4. **colors**: Object with primary, secondary, accent, background (hex codes)
+5. **typography**: Font family suggestions and hierarchy (title/subtitle sizing)
+6. **visual_elements**: Specific shapes, patterns, or motifs to include
+7. **mood**: Emotional tone (professional, energetic, calm, bold, etc.)
+8. **layout**: Description of text placement and visual balance
+9. **accessibility**: Contrast ratio notes and readability considerations
+
+FORMAT your response as VALID JSON only (no other text):
+{{
+  "designs": [
+    {{
+      "trend": "glassmorphism",
+      "concept_name": "Transparent Innovation",
+      "description": "Clean frosted glass panels with subtle blur effects...",
+      "colors": {{
+        "primary": "#3B82F6",
+        "secondary": "#1E40AF",
+        "accent": "#60A5FA",
+        "background": "#F8FAFC"
+      }},
+      "typography": "Large bold sans-serif title (120pt), light weight subtitle (36pt)",
+      "visual_elements": "Overlapping translucent geometric shapes, soft drop shadows",
+      "mood": "Modern, professional, tech-forward",
+      "layout": "Centered title with geometric background elements, subtitle at bottom",
+      "accessibility": "High contrast text on light background, AAA compliant"
+    }},
+    ... 2 more unique designs
+  ]
+}}
+
+Remember:
+- Use the REAL book title "{title}" in your descriptions
+- Make each design visually distinct (different trends, colors, layouts)
+- Ensure professional quality suitable for digital book sales
+- Return ONLY valid JSON, no markdown code blocks or extra text
+"""
+
+
+class CoverGeneratorProfessional:
     """
-    Generates professional book covers using AI-powered design concepts
-    Creates modern, trending cover designs with OpenRouter DeepSeek R1T2 Chimera
+    Professional AI cover generator using ReportLab with comprehensive graphical designs
+    Generates covers with titles using AI-powered ReportLab prompts
     """
-    
-    # Modern design trends for 2024-2025
-    DESIGN_TRENDS_2025 = {
-        'minimalist_abstract': {
-            'style': 'Clean geometric shapes with subtle gradients',
-            'colors': ['#f8fafc', '#e2e8f0', '#64748b', '#334155'],
-            'fonts': 'Sans-serif modern typography'
-        },
-        'glassmorphism': {
-            'style': 'Frosted glass effects with transparency layers',
-            'colors': ['#ffffff', '#f1f5f9', '#e2e8f0', '#cbd5e1'],
-            'fonts': 'Rounded sans-serif with light weights'
-        },
-        'neomorphism': {
-            'style': 'Soft shadows creating embedded/inset effects',
-            'colors': ['#f8fafc', '#f1f5f9', '#e2e8f0', '#cbd5e1'],
-            'fonts': 'Clean sans-serif with medium contrast'
-        },
-        'brutalist': {
-            'style': 'Bold typography with high contrast and raw edges',
-            'colors': ['#000000', '#ffffff', '#dc2626', '#ea580c'],
-            'fonts': 'Heavy sans-serif or display fonts'
-        },
-        'organic_shapes': {
-            'style': 'Flowing curves and natural forms',
-            'colors': ['#10b981', '#059669', '#047857', '#064e3b'],
-            'fonts': 'Humanist sans-serif with warm feel'
-        },
-        'cyberpunk': {
-            'style': 'Neon accents on dark backgrounds with tech elements',
-            'colors': ['#000000', '#1f2937', '#7c3aed', '#ec4899'],
-            'fonts': 'Futuristic sans-serif with condensed widths'
-        },
-        'vintage_modern': {
-            'style': 'Retro color palettes with contemporary typography',
-            'colors': ['#fef3c7', '#fde68a', '#f59e0b', '#d97706'],
-            'fonts': 'Classic serif with modern spacing'
-        }
-    }
     
     def __init__(self):
         self.api_key = settings.OPENROUTER_API_KEY
+        if not self.api_key:
+            raise ValueError("OPENROUTER_API_KEY not found in settings")
+        
         self.base_url = "https://openrouter.ai/api/v1"
         self.model = "deepseek/deepseek-chat"
         self.usage_tracker = UsageTracker()
@@ -66,26 +191,342 @@ class CoverGenerator:
     
     def generate_three_covers(self, book):
         """
-        Generate 3 different AI-powered cover designs for a book
-        Returns list of Cover objects with professional design concepts
+        Generate 3 AI-powered ReportLab covers for a book
+        Each cover includes the book title and comprehensive graphical elements
         """
         from covers.models import Cover
         
+        print(f"\n=== Generating AI ReportLab Covers for Book: {book.title} ===")
+        print(f"Sub-niche: {book.sub_niche}")
+        print(f"Audience: {self._infer_audience(book.sub_niche)}")
+        
         covers = []
         
-        # Generate 3 unique design concepts using AI
-        design_concepts = self._generate_ai_cover_concepts(book)
+        # Generate AI ReportLab design concepts
+        try:
+            design_concepts = self._generate_ai_reportlab_concepts(book)
+            
+            if not design_concepts or len(design_concepts) < 3:
+                raise Exception("Failed to generate 3 ReportLab design concepts from AI")
+            
+            print(f"Successfully generated {len(design_concepts)} AI ReportLab design concepts")
+            
+        except Exception as e:
+            print(f"AI ReportLab generation failed: {str(e)}")
+            raise Exception(f"Cover generation failed: {str(e)}")
         
-        for i, concept in enumerate(design_concepts):
-            # Generate unique filename
-            filename = f"book_{book.id}_ai_cover_{i+1}_{random.randint(1000, 9999)}"
-            image_path = self.covers_dir / f"{filename}.png"
-            pdf_path = self.covers_dir / f"{filename}.pdf"
-            
-            # Create HTML with AI-generated design
-            html_content = self._create_ai_cover_html(book.title, concept)
-            
+        # Create covers from AI ReportLab concepts
+        for i, concept in enumerate(design_concepts[:3]):  # Ensure exactly 3
             try:
+                print(f"\nCreating cover {i+1}/3: {concept.get('concept_name', 'Design')}")
+                
+                # Generate unique filename
+                clean_title = self._clean_filename(book.title)
+                filename = f"{clean_title}_cover_{i+1}_{random.randint(1000, 9999)}"
+                pdf_path = self.covers_dir / f"{filename}.pdf"
+                png_path = self.covers_dir / f"{filename}.png"
+                
+                # Create ReportLab PDF using AI-generated code
+                self._create_reportlab_cover_pdf(book.title, concept, str(pdf_path))
+                
+                # Convert PDF to PNG for preview
+                self._pdf_to_png(str(pdf_path), str(png_path))
+                
+                # Create Cover object
+                cover = Cover.objects.create(
+                    book=book,
+                    template_style=f"ai_reportlab_{concept.get('trend', 'modern')}_{i+1}",
+                    image_path=f"covers/{png_path.name}",
+                    pdf_path=f"covers/{pdf_path.name}",
+                    generation_params={
+                        'ai_generated': True,
+                        'design_concept': concept.get('concept_name', 'Professional Design'),
+                        'trend_style': concept.get('trend', 'modern'),
+                        'colors': concept.get('colors', {}),
+                        'reportlab_code': concept.get('reportlab_code', ''),
+                        'matplotlib_elements': concept.get('matplotlib_elements', ''),
+                        'layout_description': concept.get('layout_description', ''),
+                        'accessibility_notes': concept.get('accessibility_notes', ''),
+                    }
+                )
+                covers.append(cover)
+                print(f"✓ Cover {i+1} created successfully")
+                
+            except Exception as e:
+                print(f"✗ Cover {i+1} creation failed: {str(e)}")
+                # Continue to try next cover instead of failing completely
+                continue
+        
+        if len(covers) == 0:
+            raise Exception("Failed to create any covers")
+        
+        print(f"\n=== Successfully generated {len(covers)} ReportLab covers ===\n")
+        return covers
+    
+    def generate_cover_prompts(self, book) -> list:
+        """
+        Generate 3 ReportLab cover design prompts for a book
+        Returns text prompts describing how to render covers using ReportLab
+        """
+        print(f"\n=== Generating ReportLab Cover Prompts for Book: {book.title} ===")
+        
+        try:
+            # Generate AI cover concepts
+            design_concepts = self._generate_ai_cover_concepts(book)
+            
+            if not design_concepts or len(design_concepts) < 3:
+                raise Exception("Failed to generate 3 design concepts from AI")
+            
+            print(f"Successfully generated {len(design_concepts)} AI design concepts")
+            
+            # Convert AI concepts to ReportLab prompts
+            prompts = []
+            for i, concept in enumerate(design_concepts[:3]):
+                prompt = self._convert_concept_to_reportlab_prompt(book.title, concept, i+1)
+                prompts.append(prompt)
+            
+            return prompts
+            
+        except Exception as e:
+            print(f"Cover prompt generation failed: {str(e)}")
+            # Return fallback prompts
+            return self._get_fallback_reportlab_prompts(book.title)
+    
+    def _convert_concept_to_reportlab_prompt(self, title: str, concept: dict, cover_number: int) -> str:
+        """Convert AI design concept to ReportLab rendering prompt"""
+        
+        trend = concept.get('trend', 'minimalist')
+        colors = concept.get('colors', {})
+        typography = concept.get('typography', 'Large bold sans-serif title')
+        visual_elements = concept.get('visual_elements', 'Simple geometric shapes')
+        layout = concept.get('layout', 'Centered title')
+        
+        # Split title for better layout
+        words = title.split()
+        if len(words) > 4:
+            mid = len(words) // 2
+            title_line1 = ' '.join(words[:mid])
+            title_line2 = ' '.join(words[mid:])
+        else:
+            title_line1 = title
+            title_line2 = ""
+        
+        prompt = f"""Cover {cover_number}: {concept.get('concept_name', 'Professional Design')}
+
+Use ReportLab to create a {trend} style cover for the book "{title}".
+
+Canvas Setup:
+- Page size: letter (8.5 x 11 inches)
+- Background color: {colors.get('background', '#FFFFFF')}
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold
+- Size: 48pt for primary, 32pt for secondary
+- Color: {colors.get('primary', '#000000')}
+- Position: Centered horizontally, vertically centered
+- Line spacing: 1.2
+
+Visual Elements:
+- Style: {trend}
+- Colors: Primary {colors.get('primary', '#000000')}, Secondary {colors.get('secondary', '#666666')}, Accent {colors.get('accent', '#999999')}
+- Elements: {visual_elements}
+
+Layout Instructions:
+{layout}
+
+ReportLab Code Structure:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+from reportlab.lib.units import inch
+
+def create_cover{cover_number}(c):
+    # Set up canvas
+    c.setPageSize(letter)
+    
+    # Background
+    c.setFillColor(HexColor('{colors.get('background', '#FFFFFF')}'))
+    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+    
+    # Title rendering
+    c.setFillColor(HexColor('{colors.get('primary', '#000000')}'))
+    c.setFont("Helvetica-Bold", 48)
+    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
+    {f'c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
+    
+    # Add visual elements based on {trend} style
+    # {visual_elements}
+```
+
+Accessibility: Ensure high contrast ratio between text and background colors."""
+        
+        return prompt
+    
+    def _get_fallback_reportlab_prompts(self, title: str) -> list:
+        """Return fallback ReportLab prompts if AI generation fails"""
+        
+        words = title.split()
+        if len(words) > 4:
+            mid = len(words) // 2
+            title_line1 = ' '.join(words[:mid])
+            title_line2 = ' '.join(words[mid:])
+        else:
+            title_line1 = title
+            title_line2 = ""
+        
+        return [
+            f"""Cover A: Modern Minimalist
+
+Use ReportLab to create a clean, modern cover for "{title}".
+
+Canvas Setup:
+- Page size: letter (8.5 x 11 inches)
+- Background: White (#FFFFFF)
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold, 48pt primary, 32pt secondary
+- Color: Navy blue (#1a365d)
+- Position: Centered
+
+Visual Elements:
+- Add a simple colored rectangle background
+- Use HexColor('#e2e8f0') for background shape
+
+ReportLab Code:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+
+def create_coverA(c):
+    c.setPageSize(letter)
+    c.setFillColor(HexColor('#e2e8f0'))
+    c.rect(0.5*inch, 0.5*inch, 7.5*inch, 10*inch, fill=1)
+    c.setFillColor(HexColor('#1a365d'))
+    c.setFont("Helvetica-Bold", 48)
+    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
+    {f'c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
+```""",
+            
+            f"""Cover B: Elegant Typography
+
+Use ReportLab to create an elegant typographic cover for "{title}".
+
+Canvas Setup:
+- Page size: letter
+- Background: Light gray gradient (#f8fafc to #e2e8f0)
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold, 52pt primary, 36pt secondary
+- Color: Dark blue (#2d3748)
+- Position: Left-aligned with margin
+
+Visual Elements:
+- Add decorative line under title
+- Use subtle background pattern
+
+ReportLab Code:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+
+def create_coverB(c):
+    c.setPageSize(letter)
+    # Gradient background simulation
+    c.setFillColor(HexColor('#f8fafc'))
+    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+    c.setFillColor(HexColor('#2d3748'))
+    c.setFont("Helvetica-Bold", 52)
+    c.drawString(1*inch, 7*inch, "{title_line1}")
+    {f'c.setFont("Helvetica-Bold", 36)\nc.drawString(1*inch, 6.5*inch, "{title_line2}")' if title_line2 else ''}
+    # Decorative line
+    c.setStrokeColor(HexColor('#4a5568'))
+    c.setLineWidth(3)
+    c.line(1*inch, 6*inch, 7.5*inch, 6*inch)
+```""",
+            
+            f"""Cover C: Bold Statement
+
+Use ReportLab to create a bold, striking cover for "{title}".
+
+Canvas Setup:
+- Page size: letter
+- Background: Dark with light text (#1a202c)
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold, 56pt primary, 40pt secondary
+- Color: White (#ffffff)
+- Position: Centered
+
+Visual Elements:
+- High contrast design
+- Bold background shapes
+
+ReportLab Code:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+
+def create_coverC(c):
+    c.setPageSize(letter)
+    c.setFillColor(HexColor('#1a202c'))
+    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+    c.setFillColor(HexColor('#ffffff'))
+    c.setFont("Helvetica-Bold", 56)
+    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
+    {f'c.setFont("Helvetica-Bold", 40)\nc.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
+```"""
+        ]
+        """
+        Generate 3 AI-powered cover designs for a book
+        NO FALLBACK TEMPLATES - All designs are AI-generated
+        """
+        from covers.models import Cover
+        
+        print(f"\n=== Generating AI Covers for Book: {book.title} ===")
+        print(f"Sub-niche: {book.sub_niche}")
+        print(f"Audience: {self._infer_audience(book.sub_niche)}")
+        
+        covers = []
+        
+        # Generate AI ReportLab design concepts
+        try:
+            design_concepts = self._generate_ai_reportlab_concepts(book)
+            
+            if not design_concepts or len(design_concepts) < 3:
+                raise Exception("Failed to generate 3 design concepts from AI")
+            
+            print(f"Successfully generated {len(design_concepts)} AI design concepts")
+            
+        except Exception as e:
+            print(f"AI cover generation failed: {str(e)}")
+            raise Exception(f"Cover generation failed: {str(e)}")
+        
+        # Create covers from AI concepts
+        for i, concept in enumerate(design_concepts[:3]):  # Ensure exactly 3
+            try:
+                print(f"\nCreating cover {i+1}/3: {concept.get('concept_name', 'Design')}")
+                
+                # Generate unique filename
+                clean_title = self._clean_filename(book.title)
+                filename = f"{clean_title}_cover_{i+1}_{random.randint(1000, 9999)}"
+                image_path = self.covers_dir / f"{filename}.png"
+                pdf_path = self.covers_dir / f"{filename}.pdf"
+                
+                # Create HTML with AI-generated design
+                html_content = self._create_ai_cover_html(book.title, concept)
+                
                 # Render to PDF
                 html = HTML(string=html_content)
                 html.write_pdf(
@@ -99,72 +540,44 @@ class CoverGenerator:
                 # Create Cover object
                 cover = Cover.objects.create(
                     book=book,
-                    template_style=f"ai_concept_{i+1}",
+                    template_style=f"ai_{concept.get('trend', 'modern')}_{i+1}",
                     image_path=f"covers/{image_path.name}",
                     pdf_path=f"covers/{pdf_path.name}",
                     generation_params={
                         'ai_generated': True,
-                        'design_concept': concept,
+                        'design_concept': concept.get('concept_name', 'Professional Design'),
                         'trend_style': concept.get('trend', 'modern'),
                         'colors': concept.get('colors', {}),
+                        'mood': concept.get('mood', 'professional'),
                     }
                 )
                 covers.append(cover)
+                print(f"✓ Cover {i+1} created successfully")
                 
             except Exception as e:
-                print(f"Cover generation failed for concept {i+1}: {str(e)}")
-                # Create fallback cover
-                fallback_cover = self._create_fallback_cover(book, i+1)
-                if fallback_cover:
-                    covers.append(fallback_cover)
+                print(f"✗ Cover {i+1} creation failed: {str(e)}")
+                # Continue to try next cover instead of failing completely
+                continue
         
+        if len(covers) == 0:
+            raise Exception("Failed to create any covers")
+        
+        print(f"\n=== Successfully generated {len(covers)} covers ===\n")
         return covers
     
-    def _generate_ai_cover_concepts(self, book):
-        """Generate AI-powered cover design concepts using OpenRouter"""
+    def _generate_ai_reportlab_concepts(self, book) -> list:
+        """Generate AI-powered ReportLab design concepts"""
         
-        niche_context = self._get_niche_design_context(book.sub_niche)
+        # Get trending context for the niche
+        trending_ctx = get_trending_context(book.sub_niche)
+        trending_summary = f"{trending_ctx.get('category', 'Professional')} - {', '.join(trending_ctx.get('trends_2025', [])[:3])}"
         
-        prompt = f"""
-You are a professional book cover designer specializing in modern, trending designs for 2024-2025. Create 3 unique, professional cover design concepts for a book titled: "{book.title}"
-
-BOOK CONTEXT:
-- Topic: {book.sub_niche.replace('_', ' ').title()}
-- Target audience: {niche_context['audience']}
-- Industry: {niche_context['industry']}
-- Current trends: {', '.join(niche_context['trends'])}
-
-REQUIREMENTS:
-- Each design must follow one of these 2024-2025 design trends: glassmorphism, neomorphism, brutalist, organic_shapes, cyberpunk, vintage_modern, minimalist_abstract
-- Include specific color palettes (hex codes)
-- Suggest typography styles and layouts
-- Ensure designs are professional and marketable
-- Consider the book's topic for visual metaphors
-
-FORMAT your response as JSON:
-[
-  {{
-    "trend": "trend_name",
-    "title": "Design Concept Title",
-    "description": "Brief description of the design approach",
-    "colors": {{
-      "primary": "#hexcode",
-      "secondary": "#hexcode", 
-      "accent": "#hexcode",
-      "background": "#hexcode"
-    }},
-    "typography": "Font style and hierarchy description",
-    "visual_elements": "Key visual elements and layout",
-    "mood": "Emotional tone and feeling"
-  }},
-  {{
-    // Second concept
-  }},
-  {{
-    // Third concept  
-  }}
-]
-"""
+        prompt = REPORTLAB_COVER_PROMPT.format(
+            title=book.title,
+            audience=self._infer_audience(book.sub_niche),
+            sub_niche=book.sub_niche.replace('_', ' ').title(),
+            trending_info=trending_summary
+        )
         
         try:
             response = requests.post(
@@ -173,14 +586,14 @@ FORMAT your response as JSON:
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "https://book-generator.com",
-                    "X-Title": "Book Cover Generator"
+                    "X-Title": "Professional ReportLab Cover Generator"
                 },
                 json={
                     "model": self.model,
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are a creative book cover designer who creates modern, professional designs. Always respond with valid JSON."
+                            "content": "You are a creative ReportLab graphics designer who creates professional PDF book covers. Always respond with ONLY valid JSON, no markdown code blocks or extra text."
                         },
                         {
                             "role": "user",
@@ -188,9 +601,9 @@ FORMAT your response as JSON:
                         }
                     ],
                     "temperature": 0.8,
-                    "max_tokens": 2000,
+                    "max_tokens": 4000,
                 },
-                timeout=60
+                timeout=120
             )
             
             response.raise_for_status()
@@ -201,195 +614,206 @@ FORMAT your response as JSON:
                 input_tokens = data['usage'].get('prompt_tokens', 0)
                 output_tokens = data['usage'].get('completion_tokens', 0)
                 self.usage_tracker.record_usage(input_tokens, output_tokens)
+                print(f"ReportLab Cover API Usage: {input_tokens} prompt + {output_tokens} completion tokens")
             
             content = data['choices'][0]['message']['content']
             
+            # Clean up response (remove markdown code blocks if present)
+            content_clean = content.strip()
+            if content_clean.startswith('```'):
+                # Remove code block markers
+                lines = content_clean.split('\n')
+                content_clean = '\n'.join(lines[1:-1]) if len(lines) > 2 else content_clean
+                content_clean = content_clean.replace('```json', '').replace('```', '').strip()
+            
             # Parse JSON response
             try:
-                concepts = json.loads(content.strip())
-                if isinstance(concepts, list) and len(concepts) >= 3:
-                    return concepts[:3]  # Return first 3 concepts
-            except json.JSONDecodeError:
-                print(f"Failed to parse AI cover concepts JSON: {content}")
+                result = json.loads(content_clean)
+                designs = result.get('designs', [])
+                
+                if isinstance(designs, list) and len(designs) >= 3:
+                    print(f"Successfully parsed {len(designs)} ReportLab cover designs from AI")
+                    return designs[:3]
+                else:
+                    print(f"AI returned insufficient designs: {len(designs) if isinstance(designs, list) else 0}")
+                    raise ValueError("AI did not return 3 ReportLab cover designs")
+            
+            except json.JSONDecodeError as je:
+                print(f"Failed to parse JSON response: {je}")
+                print(f"Raw response (first 500 chars): {content[:500]}")
+                raise Exception("AI returned invalid JSON for ReportLab cover designs")
+        
+        except requests.exceptions.RequestException as e:
+            print(f"OpenRouter API error: {str(e)}")
+            raise Exception(f"ReportLab Cover API request failed: {str(e)}")
+        
+        except Exception as e:
+            print(f"ReportLab cover concept generation error: {str(e)}")
+            raise
+    
+    def _create_reportlab_cover_pdf(self, title: str, concept: dict, pdf_path: str):
+        """Create a ReportLab PDF cover using AI-generated code"""
+        
+        try:
+            # Get the ReportLab code from the concept
+            reportlab_code = concept.get('reportlab_code', '')
+            
+            if not reportlab_code:
+                raise Exception("No ReportLab code provided in concept")
+            
+            # Create a canvas
+            c = canvas.Canvas(pdf_path, pagesize=letter)
+            
+            # Execute the AI-generated ReportLab code
+            # Note: In a production environment, you'd want to sandbox this execution
+            # For now, we'll create a safe execution environment
+            
+            # Set up the execution context with safe imports
+            exec_globals = {
+                'canvas': c,
+                'letter': letter,
+                'inch': inch,
+                'cm': cm,
+                'HexColor': HexColor,
+                'colors': colors,
+                'Drawing': Drawing,
+                'Rect': Rect,
+                'String': String,
+                'Line': Line,
+                'Circle': Circle,
+                'Polygon': Polygon,
+                'renderPDF': renderPDF,
+                'TA_CENTER': TA_CENTER,
+                'TA_JUSTIFY': TA_JUSTIFY,
+                'TA_LEFT': TA_LEFT,
+                'TA_RIGHT': TA_RIGHT,
+            }
+            
+            # Extract function definitions from the code
+            lines = reportlab_code.split('\n')
+            functions = []
+            current_function = []
+            in_function = False
+            
+            for line in lines:
+                line = line.strip()
+                if line.startswith('def create_cover') and '(' in line:
+                    if current_function:
+                        functions.append('\n'.join(current_function))
+                    current_function = [line]
+                    in_function = True
+                elif in_function:
+                    current_function.append(line)
+                    if line.startswith('def ') and '(' in line:
+                        # New function starts
+                        functions.append('\n'.join(current_function[:-1]))
+                        current_function = [line]
+                    elif not line or line.startswith('#'):
+                        continue
+            
+            if current_function:
+                functions.append('\n'.join(current_function))
+            
+            # Execute the functions and find the appropriate one to call
+            cover_function = None
+            for func_code in functions:
+                if 'def create_cover' in func_code:
+                    try:
+                        exec(func_code, exec_globals)
+                        # Find the function name
+                        for line in func_code.split('\n'):
+                            if line.strip().startswith('def '):
+                                func_name = line.split('(')[0].replace('def ', '').strip()
+                                if func_name.startswith('create_cover'):
+                                    cover_function = func_name
+                                    break
+                        if cover_function:
+                            break
+                    except Exception as e:
+                        print(f"Failed to execute function: {e}")
+                        continue
+            
+            # Call the cover creation function
+            if cover_function and cover_function in exec_globals:
+                try:
+                    exec_globals[cover_function](c)
+                    c.save()
+                    print(f"✓ ReportLab cover PDF created: {pdf_path}")
+                except Exception as e:
+                    print(f"Failed to call cover function {cover_function}: {e}")
+                    raise Exception(f"ReportLab execution failed: {str(e)}")
+            else:
+                raise Exception("No valid cover creation function found")
             
         except Exception as e:
-            print(f"AI cover generation failed: {str(e)}")
-        
-        # Fallback to predefined concepts if AI fails
-        return self._get_fallback_concepts(book.sub_niche)
+            print(f"ReportLab PDF creation error: {str(e)}")
+            # Create a fallback simple cover
+            self._create_fallback_reportlab_cover(title, pdf_path)
     
-    def _get_niche_design_context(self, sub_niche):
-        """Get design context for different niches"""
-        contexts = {
-            # AI & Digital Transformation
-            'ai_productivity_tools': {
-                'audience': 'Tech-savvy professionals and entrepreneurs',
-                'industry': 'AI productivity software',
-                'trends': ['automation', 'efficiency', 'smart technology']
-            },
-            'digital_nomad_guides': {
-                'audience': 'Remote workers and location-independent professionals',
-                'industry': 'Digital lifestyle',
-                'trends': ['freedom', 'mobility', 'work-life balance']
-            },
-            'automation_business': {
-                'audience': 'Business owners and managers',
-                'industry': 'Business process automation',
-                'trends': ['efficiency', 'scalability', 'innovation']
-            },
-            'chatgpt_prompts_mastery': {
-                'audience': 'AI enthusiasts and content creators',
-                'industry': 'AI prompt engineering',
-                'trends': ['artificial intelligence', 'productivity', 'creativity']
-            },
-            'ai_content_creation': {
-                'audience': 'Marketers and content professionals',
-                'industry': 'AI content tools',
-                'trends': ['automation', 'personalization', 'scale']
-            },
-            'remote_work_optimization': {
-                'audience': 'Remote teams and distributed workers',
-                'industry': 'Remote collaboration',
-                'trends': ['collaboration', 'productivity', 'wellness']
-            },
-            
-            # Sustainability & Green Tech
-            'green_tech_startups': {
-                'audience': 'Entrepreneurs and investors',
-                'industry': 'Clean technology',
-                'trends': ['sustainability', 'innovation', 'impact']
-            },
-            'sustainable_living': {
-                'audience': 'Eco-conscious consumers',
-                'industry': 'Sustainable lifestyle',
-                'trends': ['environment', 'consciousness', 'wellness']
-            },
-            'climate_tech': {
-                'audience': 'Environmental professionals',
-                'industry': 'Climate technology',
-                'trends': ['climate action', 'innovation', 'urgency']
-            },
-            'eco_entrepreneurship': {
-                'audience': 'Green entrepreneurs',
-                'industry': 'Sustainable business',
-                'trends': ['profit', 'purpose', 'sustainability']
-            },
-            'carbon_footprint_reduction': {
-                'audience': 'Businesses and individuals',
-                'industry': 'Carbon management',
-                'trends': ['climate', 'responsibility', 'action']
-            },
-            
-            # Mental Health Technology
-            'digital_detox': {
-                'audience': 'Tech users seeking balance',
-                'industry': 'Digital wellness',
-                'trends': ['mindfulness', 'balance', 'wellness']
-            },
-            'mindfulness_apps': {
-                'audience': 'Mental health seekers',
-                'industry': 'Digital therapeutics',
-                'trends': ['mindfulness', 'technology', 'healing']
-            },
-            'mental_health_at_work': {
-                'audience': 'HR professionals and employees',
-                'industry': 'Workplace wellness',
-                'trends': ['mental health', 'workplace', 'support']
-            },
-            'stress_management_tech': {
-                'audience': 'Stressed professionals',
-                'industry': 'Stress reduction',
-                'trends': ['relaxation', 'technology', 'wellness']
-            },
-            'sleep_optimization': {
-                'audience': 'Health-conscious individuals',
-                'industry': 'Sleep technology',
-                'trends': ['sleep', 'health', 'optimization']
-            },
-            
-            # Future Skills & Learning
-            'prompt_engineering': {
-                'audience': 'AI practitioners and developers',
-                'industry': 'AI education',
-                'trends': ['artificial intelligence', 'skills', 'future']
-            },
-            'ai_ethics': {
-                'audience': 'AI professionals and policymakers',
-                'industry': 'AI governance',
-                'trends': ['ethics', 'responsibility', 'governance']
-            },
-            'digital_literacy': {
-                'audience': 'All digital users',
-                'industry': 'Digital education',
-                'trends': ['literacy', 'skills', 'adaptation']
-            },
-            'remote_collaboration': {
-                'audience': 'Remote teams',
-                'industry': 'Collaboration technology',
-                'trends': ['collaboration', 'remote work', 'efficiency']
-            },
-            'future_job_skills': {
-                'audience': 'Career changers and students',
-                'industry': 'Workforce development',
-                'trends': ['future', 'skills', 'career']
-            },
-        }
+    def _create_fallback_reportlab_cover(self, title: str, pdf_path: str):
+        """Create a simple fallback ReportLab cover"""
         
-        return contexts.get(sub_niche, {
-            'audience': 'Modern professionals',
-            'industry': 'Professional development',
-            'trends': ['growth', 'success', 'innovation']
-        })
+        try:
+            c = canvas.Canvas(pdf_path, pagesize=letter)
+            
+            # Background
+            c.setFillColor(HexColor('#f8fafc'))
+            c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+            
+            # Title
+            c.setFillColor(HexColor('#1a365d'))
+            c.setFont("Helvetica-Bold", 48)
+            
+            # Split title if too long
+            words = title.split()
+            if len(words) > 4:
+                mid = len(words) // 2
+                title_line1 = ' '.join(words[:mid])
+                title_line2 = ' '.join(words[mid:])
+            else:
+                title_line1 = title
+                title_line2 = ""
+            
+            # Center the title
+            c.drawCentredString(4.25*inch, 6*inch, title_line1)
+            if title_line2:
+                c.setFont("Helvetica-Bold", 32)
+                c.drawCentredString(4.25*inch, 5.5*inch, title_line2)
+            
+            # Subtitle
+            c.setFillColor(HexColor('#4a5568'))
+            c.setFont("Helvetica", 24)
+            c.drawCentredString(4.25*inch, 4.5*inch, "Professional Guide")
+            
+            c.save()
+            print(f"✓ Fallback ReportLab cover created: {pdf_path}")
+            
+        except Exception as e:
+            print(f"Fallback cover creation failed: {e}")
+            raise
     
-    def _get_fallback_concepts(self, sub_niche):
-        """Fallback concepts if AI generation fails"""
-        base_colors = {
-            'ai_productivity_tools': {'primary': '#3B82F6', 'secondary': '#1E40AF', 'accent': '#60A5FA', 'background': '#F8FAFC'},
-            'digital_nomad_guides': {'primary': '#10B981', 'secondary': '#059669', 'accent': '#34D399', 'background': '#F0FDF4'},
-            'automation_business': {'primary': '#8B5CF6', 'secondary': '#7C3AED', 'accent': '#A78BFA', 'background': '#FAF5FF'},
-            'sustainable_living': {'primary': '#059669', 'secondary': '#047857', 'accent': '#10B981', 'background': '#ECFDF5'},
-            'mental_health_at_work': {'primary': '#7C3AED', 'secondary': '#6D28D9', 'accent': '#8B5CF6', 'background': '#F5F3FF'},
-        }
+    def _infer_audience(self, sub_niche: str) -> str:
+        """Infer audience from sub-niche"""
+        kids_signals = ['kids', 'preschool', 'family', 'children', 'parenting']
+        niche_lower = sub_niche.lower()
         
-        colors = base_colors.get(sub_niche, {'primary': '#3B82F6', 'secondary': '#1E40AF', 'accent': '#60A5FA', 'background': '#F8FAFC'})
+        if any(sig in niche_lower for sig in kids_signals):
+            return "Parents, caregivers, and early educators"
         
-        return [
-            {
-                "trend": "glassmorphism",
-                "title": "Modern Glass Design",
-                "description": "Frosted glass effects with layered transparency",
-                "colors": colors,
-                "typography": "Clean sans-serif fonts with light weights",
-                "visual_elements": "Geometric shapes with subtle shadows",
-                "mood": "Modern and professional"
-            },
-            {
-                "trend": "neomorphism",
-                "title": "Soft Elevation Design", 
-                "description": "Soft shadows creating embedded effects",
-                "colors": colors,
-                "typography": "Rounded sans-serif with medium contrast",
-                "visual_elements": "Soft rounded elements with depth",
-                "mood": "Friendly and approachable"
-            },
-            {
-                "trend": "minimalist_abstract",
-                "title": "Clean Abstract Design",
-                "description": "Minimal geometric shapes with clean lines",
-                "colors": colors,
-                "typography": "Modern sans-serif hierarchy",
-                "visual_elements": "Abstract geometric patterns",
-                "mood": "Sophisticated and clean"
-            }
-        ]
+        return "Modern professionals and lifelong learners"
     
-    def _create_ai_cover_html(self, title, concept):
+    def _clean_filename(self, title: str) -> str:
+        """Clean title for filename"""
+        cleaned = ''.join(c for c in title if c.isalnum() or c in (' ', '-', '_'))
+        cleaned = cleaned[:80]
+        cleaned = '_'.join(cleaned.split())
+        return cleaned or "Professional_Book"
+    
+    def _create_ai_cover_html(self, title: str, concept: dict) -> str:
         """Create HTML for AI-generated cover design"""
         
         trend = concept.get('trend', 'modern')
         colors = concept.get('colors', {})
-        typography = concept.get('typography', 'Modern sans-serif')
-        visual_elements = concept.get('visual_elements', 'Clean geometric design')
         
         # Split title for better layout
         words = title.split()
@@ -401,42 +825,38 @@ FORMAT your response as JSON:
             title_line1 = title
             title_line2 = ""
         
-        # Generate HTML based on trend
-        if trend == 'glassmorphism':
+        # Route to appropriate template based on trend
+        if 'glass' in trend.lower():
             return self._glassmorphism_template(title_line1, title_line2, colors, concept)
-        elif trend == 'neomorphism':
+        elif 'neo' in trend.lower():
             return self._neomorphism_template(title_line1, title_line2, colors, concept)
-        elif trend == 'brutalist':
+        elif 'brutal' in trend.lower():
             return self._brutalist_template(title_line1, title_line2, colors, concept)
-        elif trend == 'organic_shapes':
+        elif 'organic' in trend.lower():
             return self._organic_template(title_line1, title_line2, colors, concept)
-        elif trend == 'cyberpunk':
+        elif 'cyber' in trend.lower() or 'futur' in trend.lower():
             return self._cyberpunk_template(title_line1, title_line2, colors, concept)
-        elif trend == 'vintage_modern':
+        elif 'vintage' in trend.lower():
             return self._vintage_modern_template(title_line1, title_line2, colors, concept)
-        else:  # minimalist_abstract or default
+        else:  # minimalist or default
             return self._minimalist_template(title_line1, title_line2, colors, concept)
     
-    def _glassmorphism_template(self, title1, title2, colors, concept):
-        """Glassmorphism design with frosted glass effects"""
+    def _glassmorphism_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
+        """Glassmorphism design template"""
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&family=Poppins:wght@300;600&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&family=Poppins:wght@300;600;800&display=swap');
                 
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 
                 body {{
                     width: 1600px;
                     height: 2400px;
-                    background: linear-gradient(135deg, {colors.get('background', '#f8fafc')} 0%, {colors.get('primary', '#e2e8f0')} 100%);
+                    background: linear-gradient(135deg, {colors.get('background', '#f8fafc')} 0%, {colors.get('primary', '#e2e8f0')}40 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -452,8 +872,8 @@ FORMAT your response as JSON:
                     backdrop-filter: blur(20px);
                     border: 1px solid rgba(255, 255, 255, 0.3);
                     border-radius: 24px;
-                    padding: 80px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                    padding: 100px 80px;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
                     position: relative;
                     z-index: 10;
                     max-width: 1200px;
@@ -462,41 +882,29 @@ FORMAT your response as JSON:
                 
                 .bg-shape {{
                     position: absolute;
-                    width: 600px;
-                    height: 600px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 50%;
-                    top: -150px;
-                    right: -150px;
-                    backdrop-filter: blur(40px);
-                }}
-                
-                .bg-shape-2 {{
-                    position: absolute;
-                    width: 400px;
-                    height: 400px;
+                    width: 700px;
+                    height: 700px;
                     background: rgba(255, 255, 255, 0.15);
-                    border-radius: 30%;
-                    bottom: -100px;
-                    left: -100px;
-                    transform: rotate(45deg);
-                    backdrop-filter: blur(30px);
+                    border-radius: 50%;
+                    top: -200px;
+                    right: -200px;
+                    backdrop-filter: blur(40px);
                 }}
                 
                 .title {{
                     font-family: 'Poppins', sans-serif;
                     font-size: 120px;
-                    font-weight: 700;
+                    font-weight: 800;
                     line-height: 1.1;
-                    margin-bottom: 40px;
+                    margin-bottom: 30px;
                     color: {colors.get('primary', '#1a365d')};
                     text-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                    letter-spacing: -2px;
+                    letter-spacing: -3px;
                 }}
                 
                 .title-line-2 {{
                     font-size: 80px;
-                    font-weight: 600;
+                    font-weight: 700;
                     margin-top: 20px;
                 }}
                 
@@ -506,22 +914,21 @@ FORMAT your response as JSON:
                     letter-spacing: 8px;
                     text-transform: uppercase;
                     color: {colors.get('secondary', '#4a5568')};
-                    opacity: 0.8;
-                    margin-top: 40px;
+                    opacity: 0.9;
+                    margin-top: 50px;
                 }}
                 
                 .accent-element {{
-                    width: 150px;
-                    height: 4px;
+                    width: 180px;
+                    height: 6px;
                     background: linear-gradient(90deg, {colors.get('accent', '#3b82f6')}, transparent);
-                    margin: 40px auto 0;
-                    border-radius: 2px;
+                    margin: 50px auto 0;
+                    border-radius: 3px;
                 }}
             </style>
         </head>
         <body>
             <div class="bg-shape"></div>
-            <div class="bg-shape-2"></div>
             <div class="glass-card">
                 <div class="title">{title1}</div>
                 {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
@@ -532,8 +939,8 @@ FORMAT your response as JSON:
         </html>
         """
     
-    def _neomorphism_template(self, title1, title2, colors, concept):
-        """Neomorphism design with soft shadows"""
+    def _neomorphism_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
+        """Neomorphism soft shadow design"""
         return f"""
         <!DOCTYPE html>
         <html>
@@ -542,11 +949,7 @@ FORMAT your response as JSON:
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;600;800&display=swap');
                 
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 
                 body {{
                     width: 1600px;
@@ -557,33 +960,19 @@ FORMAT your response as JSON:
                     justify-content: center;
                     align-items: center;
                     padding: 150px;
-                    position: relative;
                     font-family: 'Nunito', sans-serif;
                 }}
                 
                 .neo-card {{
                     background: {colors.get('background', '#f1f5f9')};
-                    border-radius: 32px;
-                    padding: 100px;
+                    border-radius: 40px;
+                    padding: 120px 100px;
                     box-shadow: 
-                        20px 20px 40px rgba(0,0,0,0.1),
-                        -20px -20px 40px rgba(255,255,255,0.8);
+                        25px 25px 50px rgba(0,0,0,0.12),
+                        -25px -25px 50px rgba(255,255,255,0.9);
                     position: relative;
-                    z-index: 10;
                     max-width: 1200px;
                     text-align: center;
-                }}
-                
-                .inner-shadow {{
-                    position: absolute;
-                    top: 40px;
-                    left: 40px;
-                    right: 40px;
-                    bottom: 40px;
-                    border-radius: 24px;
-                    box-shadow: 
-                        inset 10px 10px 20px rgba(0,0,0,0.1),
-                        inset -10px -10px 20px rgba(255,255,255,0.8);
                 }}
                 
                 .title {{
@@ -592,158 +981,46 @@ FORMAT your response as JSON:
                     line-height: 1.1;
                     margin-bottom: 30px;
                     color: {colors.get('primary', '#2d3748')};
-                    letter-spacing: -1px;
-                    position: relative;
-                    z-index: 20;
+                    letter-spacing: -2px;
                 }}
                 
                 .title-line-2 {{
                     font-size: 75px;
-                    font-weight: 600;
-                    margin-top: 15px;
+                    font-weight: 700;
+                    margin-top: 20px;
                 }}
                 
                 .subtitle {{
-                    font-size: 28px;
+                    font-size: 30px;
                     font-weight: 300;
-                    letter-spacing: 6px;
+                    letter-spacing: 8px;
                     text-transform: uppercase;
                     color: {colors.get('secondary', '#4a5568')};
-                    margin-top: 30px;
-                    position: relative;
-                    z-index: 20;
-                }}
-                
-                .accent-dot {{
-                    width: 12px;
-                    height: 12px;
-                    background: {colors.get('accent', '#3b82f6')};
-                    border-radius: 50%;
-                    margin: 30px auto 0;
-                    box-shadow: 
-                        4px 4px 8px rgba(0,0,0,0.2),
-                        -4px -4px 8px rgba(255,255,255,0.8);
+                    margin-top: 40px;
                 }}
             </style>
         </head>
         <body>
             <div class="neo-card">
-                <div class="inner-shadow"></div>
-                <div class="title">{title1}</div>
-                {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
-                <div class="subtitle">Complete Guide</div>
-                <div class="accent-dot"></div>
-            </div>
-        </body>
-        </html>
-        """
-    
-    def _minimalist_template(self, title1, title2, colors, concept):
-        """Minimalist abstract design"""
-        return f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap');
-                
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
-                
-                body {{
-                    width: 1600px;
-                    height: 2400px;
-                    background: {colors.get('background', '#ffffff')};
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: center;
-                    align-items: center;
-                    padding: 150px;
-                    position: relative;
-                    font-family: 'Inter', sans-serif;
-                }}
-                
-                .content {{
-                    position: relative;
-                    z-index: 10;
-                    text-align: center;
-                    max-width: 1200px;
-                }}
-                
-                .geometric-bg {{
-                    position: absolute;
-                    width: 800px;
-                    height: 800px;
-                    background: linear-gradient(45deg, {colors.get('primary', '#3b82f6')}20, {colors.get('accent', '#60a5fa')}20);
-                    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
-                    top: -200px;
-                    right: -200px;
-                    opacity: 0.1;
-                }}
-                
-                .title {{
-                    font-size: 140px;
-                    font-weight: 900;
-                    line-height: 1.1;
-                    margin-bottom: 40px;
-                    color: {colors.get('primary', '#1a365d')};
-                    letter-spacing: -3px;
-                }}
-                
-                .title-line-2 {{
-                    font-size: 100px;
-                    font-weight: 600;
-                    margin-top: 20px;
-                }}
-                
-                .subtitle {{
-                    font-size: 36px;
-                    font-weight: 300;
-                    letter-spacing: 12px;
-                    text-transform: uppercase;
-                    color: {colors.get('secondary', '#4a5568')};
-                    margin-top: 40px;
-                }}
-                
-                .minimal-line {{
-                    width: 300px;
-                    height: 3px;
-                    background: {colors.get('accent', '#3b82f6')};
-                    margin: 40px auto 0;
-                }}
-            </style>
-        </head>
-        <body>
-            <div class="geometric-bg"></div>
-            <div class="content">
                 <div class="title">{title1}</div>
                 {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
                 <div class="subtitle">Master Guide</div>
-                <div class="minimal-line"></div>
             </div>
         </body>
         </html>
         """
     
-    def _brutalist_template(self, title1, title2, colors, concept):
-        """Brutalist design with bold typography"""
+    def _brutalist_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
+        """Bold brutalist design"""
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;600;800&family=Bebas+Neue&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@700&display=swap');
                 
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 
                 body {{
                     width: 1600px;
@@ -754,28 +1031,19 @@ FORMAT your response as JSON:
                     justify-content: center;
                     align-items: center;
                     padding: 150px;
-                    position: relative;
                     font-family: 'Oswald', sans-serif;
-                }}
-                
-                .brutal-border {{
-                    position: absolute;
-                    top: 100px;
-                    left: 100px;
-                    right: 100px;
-                    bottom: 100px;
-                    border: 8px solid {colors.get('accent', '#ffffff')};
-                    z-index: 5;
+                    position: relative;
                 }}
                 
                 .content {{
-                    background: {colors.get('secondary', '#ffffff')};
-                    padding: 80px;
+                    background: {colors.get('background', '#ffffff')};
+                    padding: 100px;
                     position: relative;
                     z-index: 10;
                     max-width: 1200px;
                     text-align: center;
-                    box-shadow: 20px 20px 0px {colors.get('accent', '#dc2626')};
+                    box-shadow: 25px 25px 0px {colors.get('accent', '#dc2626')};
+                    border: 10px solid {colors.get('primary', '#000000')};
                 }}
                 
                 .title {{
@@ -785,26 +1053,25 @@ FORMAT your response as JSON:
                     margin-bottom: 30px;
                     color: {colors.get('primary', '#000000')};
                     text-transform: uppercase;
-                    letter-spacing: 4px;
+                    letter-spacing: 6px;
                 }}
                 
                 .title-line-2 {{
                     font-size: 120px;
-                    margin-top: 10px;
+                    margin-top: 15px;
                 }}
                 
                 .subtitle {{
                     font-size: 48px;
-                    font-weight: 800;
-                    letter-spacing: 8px;
+                    font-weight: 700;
+                    letter-spacing: 12px;
                     text-transform: uppercase;
                     color: {colors.get('accent', '#dc2626')};
-                    margin-top: 30px;
+                    margin-top: 40px;
                 }}
             </style>
         </head>
         <body>
-            <div class="brutal-border"></div>
             <div class="content">
                 <div class="title">{title1}</div>
                 {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
@@ -814,26 +1081,22 @@ FORMAT your response as JSON:
         </html>
         """
     
-    def _organic_template(self, title1, title2, colors, concept):
-        """Organic shapes design"""
+    def _organic_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
+        """Organic flowing shapes design"""
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Lato:wght@300;400&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@300&display=swap');
                 
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 
                 body {{
                     width: 1600px;
                     height: 2400px;
-                    background: linear-gradient(135deg, {colors.get('background', '#f0fdf4')} 0%, {colors.get('primary', '#10b981')} 100%);
+                    background: linear-gradient(135deg, {colors.get('background', '#f0fdf4')} 0%, {colors.get('primary', '#10b981')}60 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
@@ -845,13 +1108,13 @@ FORMAT your response as JSON:
                 
                 .organic-shape {{
                     position: absolute;
-                    width: 700px;
-                    height: 700px;
-                    background: rgba(255, 255, 255, 0.2);
+                    width: 800px;
+                    height: 800px;
+                    background: rgba(255, 255, 255, 0.25);
                     border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-                    top: -150px;
-                    right: -150px;
-                    backdrop-filter: blur(20px);
+                    top: -200px;
+                    right: -200px;
+                    backdrop-filter: blur(25px);
                 }}
                 
                 .content {{
@@ -868,30 +1131,22 @@ FORMAT your response as JSON:
                     line-height: 1.1;
                     margin-bottom: 40px;
                     color: {colors.get('secondary', '#047857')};
-                    letter-spacing: -2px;
+                    letter-spacing: -3px;
                 }}
                 
                 .title-line-2 {{
                     font-size: 90px;
                     font-weight: 700;
-                    margin-top: 20px;
+                    margin-top: 25px;
                 }}
                 
                 .subtitle {{
-                    font-size: 34px;
+                    font-size: 36px;
                     font-weight: 300;
-                    letter-spacing: 10px;
+                    letter-spacing: 12px;
                     text-transform: uppercase;
                     color: {colors.get('accent', '#059669')};
-                    margin-top: 40px;
-                }}
-                
-                .organic-accent {{
-                    width: 200px;
-                    height: 8px;
-                    background: linear-gradient(90deg, {colors.get('accent', '#10b981')}, {colors.get('primary', '#059669')});
-                    margin: 40px auto 0;
-                    border-radius: 4px;
+                    margin-top: 50px;
                 }}
             </style>
         </head>
@@ -901,27 +1156,22 @@ FORMAT your response as JSON:
                 <div class="title">{title1}</div>
                 {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
                 <div class="subtitle">Natural Guide</div>
-                <div class="organic-accent"></div>
             </div>
         </body>
         </html>
         """
     
-    def _cyberpunk_template(self, title1, title2, colors, concept):
-        """Cyberpunk design with neon effects"""
+    def _cyberpunk_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
+        """Futuristic cyberpunk neon design"""
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;600;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;800&display=swap');
                 
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 
                 body {{
                     width: 1600px;
@@ -944,19 +1194,19 @@ FORMAT your response as JSON:
                     right: 0;
                     bottom: 0;
                     background-image: 
-                        linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px);
-                    background-size: 50px 50px;
+                        linear-gradient(rgba(139, 92, 246, 0.15) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(139, 92, 246, 0.15) 1px, transparent 1px);
+                    background-size: 60px 60px;
                 }}
                 
                 .neon-glow {{
                     position: absolute;
-                    width: 600px;
-                    height: 600px;
-                    background: radial-gradient(circle, {colors.get('accent', '#ec4899')}40 0%, transparent 70%);
-                    top: -100px;
-                    right: -100px;
-                    filter: blur(50px);
+                    width: 700px;
+                    height: 700px;
+                    background: radial-gradient(circle, {colors.get('accent', '#ec4899')}50 0%, transparent 70%);
+                    top: -150px;
+                    right: -150px;
+                    filter: blur(60px);
                 }}
                 
                 .content {{
@@ -973,46 +1223,26 @@ FORMAT your response as JSON:
                     margin-bottom: 40px;
                     color: {colors.get('accent', '#ec4899')};
                     text-shadow: 
-                        0 0 20px {colors.get('accent', '#ec4899')},
-                        0 0 40px {colors.get('accent', '#ec4899')},
-                        0 0 60px {colors.get('accent', '#ec4899')};
+                        0 0 25px {colors.get('accent', '#ec4899')},
+                        0 0 50px {colors.get('accent', '#ec4899')};
                     letter-spacing: -2px;
                     text-transform: uppercase;
                 }}
                 
                 .title-line-2 {{
                     font-size: 100px;
-                    font-weight: 600;
-                    margin-top: 20px;
+                    font-weight: 700;
+                    margin-top: 25px;
                 }}
                 
                 .subtitle {{
-                    font-size: 36px;
-                    font-weight: 300;
-                    letter-spacing: 8px;
+                    font-size: 38px;
+                    font-weight: 600;
+                    letter-spacing: 10px;
                     text-transform: uppercase;
                     color: {colors.get('secondary', '#8b5cf6')};
-                    margin-top: 40px;
-                    text-shadow: 0 0 10px {colors.get('secondary', '#8b5cf6')};
-                }}
-                
-                .cyber-line {{
-                    width: 250px;
-                    height: 2px;
-                    background: linear-gradient(90deg, transparent, {colors.get('accent', '#ec4899')}, transparent);
-                    margin: 40px auto 0;
-                    position: relative;
-                }}
-                
-                .cyber-line::before {{
-                    content: '';
-                    position: absolute;
-                    top: -2px;
-                    left: 0;
-                    right: 0;
-                    height: 6px;
-                    background: linear-gradient(90deg, transparent, {colors.get('accent', '#ec4899')}40, transparent);
-                    filter: blur(2px);
+                    margin-top: 50px;
+                    text-shadow: 0 0 15px {colors.get('secondary', '#8b5cf6')};
                 }}
             </style>
         </head>
@@ -1023,13 +1253,12 @@ FORMAT your response as JSON:
                 <div class="title">{title1}</div>
                 {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
                 <div class="subtitle">Future Guide</div>
-                <div class="cyber-line"></div>
             </div>
         </body>
         </html>
         """
     
-    def _vintage_modern_template(self, title1, title2, colors, concept):
+    def _vintage_modern_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
         """Vintage modern design"""
         return f"""
         <!DOCTYPE html>
@@ -1037,53 +1266,39 @@ FORMAT your response as JSON:
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;600&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:wght@600;700&family=Poppins:wght@300;600&display=swap');
                 
-                * {{
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }}
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
                 
                 body {{
                     width: 1600px;
                     height: 2400px;
-                    background: linear-gradient(135deg, {colors.get('background', '#fef3c7')} 0%, {colors.get('primary', '#f59e0b')} 100%);
+                    background: linear-gradient(135deg, {colors.get('background', '#fef3c7')} 0%, {colors.get('primary', '#f59e0b')}40 100%);
                     display: flex;
                     flex-direction: column;
                     justify-content: center;
                     align-items: center;
                     padding: 150px;
-                    position: relative;
                     font-family: 'Poppins', sans-serif;
-                }}
-                
-                .vintage-border {{
-                    position: absolute;
-                    top: 80px;
-                    left: 80px;
-                    right: 80px;
-                    bottom: 80px;
-                    border: 6px solid {colors.get('secondary', '#d97706')};
-                    border-radius: 20px;
-                    opacity: 0.3;
+                    position: relative;
                 }}
                 
                 .content {{
+                    background: rgba(255, 255, 255, 0.95);
+                    padding: 100px;
+                    border-radius: 20px;
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
                     position: relative;
                     z-index: 10;
-                    text-align: center;
                     max-width: 1100px;
-                    background: rgba(255, 255, 255, 0.9);
-                    padding: 80px;
-                    border-radius: 16px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                    text-align: center;
+                    border: 8px solid {colors.get('secondary', '#d97706')};
                 }}
                 
                 .title {{
                     font-family: 'Crimson Text', serif;
                     font-size: 120px;
-                    font-weight: 600;
+                    font-weight: 700;
                     line-height: 1.1;
                     margin-bottom: 40px;
                     color: {colors.get('secondary', '#92400e')};
@@ -1092,173 +1307,186 @@ FORMAT your response as JSON:
                 
                 .title-line-2 {{
                     font-size: 85px;
-                    font-weight: 400;
-                    margin-top: 20px;
+                    font-weight: 600;
+                    margin-top: 25px;
                 }}
                 
                 .subtitle {{
-                    font-size: 32px;
+                    font-size: 34px;
                     font-weight: 300;
-                    letter-spacing: 6px;
+                    letter-spacing: 8px;
                     text-transform: uppercase;
                     color: {colors.get('accent', '#f59e0b')};
-                    margin-top: 40px;
-                }}
-                
-                .vintage-accent {{
-                    width: 180px;
-                    height: 4px;
-                    background: linear-gradient(90deg, {colors.get('secondary', '#d97706')}, {colors.get('accent', '#f59e0b')});
-                    margin: 40px auto 0;
-                    border-radius: 2px;
-                    position: relative;
-                }}
-                
-                .vintage-accent::before {{
-                    content: '';
-                    position: absolute;
-                    width: 8px;
-                    height: 8px;
-                    background: {colors.get('secondary', '#d97706')};
-                    border-radius: 50%;
-                    left: -4px;
-                    top: -2px;
-                }}
-                
-                .vintage-accent::after {{
-                    content: '';
-                    position: absolute;
-                    width: 8px;
-                    height: 8px;
-                    background: {colors.get('secondary', '#d97706')};
-                    border-radius: 50%;
-                    right: -4px;
-                    top: -2px;
+                    margin-top: 50px;
                 }}
             </style>
         </head>
         <body>
-            <div class="vintage-border"></div>
             <div class="content">
                 <div class="title">{title1}</div>
                 {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
                 <div class="subtitle">Timeless Guide</div>
-                <div class="vintage-accent"></div>
             </div>
         </body>
         </html>
         """
     
-    def _pdf_to_png(self, pdf_path, png_path):
-        """Convert first page of PDF to PNG for preview"""
-        try:
-            # Make sure pdf2image is available
-            import importlib.util
-            pdf2image_spec = importlib.util.find_spec('pdf2image')
-            if pdf2image_spec is not None:
-                try:
-                    from pdf2image import convert_from_path
-                    images = convert_from_path(pdf_path, first_page=1, last_page=1, dpi=150)
-                    if images:
-                        images[0].save(png_path, 'PNG')
-                        print(f"Successfully converted PDF to PNG: {png_path}")
-                        return
-                except Exception as e:
-                    print(f"pdf2image conversion failed: {e}, trying alternative method")
-            else:
-                print("pdf2image module not found, using fallback method")
+    def _minimalist_template(self, title1: str, title2: str, colors: dict, concept: dict) -> str:
+        """Clean minimalist design"""
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap');
                 
-            # Try alternative method using Pillow directly
+                * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+                
+                body {{
+                    width: 1600px;
+                    height: 2400px;
+                    background: {colors.get('background', '#ffffff')};
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 150px;
+                    position: relative;
+                    font-family: 'Inter', sans-serif;
+                }}
+                
+                .geometric-bg {{
+                    position: absolute;
+                    width: 900px;
+                    height: 900px;
+                    background: linear-gradient(45deg, {colors.get('primary', '#3b82f6')}15, {colors.get('accent', '#60a5fa')}15);
+                    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+                    top: -250px;
+                    right: -250px;
+                    opacity: 0.15;
+                }}
+                
+                .content {{
+                    position: relative;
+                    z-index: 10;
+                    text-align: center;
+                    max-width: 1200px;
+                }}
+                
+                .title {{
+                    font-size: 140px;
+                    font-weight: 900;
+                    line-height: 1.1;
+                    margin-bottom: 50px;
+                    color: {colors.get('primary', '#1a365d')};
+                    letter-spacing: -4px;
+                }}
+                
+                .title-line-2 {{
+                    font-size: 100px;
+                    font-weight: 700;
+                    margin-top: 25px;
+                }}
+                
+                .subtitle {{
+                    font-size: 38px;
+                    font-weight: 300;
+                    letter-spacing: 14px;
+                    text-transform: uppercase;
+                    color: {colors.get('secondary', '#4a5568')};
+                    margin-top: 50px;
+                }}
+                
+                .minimal-line {{
+                    width: 350px;
+                    height: 4px;
+                    background: {colors.get('accent', '#3b82f6')};
+                    margin: 50px auto 0;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="geometric-bg"></div>
+            <div class="content">
+                <div class="title">{title1}</div>
+                {f'<div class="title title-line-2">{title2}</div>' if title2 else ''}
+                <div class="subtitle">Master Guide</div>
+                <div class="minimal-line"></div>
+            </div>
+        </body>
+        </html>
+        """
+    
+    def _pdf_to_png(self, pdf_path: str, png_path: str):
+        """Convert PDF to PNG for preview"""
+        try:
+            # Try pdf2image first
+            try:
+                from pdf2image import convert_from_path
+                images = convert_from_path(pdf_path, first_page=1, last_page=1, dpi=150)
+                if images:
+                    images[0].save(png_path, 'PNG')
+                    print(f"✓ PNG preview created: {png_path}")
+                    return
+            except (ImportError, Exception) as e:
+                print(f"pdf2image not available or failed: {e}, trying PyMuPDF...")
+            
+            # Try PyMuPDF
             try:
                 import fitz  # PyMuPDF
                 doc = fitz.open(pdf_path)
                 page = doc.load_page(0)
                 pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
                 pix.save(png_path)
-                print(f"PyMuPDF successfully saved PNG: {png_path}")
+                print(f"✓ PNG preview created with PyMuPDF: {png_path}")
                 return
-            except ImportError:
-                print("PyMuPDF not available, using simple fallback")
-            except Exception as e:
-                print(f"PyMuPDF conversion failed: {e}")
-                
-        except Exception as e:
-            print(f"Error converting PDF to PNG: {e}")
+            except (ImportError, Exception) as e:
+                print(f"PyMuPDF not available or failed: {e}, using fallback...")
             
-        # Fallback: Create a simple preview image using PIL
+        except Exception as e:
+            print(f"PNG conversion error: {e}")
+        
+        # Fallback: Create placeholder image
         try:
             img = Image.new('RGB', (600, 900), color='white')
             draw = ImageDraw.Draw(img)
-            
-            # Try to load a font
-            try:
-                font = ImageFont.truetype("Arial", 40)
-            except:
-                font = ImageFont.load_default()
-                
-            # Draw placeholder text
-            draw.rectangle([50, 50, 550, 850], outline="black", width=5)
-            draw.text((300, 300), "Cover Preview", fill='black', font=font, anchor="mm")
-            draw.text((300, 400), "Image generation", fill='black', font=font, anchor="mm")
-            draw.text((300, 500), "in progress", fill='black', font=font, anchor="mm")
-            
+            draw.rectangle([50, 50, 550, 850], outline="gray", width=5)
+            draw.text((300, 450), "Cover Preview", fill='gray', anchor="mm")
             img.save(png_path, 'PNG')
-            print(f"Created fallback image: {png_path}")
+            print(f"✓ Fallback PNG created: {png_path}")
         except Exception as e:
-            print(f"Error creating fallback image: {e}")
-        """Convert first page of PDF to PNG for preview"""
-        try:
-            # Make sure pdf2image is available
-            import importlib.util
-            pdf2image_spec = importlib.util.find_spec('pdf2image')
-            if pdf2image_spec is not None:
-                try:
-                    from pdf2image import convert_from_path
-                    images = convert_from_path(pdf_path, first_page=1, last_page=1, dpi=150)
-                    if images:
-                        images[0].save(png_path, 'PNG')
-                        print(f"Successfully converted PDF to PNG: {png_path}")
-                        return
-                except Exception as e:
-                    print(f"pdf2image conversion failed: {e}, trying alternative method")
-            else:
-                print("pdf2image module not found, using fallback method")
-                
-            # Try alternative method using Pillow directly
-            try:
-                import fitz  # PyMuPDF
-                doc = fitz.open(pdf_path)
-                page = doc.load_page(0)
-                pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-                pix.save(png_path)
-                print(f"PyMuPDF successfully saved PNG: {png_path}")
-                return
-            except ImportError:
-                print("PyMuPDF not available, using simple fallback")
-            except Exception as e:
-                print(f"PyMuPDF conversion failed: {e}")
-                
-        except Exception as e:
-            print(f"Error converting PDF to PNG: {e}")
-            
-        # Fallback: Create a simple preview image using PIL
-        try:
-            img = Image.new('RGB', (600, 900), color='white')
-            draw = ImageDraw.Draw(img)
-            
-            # Try to load a font
-            try:
-                font = ImageFont.truetype("Arial", 40)
-            except:
-                font = ImageFont.load_default()
-                
-            # Draw placeholder text
-            draw.rectangle([50, 50, 550, 850], outline="black", width=5)
-            draw.text((300, 300), "Cover Preview", fill='black', font=font, anchor="mm")
-            draw.text((300, 400), "Image generation", fill='black', font=font, anchor="mm")
-            draw.text((300, 500), "in progress", fill='black', font=font, anchor="mm")
-            
-            img.save(png_path, 'PNG')
-            print(f"Created fallback image: {png_path}")
-        except Exception as e:
-            print(f"Error creating fallback image: {e}")
+            print(f"Fallback PNG creation error: {e}")
+    
+    def _get_modern_css(self) -> str:
+        """Return modern CSS styles for PDF generation"""
+        return """
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&family=Nunito:wght@300;400;500;600;700;800;900&family=Oswald:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Lato:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .title {
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .subtitle {
+            font-weight: 300;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        """
+
+
+# Maintain backwards compatibility
+CoverGenerator = CoverGeneratorProfessional

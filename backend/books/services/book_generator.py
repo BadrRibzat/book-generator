@@ -166,62 +166,71 @@ class BookGeneratorProfessional:
         self.books_dir = self.media_root / 'books'
         self.books_dir.mkdir(parents=True, exist_ok=True)
     
-    def infer_audience(self, sub_niche: str) -> str:
-        """Detect audience based on sub-niche keywords"""
+    def infer_audience(self, book) -> str:
+        """Detect audience based on book's niche and domain"""
+        # Use the new model structure
+        niche_name = book.niche.name.lower() if book.niche else ""
+        domain_name = book.domain.name.lower() if book.domain else ""
+
         kids_signals = [
-            'kids', 'preschool', 'family', 'bedtime', 'phonics', 'child', 
+            'kids', 'preschool', 'family', 'bedtime', 'phonics', 'child',
             'children', 'parenting', 'education', 'learning', 'story'
         ]
-        
-        niche_lower = sub_niche.lower().replace('_', ' ')
-        if any(sig in niche_lower for sig in kids_signals):
+
+        if any(sig in niche_name for sig in kids_signals) or any(sig in domain_name for sig in kids_signals):
             return "Parents, caregivers, and early educators"
-        
+
         return "Modern professionals and lifelong learners"
-    
-    def design_brief_from_subniche(self, sub_niche: str) -> str:
-        """Generate design brief based on sub-niche"""
-        s = sub_niche.lower()
-        
-        if 'ai' in s or 'digital' in s or 'automation' in s:
+
+    def design_brief_from_book(self, book) -> str:
+        """Generate design brief based on book's domain and niche"""
+        domain_name = book.domain.name.lower() if book.domain else ""
+        niche_name = book.niche.name.lower() if book.niche else ""
+
+        # Combine domain and niche for better design brief
+        combined = f"{domain_name} {niche_name}".strip()
+
+        if 'ai' in combined or 'digital' in combined or 'automation' in combined:
             return "Modern minimal, bold sans-serif, abstract neural motifs with subtle gradients, tech-forward aesthetic"
-        
-        if 'sustainability' in s or 'eco' in s or 'green' in s or 'climate' in s:
+
+        if 'sustainability' in combined or 'eco' in combined or 'green' in combined or 'climate' in combined:
             return "Eco-modern, textured organic feel, leaf/earth abstracts, earthy greens with clean space, natural tones"
-        
-        if 'mental' in s or 'mindfulness' in s or 'wellness' in s or 'stress' in s:
+
+        if 'mental' in combined or 'mindfulness' in combined or 'wellness' in combined or 'stress' in combined:
             return "Calm editorial, soft gradients, high readability, soothing blues and lavenders, peaceful atmosphere"
-        
-        if 'kids' in s or 'preschool' in s or 'family' in s or 'children' in s:
+
+        if 'kids' in combined or 'preschool' in combined or 'family' in combined or 'children' in combined:
             return "Playful, high-contrast shapes, friendly serif + rounded sans, warm pastels, child-friendly design"
-        
-        if 'startup' in s or 'entrepreneurship' in s or 'business' in s:
+
+        if 'startup' in combined or 'entrepreneurship' in combined or 'business' in combined:
             return "Editorial minimal, bold typography, geometric accents, professional confident aesthetic"
-        
-        if 'blockchain' in s or 'crypto' in s or 'metaverse' in s or 'nft' in s:
+
+        if 'blockchain' in combined or 'crypto' in combined or 'metaverse' in combined or 'nft' in combined:
             return "Futuristic cyberpunk, neon accents, digital grid patterns, tech-forward dark themes"
-        
-        if 'remote' in s or 'nomad' in s or 'work' in s:
+
+        if 'remote' in combined or 'nomad' in combined or 'work' in combined:
             return "Clean modern, location-independent motifs, freedom themes, balanced professional aesthetic"
-        
+
         return "Contemporary editorial minimalism with strong typographic hierarchy, professional and approachable"
-    
+
     def build_book_prompt(self, book) -> str:
-        """Build comprehensive prompt with trending context"""
-        sub_niche = book.sub_niche
-        page_length = book.page_length
-        audience = self.infer_audience(sub_niche)
-        
-        # Get trending context
-        trending_ctx = get_trending_context(sub_niche)
+        """Build comprehensive prompt with trending context using new model structure"""
+        # Use new model fields
+        domain_name = book.domain.name if book.domain else "General"
+        niche_name = book.niche.name if book.niche else "General Interest"
+        audience = self.infer_audience(book)
+        page_length = book.book_style.length if book.book_style else 'medium'
+
+        # Get trending context based on niche
+        trending_ctx = get_trending_context(niche_name)
         trending_text = format_trending_bullets(trending_ctx)
-        
+
         # Get related niches
-        related = get_related_niches(sub_niche, limit=6)
+        related = get_related_niches(niche_name, limit=6)
         related_text = ', '.join([r.replace('_', ' ').title() for r in related]) if related else "Related professional development topics"
-        
+
         return PROFESSIONAL_BOOK_PROMPT.format(
-            sub_niche=sub_niche.replace('_', ' ').title(),
+            sub_niche=f"{domain_name}: {niche_name}",
             audience=audience,
             page_length=page_length,
             trending_context=trending_text,
@@ -273,14 +282,19 @@ class BookGeneratorProfessional:
         
         # Determine audience if not provided
         if not audience:
-            audience = self.infer_audience(book.sub_niche)
+            audience = self.infer_audience(book)
         
+        # Use new model fields for the prompt
+        domain_name = book.domain.name if book.domain else "General"
+        niche_name = book.niche.name if book.niche else "General Interest"
+        page_length = book.book_style.length if book.book_style else 'medium'
+
         # Build the SmartBook prompt
         prompt = SMARTBOOK_AI_PROMPT.format(
-            user_request=user_request or f"Generate a {book.page_length}-page book about {book.sub_niche}",
+            user_request=user_request or f"Generate a {page_length}-page book about {domain_name}: {niche_name}",
             audience=audience,
-            niche=book.sub_niche.replace('_', ' ').title(),
-            page_length=book.page_length
+            niche=f"{domain_name}: {niche_name}",
+            page_length=page_length
         )
         
         system_msg = {
@@ -293,10 +307,10 @@ class BookGeneratorProfessional:
             "content": prompt
         }
         
-        print(f"Generating SmartBook content for: {book.sub_niche} ({book.page_length} pages) - Audience: {audience}")
+        print(f"Generating SmartBook content for: {domain_name} - {niche_name} ({page_length} pages) - Audience: {audience}")
         
         # Calculate required tokens
-        required_tokens = int(book.page_length * 650 * 1.5)
+        required_tokens = int(self._get_page_count_from_length(page_length) * 650 * 1.5)
         max_tokens = max(required_tokens, 16000)
         
         print(f"Using max_tokens={max_tokens} for SmartBook generation")
@@ -311,7 +325,7 @@ class BookGeneratorProfessional:
         usage = result.get("usage", {})
         
         # Parse the SmartBook response
-        parsed_data = self.parse_smartbook_response(content, book.page_length)
+        parsed_data = self.parse_smartbook_response(content, self._get_page_count_from_length(page_length))
         
         # Update book title if generated
         if parsed_data.get('title') and book.title in ["Untitled Book", "Generating..."]:
@@ -327,6 +341,15 @@ class BookGeneratorProfessional:
             "usage": usage,
             "latency_sec": result["latency_sec"]
         }
+
+    def _get_page_count_from_length(self, length: str) -> int:
+        """Convert length string to page count"""
+        length_map = {
+            'short': 18,  # 15-20 pages
+            'medium': 22,  # 20-25 pages
+            'full': 27  # 25-30 pages
+        }
+        return length_map.get(length, 22)  # Default to medium
     
     def parse_smartbook_response(self, content: str, page_length: int) -> Dict[str, Any]:
         """Parse SmartBook AI response into structured data"""
@@ -404,15 +427,20 @@ class BookGeneratorProfessional:
             "content": prompt
         }
         
-        print(f"Generating book content for: {book.sub_niche} ({book.page_length} pages)")
+        # Use new model fields
+        domain_name = book.domain.name if book.domain else "General"
+        niche_name = book.niche.name if book.niche else "General Interest"
+        page_length = self._get_page_count_from_length(book.book_style.length) if book.book_style else 22
+
+        print(f"Generating book content for: {domain_name} - {niche_name} ({page_length} pages)")
         
         # Calculate required tokens based on page length
         # ~500 words per page, ~1.3 tokens per word = ~650 tokens per page
         # Add 50% buffer for formatting and structure
-        required_tokens = int(book.page_length * 650 * 1.5)
+        required_tokens = int(page_length * 650 * 1.5)
         max_tokens = max(required_tokens, 16000)  # Minimum 16K tokens
         
-        print(f"Using max_tokens={max_tokens} for {book.page_length} pages")
+        print(f"Using max_tokens={max_tokens} for {page_length} pages")
         
         result = self.call_openrouter_chat(
             [system_msg, user_msg],
@@ -424,8 +452,8 @@ class BookGeneratorProfessional:
         usage = result.get("usage", {})
         
         # Extract title and design brief
-        title = self.extract_title(content) or self.generate_fallback_title(book.sub_niche)
-        design_brief = self.extract_design_brief(content) or self.design_brief_from_subniche(book.sub_niche)
+        title = self.extract_title(content) or self.generate_fallback_title(f"{domain_name} {niche_name}")
+        design_brief = self.extract_design_brief(content) or self.design_brief_from_book(book)
         
         # Update book title if extracted (check for placeholder titles)
         if title and book.title in ["Untitled Book", "Generating..."]:
@@ -433,7 +461,7 @@ class BookGeneratorProfessional:
             book.save()
         
         # Parse content into structured chapters
-        parsed_content = self.parse_book_content(content, book.page_length)
+        parsed_content = self.parse_book_content(content, page_length)
         
         return {
             "title": title,
@@ -442,7 +470,7 @@ class BookGeneratorProfessional:
             "usage": usage,
             "latency_sec": result["latency_sec"],
             "design_brief": design_brief,
-            "audience": self.infer_audience(book.sub_niche)
+            "audience": self.infer_audience(book)
         }
     
     def extract_title(self, text: str) -> Optional[str]:

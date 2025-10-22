@@ -16,7 +16,6 @@
         </div>
 
         <!-- Progress Steps -->
-        <!-- Progress Steps -->
         <div class="mb-12">
           <div class="flex items-center justify-between max-w-4xl mx-auto">
             <div v-for="(step, index) in steps" :key="index" class="flex-1">
@@ -101,7 +100,7 @@
                 </div>
               </div>
 
-              <!-- Step 2: Choose Sub-Niche -->
+              <!-- Step 2: Choose Niche -->
               <div v-show="currentStep === 1" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'bullseye']" class="mr-3 text-primary-600 dark:text-primary-400" />
@@ -109,35 +108,38 @@
                 </h2>
                 
                 <p class="text-gray-600 dark:text-gray-400 mb-6">
-                  Choose a specific sub-niche within <strong>{{ getDomainLabel(form.domain) }}</strong>. Each niche is carefully selected based on market trends and audience demand.
+                  Choose a specific niche within <strong>{{ getDomainLabel(form.domain) }}</strong>. Each niche is carefully selected based on market trends and audience demand.
                 </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label
                     v-for="niche in availableNiches"
-                    :key="niche.value"
+                    :key="niche.id"
                     class="group relative flex cursor-pointer rounded-xl border-2 p-5 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-102 backdrop-blur-sm"
-                    :class="form.sub_niche === niche.value ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                    :class="form.niche === niche.id ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
                   >
                     <input
                       type="radio"
-                      name="sub_niche"
-                      :value="niche.value"
-                      v-model="form.sub_niche"
+                      name="niche"
+                      :value="niche.id"
+                      v-model.number="form.niche"
                       class="sr-only"
                     />
                     <div class="flex flex-1 items-center">
                       <div class="flex-shrink-0 mr-4">
-                        <div class="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300" :class="form.sub_niche === niche.value ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300" :class="form.niche === niche.id ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
                           <font-awesome-icon :icon="['fas', 'star']" class="h-5 w-5" />
                         </div>
                       </div>
-                      <span class="block text-sm font-semibold" :class="form.sub_niche === niche.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
-                        {{ niche.label }}
+                      <span class="block text-sm font-semibold" :class="form.niche === niche.id ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                        {{ niche.name }}
+                      </span>
+                      <span class="block text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {{ niche.audience }}
                       </span>
                     </div>
                     <font-awesome-icon
-                      v-if="form.sub_niche === niche.value"
+                      v-if="form.niche === niche.id"
                       :icon="['fas', 'check-circle']"
                       class="h-5 w-5 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
                     />
@@ -145,47 +147,59 @@
                 </div>
               </div>
 
-              <!-- Step 3: Choose Page Length -->
+              <!-- Step 3: Choose Book Style -->
               <div v-show="currentStep === 2" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                  <font-awesome-icon :icon="['fas', 'file-pdf']" class="mr-3 text-primary-600 dark:text-primary-400" />
-                  Choose Your Book Length
+                  <font-awesome-icon :icon="['fas', 'palette']" class="mr-3 text-primary-600 dark:text-primary-400" />
+                  Choose Your Book Style
                 </h2>
                 
                 <p class="text-gray-600 dark:text-gray-400 mb-6">
-                  Select how many pages you want your book to have. More pages mean more detailed content, but will take longer to generate.
+                  Select the writing style and format that best fits your audience and goals. Each style is optimized for different readers and purposes.
                 </p>
 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <label
-                    v-for="length in pageLengths"
-                    :key="length"
-                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex-col items-center backdrop-blur-sm"
-                    :class="form.page_length === length ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                    v-for="style in bookStyles"
+                    :key="style.id"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex-col backdrop-blur-sm"
+                    :class="form.book_style === style.id ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
                   >
                     <input
                       type="radio"
-                      name="page_length"
-                      :value="length"
-                      v-model.number="form.page_length"
+                      name="book_style"
+                      :value="style.id"
+                      v-model.number="form.book_style"
                       class="sr-only"
                     />
-                    <div class="w-16 h-16 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300" :class="form.page_length === length ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
-                      <font-awesome-icon :icon="['fas', 'book']" class="h-8 w-8" />
+                    <div class="flex items-start mb-4">
+                      <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-300" :class="form.book_style === style.id ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                        <font-awesome-icon :icon="['fas', getStyleIcon(style.tone)]" class="h-6 w-6" />
+                      </div>
+                      <div class="flex-1">
+                        <span class="text-lg font-bold mb-2 block" :class="form.book_style === style.id ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                          {{ style.name }}
+                        </span>
+                        <div class="flex flex-wrap gap-2 mb-3">
+                          <span class="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+                            {{ style.tone }}
+                          </span>
+                          <span class="text-xs px-2 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                            {{ style.target_audience }}
+                          </span>
+                          <span class="text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                            {{ style.length }}
+                          </span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                          {{ style.description }}
+                        </p>
+                      </div>
                     </div>
-                    <span class="text-3xl font-bold mb-2" :class="form.page_length === length ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
-                      {{ length }}
-                    </span>
-                    <span class="text-sm font-medium mb-2" :class="form.page_length === length ? 'text-primary-700 dark:text-primary-300' : 'text-gray-500 dark:text-gray-400'">
-                      pages
-                    </span>
-                    <span class="text-xs px-2 py-1 rounded-full" :class="form.page_length === length ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'">
-                      ~{{ getEstimatedTime(length) }}
-                    </span>
                     <font-awesome-icon
-                      v-if="form.page_length === length"
+                      v-if="form.book_style === style.id"
                       :icon="['fas', 'check-circle']"
-                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-3 right-3 transition-all duration-300 animate-scale-in"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
                     />
                   </label>
                 </div>
@@ -195,14 +209,14 @@
                   <div class="flex">
                     <font-awesome-icon :icon="['fas', 'info-circle']" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div class="ml-3">
-                      <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">AI Generation Details</h3>
+                      <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">Book Style Details</h3>
                       <div class="mt-2 text-sm text-blue-700 dark:text-blue-400">
-                        <p>Our AI will create:</p>
+                        <p>Your selected style will determine:</p>
                         <ul class="list-disc list-inside mt-1 space-y-1">
-                          <li>Market-optimized title (non-editable)</li>
-                          <li>{{ form.page_length }} pages of professional content</li>
-                          <li>3 unique AI-generated cover designs</li>
-                          <li>Print-ready PDF with selected cover</li>
+                          <li>Writing tone and voice</li>
+                          <li>Target audience approach</li>
+                          <li>Content length and depth</li>
+                          <li>Language and terminology level</li>
                         </ul>
                       </div>
                     </div>
@@ -210,8 +224,210 @@
                 </div>
               </div>
 
-              <!-- Step 4: Review & Confirm -->
+              <!-- Step 4: Choose Book Length -->
               <div v-show="currentStep === 3" class="space-y-6 animate-fade-in">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  <font-awesome-icon :icon="['fas', 'ruler']" class="mr-3 text-primary-600 dark:text-primary-400" />
+                  Choose Your Book Length
+                </h2>
+                
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                  Select the ideal length for your book. Longer books provide more depth but take more time to generate.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label
+                    v-for="length in bookLengths"
+                    :key="length.value"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                    :class="form.book_length === length.value ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                  >
+                    <input
+                      type="radio"
+                      name="book_length"
+                      :value="length.value"
+                      v-model="form.book_length"
+                      class="sr-only"
+                    />
+                    <div class="flex flex-1 items-center">
+                      <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300" :class="form.book_length === length.value ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                          <font-awesome-icon :icon="['fas', length.icon]" class="h-6 w-6" />
+                        </div>
+                      </div>
+                      <div class="flex flex-col">
+                        <span class="block text-lg font-bold mb-1" :class="form.book_length === length.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                          {{ length.label }}
+                        </span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                          {{ length.description }}
+                        </span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          ~{{ length.pages }} pages
+                        </span>
+                      </div>
+                    </div>
+                    <font-awesome-icon
+                      v-if="form.book_length === length.value"
+                      :icon="['fas', 'check-circle']"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <!-- Step 5: Target Audience -->
+              <div v-show="currentStep === 4" class="space-y-6 animate-fade-in">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  <font-awesome-icon :icon="['fas', 'users']" class="mr-3 text-primary-600 dark:text-primary-400" />
+                  Define Your Target Audience
+                </h2>
+                
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                  Who is your ideal reader? This helps us tailor the content and language to their needs and interests.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label
+                    v-for="audience in targetAudiences"
+                    :key="audience.value"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                    :class="form.target_audience === audience.value ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                  >
+                    <input
+                      type="radio"
+                      name="target_audience"
+                      :value="audience.value"
+                      v-model="form.target_audience"
+                      class="sr-only"
+                    />
+                    <div class="flex flex-1 items-center">
+                      <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300" :class="form.target_audience === audience.value ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                          <font-awesome-icon :icon="['fas', audience.icon]" class="h-6 w-6" />
+                        </div>
+                      </div>
+                      <div class="flex flex-col">
+                        <span class="block text-lg font-bold mb-1" :class="form.target_audience === audience.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                          {{ audience.label }}
+                        </span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                          {{ audience.description }}
+                        </span>
+                      </div>
+                    </div>
+                    <font-awesome-icon
+                      v-if="form.target_audience === audience.value"
+                      :icon="['fas', 'check-circle']"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <!-- Step 6: Key Topics -->
+              <div v-show="currentStep === 5" class="space-y-6 animate-fade-in">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  <font-awesome-icon :icon="['fas', 'list-check']" class="mr-3 text-primary-600 dark:text-primary-400" />
+                  Select Key Topics
+                </h2>
+                
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                  Choose the main topics you want to cover in your book. Select 3-5 topics that are most important to your audience.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label
+                    v-for="topic in availableTopics"
+                    :key="topic.id"
+                    class="group relative flex cursor-pointer rounded-xl border-2 p-4 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-102 backdrop-blur-sm"
+                    :class="form.key_topics.includes(topic.id) ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="topic.id"
+                      v-model="form.key_topics"
+                      class="sr-only"
+                    />
+                    <div class="flex flex-1 items-center">
+                      <div class="flex-shrink-0 mr-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300" :class="form.key_topics.includes(topic.id) ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                          <font-awesome-icon v-if="form.key_topics.includes(topic.id)" :icon="['fas', 'check']" class="h-4 w-4" />
+                          <font-awesome-icon v-else :icon="['fas', 'plus']" class="h-4 w-4" />
+                        </div>
+                      </div>
+                      <span class="block text-sm font-semibold" :class="form.key_topics.includes(topic.id) ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                        {{ topic.name }}
+                      </span>
+                    </div>
+                  </label>
+                </div>
+
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <div class="flex">
+                    <font-awesome-icon :icon="['fas', 'info-circle']" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div class="ml-3">
+                      <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">Topic Selection</h3>
+                      <div class="mt-2 text-sm text-blue-700 dark:text-blue-400">
+                        <p>Selected: {{ form.key_topics.length }} topics</p>
+                        <p class="mt-1">Recommended: 3-5 topics for optimal book structure</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 7: Writing Preferences -->
+              <div v-show="currentStep === 6" class="space-y-6 animate-fade-in">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  <font-awesome-icon :icon="['fas', 'pen-fancy']" class="mr-3 text-primary-600 dark:text-primary-400" />
+                  Writing Style Preferences
+                </h2>
+                
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                  How would you like your book to be written? Choose the style that best matches your vision.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label
+                    v-for="preference in writingPreferences"
+                    :key="preference.value"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 backdrop-blur-sm"
+                    :class="form.writing_preferences === preference.value ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                  >
+                    <input
+                      type="radio"
+                      name="writing_preferences"
+                      :value="preference.value"
+                      v-model="form.writing_preferences"
+                      class="sr-only"
+                    />
+                    <div class="flex flex-1 items-center">
+                      <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300" :class="form.writing_preferences === preference.value ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                          <font-awesome-icon :icon="['fas', preference.icon]" class="h-6 w-6" />
+                        </div>
+                      </div>
+                      <div class="flex flex-col">
+                        <span class="block text-lg font-bold mb-1" :class="form.writing_preferences === preference.value ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                          {{ preference.label }}
+                        </span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                          {{ preference.description }}
+                        </span>
+                      </div>
+                    </div>
+                    <font-awesome-icon
+                      v-if="form.writing_preferences === preference.value"
+                      :icon="['fas', 'check-circle']"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <!-- Step 8: Review & Confirm -->
+              <div v-show="currentStep === 7" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'check-square']" class="mr-3 text-primary-600 dark:text-primary-400" />
                   Review Your Book Configuration
@@ -237,19 +453,58 @@
                       <font-awesome-icon :icon="['fas', 'bullseye']" class="text-white" />
                     </div>
                     <div class="ml-4">
-                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Sub-Niche</p>
-                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getNicheLabel(form.sub_niche) }}</p>
+                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Niche</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getNicheLabel(form.niche) }}</p>
                     </div>
                   </div>
 
                   <div class="flex items-start">
                     <div class="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                      <font-awesome-icon :icon="['fas', 'file-pdf']" class="text-white" />
+                      <font-awesome-icon :icon="['fas', 'palette']" class="text-white" />
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Book Style</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getBookStyleLabel(form.book_style) }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                      <font-awesome-icon :icon="['fas', 'ruler']" class="text-white" />
                     </div>
                     <div class="ml-4">
                       <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Book Length</p>
-                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ form.page_length }} Pages</p>
-                      <p class="text-sm text-gray-600 dark:text-gray-400">Estimated generation time: {{ getEstimatedTime(form.page_length) }}</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getBookLengthLabel(form.book_length) }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                      <font-awesome-icon :icon="['fas', 'users']" class="text-white" />
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Target Audience</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getTargetAudienceLabel(form.target_audience) }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                      <font-awesome-icon :icon="['fas', 'list-check']" class="text-white" />
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Key Topics</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getSelectedTopicsLabel() }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                      <font-awesome-icon :icon="['fas', 'pen-fancy']" class="text-white" />
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Writing Style</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getWritingPreferenceLabel(form.writing_preferences) }}</p>
                     </div>
                   </div>
                 </div>
@@ -262,7 +517,7 @@
                       <h3 class="text-sm font-medium text-yellow-800 dark:text-yellow-300">What Happens Next?</h3>
                       <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
                         <ol class="list-decimal list-inside space-y-1">
-                          <li>AI generates your book content ({{ getEstimatedTime(form.page_length) }})</li>
+                          <li>AI generates your book content based on selected style</li>
                           <li>System creates 3 professional cover options</li>
                           <li>You'll be redirected to select your favorite cover</li>
                           <li>Final PDF will be assembled and ready to download</li>
@@ -367,15 +622,20 @@ const currentStep = ref(0);
 const loading = ref(false);
 const error = ref('');
 
-const steps = ['Domain', 'Sub-Niche', 'Length', 'Confirm'];
+const steps = ['Domain', 'Niche', 'Book Style', 'Book Length', 'Target Audience', 'Key Topics', 'Writing Preferences', 'Confirm'];
 
 const form = ref({
   domain: '',
-  sub_niche: '',
-  page_length: 20,
+  niche: '',
+  book_style: '',
+  book_length: '',
+  target_audience: '',
+  key_topics: [] as string[],
+  writing_preferences: '',
+  cover_style: '',
 });
 
-const domains = ref([
+const domains = ref<Array<{value: string, label: string, description?: string, icon?: string}>>([
   { value: 'ai_digital_transformation', label: 'AI & Digital Transformation' },
   { value: 'sustainability_green_tech', label: 'Sustainability & Green Tech' },
   { value: 'mental_health_tech', label: 'Mental Health Technology' },
@@ -389,15 +649,35 @@ const domainIcons: Record<string, string> = {
   'future_skills': 'rocket'
 };
 
-const domainDescriptions: Record<string, string> = {
-  'ai_digital_transformation': 'AI automation & digital innovation',
-  'sustainability_green_tech': 'Green tech & eco-innovation',
-  'mental_health_tech': 'Digital mental wellness solutions',
-  'future_skills': 'Emerging tech & future-ready skills'
-};
-
 const allNiches = ref<any>({});
-const pageLengths = [15, 20, 25, 30];
+const bookStyles = ref<any[]>([]);
+const bookLengths = ref([
+  { value: 'short', label: 'Short Book', description: 'Quick guide or introduction', pages: '15-25', icon: 'file-alt' },
+  { value: 'medium', label: 'Standard Book', description: 'Comprehensive coverage', pages: '30-50', icon: 'book' },
+  { value: 'long', label: 'Extended Book', description: 'In-depth analysis and examples', pages: '60-80', icon: 'book-open' }
+]);
+const targetAudiences = ref([
+  { value: 'beginners', label: 'Beginners', description: 'New to the topic, need basics explained', icon: 'seedling' },
+  { value: 'intermediate', label: 'Intermediate', description: 'Some knowledge, want practical applications', icon: 'user-graduate' },
+  { value: 'advanced', label: 'Advanced', description: 'Experienced, seeking expert insights', icon: 'crown' },
+  { value: 'professionals', label: 'Professionals', description: 'Industry experts and practitioners', icon: 'briefcase' }
+]);
+const availableTopics = ref([
+  { id: 'introduction', name: 'Introduction & Overview' },
+  { id: 'fundamentals', name: 'Core Fundamentals' },
+  { id: 'best_practices', name: 'Best Practices & Strategies' },
+  { id: 'case_studies', name: 'Real-World Case Studies' },
+  { id: 'implementation', name: 'Step-by-Step Implementation' },
+  { id: 'troubleshooting', name: 'Common Challenges & Solutions' },
+  { id: 'future_trends', name: 'Future Trends & Predictions' },
+  { id: 'resources', name: 'Additional Resources & Tools' }
+]);
+const writingPreferences = ref([
+  { value: 'formal', label: 'Formal & Professional', description: 'Academic tone, structured approach', icon: 'graduation-cap' },
+  { value: 'conversational', label: 'Conversational', description: 'Friendly, easy-to-read style', icon: 'comments' },
+  { value: 'inspirational', label: 'Inspirational', description: 'Motivational, encouraging tone', icon: 'star' },
+  { value: 'practical', label: 'Practical & Actionable', description: 'Focus on implementation and results', icon: 'tools' }
+]);
 
 const availableNiches = computed(() => {
   if (!form.value.domain || !allNiches.value[form.value.domain]) {
@@ -408,8 +688,10 @@ const availableNiches = computed(() => {
   if (!Array.isArray(domainNiches)) return [];
   
   return domainNiches.map((niche: any) => ({
-    value: niche.value,
-    label: niche.label
+    id: niche.id,
+    name: niche.name,
+    audience: niche.audience,
+    description: niche.description
   }));
 });
 
@@ -418,10 +700,18 @@ const isStepValid = computed(() => {
     case 0:
       return form.value.domain !== '';
     case 1:
-      return form.value.sub_niche !== '';
+      return form.value.niche !== '';
     case 2:
-      return form.value.page_length > 0;
+      return form.value.book_style !== '';
     case 3:
+      return form.value.book_length !== '';
+    case 4:
+      return form.value.target_audience !== '';
+    case 5:
+      return form.value.key_topics.length > 0;
+    case 6:
+      return form.value.writing_preferences !== '';
+    case 7:
       return true;
     default:
       return false;
@@ -436,13 +726,48 @@ onMounted(async () => {
   }
 
   try {
-    const response = await apiClient.get('/config/sub-niches/');
-    domains.value = response.data.domains || [];
-    allNiches.value = response.data.sub_niches || {};
+    // Load domains from API and convert to expected format
+    const domainsResponse = await apiClient.get('/domains/');
+    const apiDomains = domainsResponse.data || [];
+    domains.value = apiDomains.map((domain: any) => ({
+      value: domain.slug, // Use slug as value
+      label: domain.name,
+      description: domain.description,
+      icon: domain.icon
+    }));
+
+    // Load niches from API and group by domain
+    const nichesResponse = await apiClient.get('/niches/');
+    const apiNiches = nichesResponse.data || [];
+    
+    // Group niches by domain slug
+    const groupedNiches: any = {};
+    apiNiches.forEach((niche: any) => {
+      const domainSlug = niche.domain_slug;
+      if (domainSlug) {
+        if (!groupedNiches[domainSlug]) {
+          groupedNiches[domainSlug] = [];
+        }
+        groupedNiches[domainSlug].push({
+          id: niche.id,
+          name: niche.name,
+          audience: niche.audience,
+          description: niche.description
+        });
+      }
+    });
+    allNiches.value = groupedNiches;
+
+    // Load book styles
+    const stylesResponse = await apiClient.get('/book-styles/');
+    bookStyles.value = stylesResponse.data || [];
+
+    console.log('Loaded domains:', domains.value);
     console.log('Loaded niches:', allNiches.value);
+    console.log('Loaded book styles:', bookStyles.value);
   } catch (err) {
     error.value = 'Failed to load book configuration';
-    console.error('Failed to load niches:', err);
+    console.error('Failed to load configuration:', err);
   }
 });
 
@@ -452,23 +777,54 @@ const getDomainLabel = (value: string) => {
 };
 
 const getNicheLabel = (value: string) => {
-  const niche = availableNiches.value.find((n: any) => n.value === value);
-  return niche ? niche.label : value;
+  const niche = availableNiches.value.find((n: any) => n.id === value);
+  return niche ? niche.name : value;
 };
 
 const getDomainDescription = (value: string) => {
-  return domainDescriptions[value] || 'Trending niche content';
+  const domain = domains.value.find(d => d.value === value);
+  return domain ? domain.description : 'Trending niche content';
 };
 
-const getEstimatedTime = (pages: number) => {
-  const minutes = Math.ceil(pages / 5) * 2;
-  return `${minutes}-${minutes + 5} min`;
+const getStyleIcon = (tone: string) => {
+  const iconMap: Record<string, string> = {
+    'professional': 'briefcase',
+    'casual': 'coffee',
+    'academic': 'graduation-cap',
+    'conversational': 'comments'
+  };
+  return iconMap[tone] || 'book';
+};
+
+const getBookStyleLabel = (value: string) => {
+  const style = bookStyles.value.find(s => s.id === value);
+  return style ? style.name : value;
+};
+
+const getBookLengthLabel = (value: string) => {
+  const length = bookLengths.value.find(l => l.value === value);
+  return length ? length.label : value;
+};
+
+const getTargetAudienceLabel = (value: string) => {
+  const audience = targetAudiences.value.find(a => a.value === value);
+  return audience ? audience.label : value;
+};
+
+const getSelectedTopicsLabel = () => {
+  const selectedTopics = availableTopics.value.filter(t => form.value.key_topics.includes(t.id));
+  return selectedTopics.map(t => t.name).join(', ') || 'None selected';
+};
+
+const getWritingPreferenceLabel = (value: string) => {
+  const preference = writingPreferences.value.find(p => p.value === value);
+  return preference ? preference.label : value;
 };
 
 const handleNext = async () => {
   error.value = '';
   
-  if (currentStep.value < 3) {
+  if (currentStep.value < 7) {
     currentStep.value++;
   } else {
     // Submit the form

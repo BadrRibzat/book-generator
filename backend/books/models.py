@@ -4,10 +4,137 @@ from django.utils import timezone
 from users.models import UserProfile, SubscriptionPlan
 
 
+class Domain(models.Model):
+    """
+    Book domain/category model - admin managed
+    """
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True, help_text="FontAwesome icon name")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.name
+
+
+class Niche(models.Model):
+    """
+    Book sub-niche model - filtered by domain
+    """
+    domain = models.ForeignKey(Domain, on_delete=models.CASCADE, related_name='niches')
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100)
+    description = models.TextField(blank=True)
+    audience = models.CharField(max_length=200, blank=True, help_text="Target audience description")
+    market_size = models.CharField(max_length=100, blank=True, help_text="Market size info")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['domain', 'order', 'name']
+        unique_together = ['domain', 'slug']
+    
+    def __str__(self):
+        return f"{self.name} ({self.domain.name})"
+
+
+class BookStyle(models.Model):
+    """
+    Book style configuration - tone, audience, language combinations
+    """
+    TONE_CHOICES = [
+        ('educational', 'Educational'),
+        ('inspirational', 'Inspirational'),
+        ('technical', 'Technical'),
+        ('playful', 'Playful'),
+        ('professional', 'Professional'),
+        ('conversational', 'Conversational'),
+    ]
+    
+    AUDIENCE_CHOICES = [
+        ('kids', 'Kids (5-12 years)'),
+        ('parents', 'Parents'),
+        ('students', 'Students'),
+        ('professionals', 'Professionals'),
+        ('entrepreneurs', 'Entrepreneurs'),
+        ('general', 'General Public'),
+    ]
+    
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('fr', 'French'),
+        ('es', 'Spanish'),
+        ('de', 'German'),
+        ('it', 'Italian'),
+        ('pt', 'Portuguese'),
+    ]
+    
+    LENGTH_CHOICES = [
+        ('short', 'Short (15-20 pages)'),
+        ('medium', 'Medium (20-25 pages)'),
+        ('full', 'Full (25-30 pages)'),
+    ]
+    
+    name = models.CharField(max_length=100, unique=True)
+    tone = models.CharField(max_length=20, choices=TONE_CHOICES)
+    target_audience = models.CharField(max_length=20, choices=AUDIENCE_CHOICES)
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
+    length = models.CharField(max_length=10, choices=LENGTH_CHOICES, default='medium')
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.tone}, {self.target_audience}, {self.language})"
+    
+    @property
+    def page_count_range(self):
+        """Return tuple of (min_pages, max_pages)"""
+        ranges = {
+            'short': (15, 20),
+            'medium': (20, 25),
+            'full': (25, 30),
+        }
+        return ranges.get(self.length, (20, 25))
+
+
+class CoverStyle(models.Model):
+    """
+    Cover style options for book covers
+    """
+    STYLE_CHOICES = [
+        ('minimalist', 'Minimalist'),
+        ('futuristic', 'Futuristic'),
+        ('playful', 'Playful'),
+        ('elegant', 'Elegant'),
+        ('corporate', 'Corporate'),
+        ('artistic', 'Artistic'),
+    ]
+    
+    name = models.CharField(max_length=100, unique=True)
+    style = models.CharField(max_length=20, choices=STYLE_CHOICES)
+    description = models.TextField(blank=True)
+    preview_image = models.ImageField(upload_to='cover_styles/', blank=True, null=True)
+    color_scheme = models.JSONField(default=dict, help_text="Primary and accent colors")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    
+    class Meta:
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return f"{self.name} ({self.style})"
+
+
 class Book(models.Model):
-    """
-    Enhanced Book model with SaaS features and usage tracking
-    """
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('generating', 'Generating Content'),
@@ -76,9 +203,13 @@ class Book(models.Model):
     # Core fields
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='books')
     title = models.CharField(max_length=200)  # Auto-generated
-    domain = models.CharField(max_length=50, choices=DOMAIN_CHOICES)
-    sub_niche = models.CharField(max_length=50, choices=SUB_NICHE_CHOICES)
-    page_length = models.IntegerField(choices=PAGE_LENGTH_CHOICES)
+    
+    # New relationships
+    domain = models.ForeignKey(Domain, on_delete=models.PROTECT, related_name='books', default=1)
+    niche = models.ForeignKey(Niche, on_delete=models.PROTECT, related_name='books', default=1)
+    book_style = models.ForeignKey(BookStyle, on_delete=models.PROTECT, related_name='books', default=1)
+    cover_style = models.ForeignKey(CoverStyle, on_delete=models.PROTECT, related_name='books', blank=True, null=True)
+    
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
     # MongoDB reference for content
@@ -206,7 +337,9 @@ class Book(models.Model):
             else:
                 discount = 0  # No discount for free tier
             
-            cost = (self.page_length * base_cost_per_page) * (1 - discount)
+            # Use page count from book_style
+            page_count = self.book_style.page_count_range[1] if self.book_style else 20
+            cost = (page_count * base_cost_per_page) * (1 - discount)
             self.cost_to_generate = round(cost, 2)
             self.save()
     
@@ -254,8 +387,8 @@ class BookTemplate(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='templates')
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
-    domain = models.CharField(max_length=50, choices=Book.DOMAIN_CHOICES)
-    sub_niche = models.CharField(max_length=50, choices=Book.SUB_NICHE_CHOICES)
+    domain = models.ForeignKey(Domain, on_delete=models.PROTECT, related_name='templates', default=1)
+    niche = models.ForeignKey(Niche, on_delete=models.PROTECT, related_name='templates', default=1)
     
     # Template content
     title_template = models.CharField(max_length=200, help_text="Template for generating title")

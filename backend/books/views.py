@@ -14,17 +14,66 @@ import os
 import json
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample
 
-from .models import Book
+from .models import Book, BookTemplate, Domain, Niche, BookStyle, CoverStyle
 from .serializers import (
     BookSerializer, 
     BookCreateSerializer, 
+    BookStatusSerializer,
     UserSerializer,
-    UserRegistrationSerializer
+    UserRegistrationSerializer,
+    DomainSerializer,
+    NicheSerializer,
+    BookStyleSerializer,
+    CoverStyleSerializer
 )
 from .services.book_generator import BookGeneratorProfessional
+from .tasks import generate_book_content, generate_book_covers, create_final_book_pdf
 from .services.pdf_merger import PDFMerger
 from covers.services import CoverGeneratorProfessional
 from backend.utils.mongodb import get_mongodb_db
+
+
+class DomainViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for reading domains
+    """
+    queryset = Domain.objects.filter(is_active=True)
+    serializer_class = DomainSerializer
+    permission_classes = [AllowAny]
+
+
+class NicheViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for reading niches, filtered by domain
+    """
+    serializer_class = NicheSerializer
+    permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        queryset = Niche.objects.filter(is_active=True)
+        domain_slug = self.request.query_params.get('domain', None)
+        if domain_slug is not None:
+            queryset = queryset.filter(domain__slug=domain_slug)
+        return queryset
+
+
+class BookStyleViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for reading book styles
+    """
+    queryset = BookStyle.objects.filter(is_active=True)
+    serializer_class = BookStyleSerializer
+    permission_classes = [AllowAny]
+
+
+class CoverStyleViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for reading cover styles
+    """
+    queryset = CoverStyle.objects.filter(is_active=True)
+    serializer_class = CoverStyleSerializer
+    permission_classes = [AllowAny]
+
 
 class BookViewSet(viewsets.ModelViewSet):
     """
@@ -40,11 +89,12 @@ class BookViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Book.objects.filter(user=self.request.user)
     
-    def create(self, request):
+    @action(detail=False, methods=['post'])
+    def create_guided(self, request):
         """
-        Step 1: Create book and start content generation
+        Create book using the guided workflow with domain, niche, style, cover_style
         """
-        serializer = self.get_serializer(data=request.data)
+        serializer = BookCreateSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         book = serializer.save()
         
@@ -58,74 +108,40 @@ class BookViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
     
+    @action(detail=True, methods=['get'])
+    def status(self, request, pk=None):
+        """
+        Get book generation status and progress
+        """
+        book = self.get_object()
+        serializer = BookStatusSerializer(book)
+        return Response(serializer.data)
+    
     def _generate_book_content(self, book):
         """
-        Generate book content and update status
-        This should ideally be an async task (Celery/Django-Q)
-        For now, we'll do it synchronously with error handling
+        Trigger async book content generation using Celery
         """
         try:
-            book.status = 'generating'
-            book.save()
-            
-            # Generate content using OpenRouter DeepSeek R1
-            generator = BookGeneratorProfessional()
-            content_data = generator.generate_book_content(book)
-            
-            # Create PDF
-            interior_pdf_path = generator.create_pdf(book, content_data)
-            
-            # Store content in MongoDB
-            db = get_mongodb_db()
-            result = db.book_contents.insert_one({
-                'book_id': book.id,
-                'content': content_data,
-                'interior_pdf_path': interior_pdf_path,
-                'created_at': timezone.now().isoformat()
-            })
-            
-            book.mongodb_id = str(result.inserted_id)
-            book.status = 'content_generated'
-            book.content_generated_at = timezone.now()
-            book.save()
-            
-            # Auto-trigger cover generation
-            self._generate_covers(book)
-            
+            # Trigger the Celery task for content generation
+            generate_book_content.delay(book.id)
+            print(f"Triggered async content generation for book {book.id}")
+
         except Exception as e:
             book.status = 'error'
-            book.error_message = str(e)
+            book.error_message = f"Failed to start content generation: {str(e)}"
             book.save()
     
     def _generate_covers(self, book):
         """
-        Generate 3 cover options for the book
+        Trigger async cover generation using Celery
         """
         try:
-            # First check if MongoDB connection is valid
-            try:
-                db = get_mongodb_db()
-                content_doc = db.book_contents.find_one({'book_id': book.id})
-                if not content_doc:
-                    raise Exception("Book content not found in MongoDB")
-            except Exception as mongo_err:
-                print(f"MongoDB connection error: {mongo_err}")
-                raise Exception(f"Database connection error: {str(mongo_err)}")
-            
-            print(f"Generating covers for book {book.id}: {book.title}")
-            cover_gen = CoverGeneratorProfessional()
-            covers = cover_gen.generate_three_covers(book)
-            
-            # Check if covers were successfully generated
-            if len(covers) == 0:
-                raise Exception("No covers were generated")
-                
-            print(f"Successfully generated {len(covers)} covers for book {book.id}")
-            book.status = 'cover_pending'  # Set to cover_pending to indicate covers are ready for selection
-            book.save()
-            
+            # Trigger the Celery task for cover generation
+            generate_book_covers.delay(book.id)
+            print(f"Triggered async cover generation for book {book.id}")
+
         except Exception as e:
-            print(f"Cover generation failed: {str(e)}")
+            print(f"Failed to start cover generation: {str(e)}")
             book.status = 'error'
             book.error_message = f"Cover generation failed: {str(e)}"
             book.save()
@@ -202,12 +218,12 @@ class BookViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
             
-            # Generate final PDF
+            # Generate final PDF using Celery task
             try:
-                self._create_final_pdf(book)
-                print(f"Final PDF created for book {book.id}")
+                create_final_book_pdf.delay(book.id)
+                print(f"Triggered async final PDF creation for book {book.id}")
             except Exception as e:
-                print(f"PDF creation failed: {str(e)}")
+                print(f"Failed to start PDF creation: {str(e)}")
                 return Response(
                     {'error': f'PDF creation failed: {str(e)}'},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -611,59 +627,3 @@ def current_user(request):
     return Response(UserSerializer(request.user).data)
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_sub_niches(request):
-    """
-    Get available sub-niches organized by domain
-    
-    Returns trending 2025-2027 categories from the professional taxonomy:
-    - AI & Digital Transformation (8 sub-niches)
-    - Sustainability & Green Tech (8 sub-niches) 
-    - Mental Health Technology (8 sub-niches)
-    - Future Skills & Digital Economy (8 sub-niches)
-    
-    Total: 32 sub-niches with market trends, tools, and audience data
-    """
-    from books.services.trending import TRENDING_NICHES_2025_2027
-    
-    # Map taxonomy domain names to API keys for backwards compatibility
-    DOMAIN_KEY_MAP = {
-        'AI & Digital Transformation': 'ai_digital_transformation',
-        'Sustainability & Green Tech': 'sustainability_green_tech',
-        'Mental Health Technology': 'mental_health_tech',
-        'Future Skills & Digital Economy': 'future_skills'
-    }
-    
-    # Build API response from trending taxonomy
-    domains = []
-    niches = {}
-    
-    for domain_name, sub_niches_dict in TRENDING_NICHES_2025_2027.items():
-        # Use mapped key for API compatibility
-        domain_key = DOMAIN_KEY_MAP.get(domain_name, domain_name.lower().replace(' ', '_').replace('&', '').replace('__', '_').strip('_'))
-        
-        # Add domain to list
-        domains.append({
-            'value': domain_key,
-            'label': domain_name
-        })
-        
-        # Add sub-niches for this domain
-        niches[domain_key] = []
-        for sub_niche_key, sub_niche_data in sub_niches_dict.items():
-            # Create readable label from key
-            label = ' '.join(word.capitalize() for word in sub_niche_key.split('_'))
-            
-            niches[domain_key].append({
-                'value': sub_niche_key,
-                'label': label,
-                'audience': sub_niche_data.get('audience', ''),
-                'market_size': sub_niche_data.get('market_size', '')
-            })
-    
-    return Response({
-        'domains': domains,
-        'sub_niches': niches,
-        'page_lengths': [15, 20, 25, 30]
-    })

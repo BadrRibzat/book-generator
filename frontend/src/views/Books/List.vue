@@ -179,7 +179,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
-import type { BookStatus, Domain, SubNiche } from '../../types';
+import type { BookStatus } from '../../types';
 
 const router = useRouter();
 const booksStore = useBooksStore();
@@ -261,11 +261,13 @@ const getStatusLabel = (status: BookStatus) => {
   return labels[status];
 };
 
-const formatDomain = (domain: Domain) => {
+const formatDomain = (domain: string | null | undefined) => {
+  if (!domain || typeof domain !== 'string') return 'Unknown Domain';
   return domain.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
-const formatNiche = (niche: SubNiche) => {
+const formatNiche = (niche: string | null | undefined) => {
+  if (!niche || typeof niche !== 'string') return 'Unknown Niche';
   return niche.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 };
 

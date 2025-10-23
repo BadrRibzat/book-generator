@@ -33,8 +33,66 @@
 
       <!-- Main Content -->
       <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Stats Cards with Glassmorphism -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Tab Navigation -->
+        <div class="mb-8">
+          <div class="border-b border-gray-200 dark:border-gray-700">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+              <button
+                @click="activeTab = 'overview'"
+                :class="[
+                  activeTab === 'overview'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                <font-awesome-icon :icon="['fas', 'tachometer-alt']" class="mr-2" />
+                Overview
+              </button>
+              <button
+                @click="activeTab = 'books'"
+                :class="[
+                  activeTab === 'books'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                <font-awesome-icon :icon="['fas', 'book']" class="mr-2" />
+                My Books
+              </button>
+              <button
+                @click="activeTab = 'subscription'"
+                :class="[
+                  activeTab === 'subscription'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                <font-awesome-icon :icon="['fas', 'credit-card']" class="mr-2" />
+                Subscription
+              </button>
+              <button
+                @click="activeTab = 'profile'"
+                :class="[
+                  activeTab === 'profile'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300',
+                  'whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm'
+                ]"
+              >
+                <font-awesome-icon :icon="['fas', 'user-cog']" class="mr-2" />
+                Profile Settings
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div v-show="activeTab === 'overview'">
+          <!-- Stats Cards with Glassmorphism -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <!-- Books Generated -->
           <div class="card-modern interactive-card">
             <div class="flex items-center justify-between">
@@ -342,6 +400,204 @@
             </div>
           </div>
         </div>
+
+        <!-- My Books Tab -->
+        <div v-show="activeTab === 'books'">
+          <div class="card-modern">
+            <div class="p-6 border-b border-gray-200/20 dark:border-gray-700/50">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white display-font">My Books</h2>
+              <p class="text-sm text-gray-600 dark:text-gray-400">Manage your generated books</p>
+            </div>
+            <div class="p-6">
+              <div v-if="allBooks.length === 0" class="text-center py-12">
+                <div class="w-20 h-20 bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <font-awesome-icon :icon="['fas', 'book-open']" class="text-white text-3xl" />
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No books yet</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Create your first AI-powered book to get started</p>
+                <router-link
+                  to="/profile/create"
+                  class="btn-primary inline-flex items-center justify-center group"
+                >
+                  <font-awesome-icon :icon="['fas', 'plus']" class="mr-2" />
+                  Create Your First Book
+                </router-link>
+              </div>
+              <div v-else class="space-y-4">
+                <div
+                  v-for="book in allBooks"
+                  :key="book.id"
+                  class="flex items-center justify-between p-6 rounded-xl bg-gradient-to-r from-white/50 to-transparent dark:from-gray-800/50 dark:to-transparent border border-white/20 dark:border-gray-700/50 hover:shadow-lg transition-all duration-300"
+                >
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
+                      <font-awesome-icon :icon="['fas', 'book']" class="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        {{ book.title || 'Untitled Book' }}
+                      </h3>
+                      <p class="text-sm text-gray-600 dark:text-gray-400">
+                        {{ formatDate(book.created_at) }} • {{ book.status }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <router-link
+                      :to="`/profile/books/${book.id}`"
+                      class="px-4 py-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 border border-primary-200 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                    >
+                      View
+                    </router-link>
+                    <button
+                      v-if="book.status === 'ready'"
+                      @click="downloadBook(book)"
+                      class="px-4 py-2 text-sm font-medium text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 border border-green-200 dark:border-green-700 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                    >
+                      Download
+                    </button>
+                    <button
+                      @click="duplicateBook(book)"
+                      class="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                    >
+                      Duplicate
+                    </button>
+                    <button
+                      @click="confirmDeleteBook(book)"
+                      class="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 border border-red-200 dark:border-red-700 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription Tab -->
+        <div v-show="activeTab === 'subscription'">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Current Plan -->
+            <div class="card-modern p-6">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                  <font-awesome-icon :icon="['fas', 'crown']" class="text-white text-xl" />
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white display-font">Current Plan</h2>
+              </div>
+              <div class="text-center">
+                <div class="text-4xl font-bold mb-2" :class="getTierColorClass(userProfile?.subscription_tier)">
+                  {{ userProfile?.subscription_tier || 'FREE' }}
+                </div>
+                <div class="text-gray-600 dark:text-gray-400 mb-6">
+                  {{ getTierDescription(userProfile?.subscription_tier) }}
+                </div>
+                <div class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg p-4 mb-6">
+                  <div class="text-sm text-gray-600 dark:text-gray-400">Books per day</div>
+                  <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ userProfile?.books_per_day || 1 }}</div>
+                </div>
+                <router-link
+                  v-if="userProfile?.subscription_tier === 'free'"
+                  to="/pricing"
+                  class="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-xl font-medium hover:from-amber-600 hover:to-orange-600 transition-all duration-200 text-center block shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <font-awesome-icon :icon="['fas', 'arrow-up']" class="mr-2" />
+                  Upgrade Plan
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Usage Stats -->
+            <div class="card-modern p-6">
+              <div class="flex items-center space-x-3 mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                  <font-awesome-icon :icon="['fas', 'chart-bar']" class="text-white text-xl" />
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white display-font">Usage Statistics</h2>
+              </div>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-600 dark:text-gray-400">Books this month</span>
+                  <span class="font-semibold text-gray-900 dark:text-white">{{ stats.monthlyBooks }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-600 dark:text-gray-400">Books today</span>
+                  <span class="font-semibold text-gray-900 dark:text-white">{{ stats.dailyBooks }} / {{ stats.dailyLimit }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-600 dark:text-gray-400">AI Tokens used</span>
+                  <span class="font-semibold text-gray-900 dark:text-white">{{ aiStats.totalTokens.toLocaleString() }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gray-600 dark:text-gray-400">Est. Cost</span>
+                  <span class="font-semibold text-green-600 dark:text-green-400">${{ aiStats.estimatedCost.toFixed(2) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile Settings Tab -->
+        <div v-show="activeTab === 'profile'">
+          <div class="card-modern p-6">
+            <div class="flex items-center space-x-3 mb-6">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <font-awesome-icon :icon="['fas', 'user-cog']" class="text-white text-xl" />
+              </div>
+              <h2 class="text-xl font-bold text-gray-900 dark:text-white display-font">Profile Settings</h2>
+            </div>
+            <div class="max-w-md">
+              <form @submit.prevent="updateProfile" class="space-y-6">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
+                  <input
+                    v-model="profileForm.username"
+                    type="text"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                  <input
+                    v-model="profileForm.email"
+                    type="email"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                    required
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Name</label>
+                  <input
+                    v-model="profileForm.first_name"
+                    type="text"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                  <input
+                    v-model="profileForm.last_name"
+                    type="text"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  :disabled="updatingProfile"
+                  class="w-full bg-gradient-to-r from-primary-600 to-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:from-primary-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span v-if="updatingProfile" class="flex items-center justify-center">
+                    <font-awesome-icon :icon="['fas', 'spinner']" class="animate-spin mr-2" />
+                    Updating...
+                  </span>
+                  <span v-else>Update Profile</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
 
@@ -443,10 +699,21 @@ const aiStats = ref<AIStats>({
 })
 
 const recentBooks = ref<Book[]>([])
+const allBooks = ref<Book[]>([])
 const recentActivity = ref<Activity[]>([])
 const userProfile = ref<UserProfile>({})
+const activeTab = ref('overview')
 const refreshing = ref(false)
 const activityInterval = ref<number | null>(null)
+
+// Profile form
+const profileForm = ref({
+  username: '',
+  email: '',
+  first_name: '',
+  last_name: ''
+})
+const updatingProfile = ref(false)
 
 // Computed
 const user = computed(() => authStore.user)
@@ -735,6 +1002,79 @@ const cancelDelete = () => {
   bookToDelete.value = null
 }
 
+// Duplicate book
+const duplicateBook = async (book: Book) => {
+  try {
+    // Create a new book with the same configuration
+    const duplicateData = {
+      domain: book.domain,
+      niche: book.niche,
+      book_style: book.book_style,
+      cover_style: book.cover_style,
+      book_length: 'medium', // Default
+      target_audience: 'general', // Default
+      key_topics: [], // Default
+      writing_preferences: 'conversational' // Default
+    }
+
+    const response = await apiClient.post('/books/create-guided/', duplicateData)
+    const newBook = response.data
+
+    // Add to books list
+    allBooks.value.unshift(newBook)
+    recentBooks.value.unshift(newBook)
+
+    // Update stats
+    stats.value.totalBooks += 1
+    stats.value.monthlyBooks += 1
+    stats.value.dailyBooks += 1
+
+    addActivity({
+      type: 'book_created',
+      title: 'Book duplicated',
+      description: `Created duplicate of "${book.title || 'Untitled Book'}"`,
+      status: 'success'
+    })
+  } catch (error) {
+    console.error('Failed to duplicate book:', error)
+    addActivity({
+      type: 'error',
+      title: 'Duplicate failed',
+      description: 'Could not duplicate the book',
+      status: 'error'
+    })
+  }
+}
+
+// Update profile
+const updateProfile = async () => {
+  try {
+    updatingProfile.value = true
+    await apiClient.patch('/users/profile/', profileForm.value)
+    
+    // Update user data
+    authStore.user.username = profileForm.value.username
+    authStore.user.email = profileForm.value.email
+    
+    addActivity({
+      type: 'book_created',
+      title: 'Profile updated',
+      description: 'Your profile settings have been saved',
+      status: 'success'
+    })
+  } catch (error) {
+    console.error('Failed to update profile:', error)
+    addActivity({
+      type: 'error',
+      title: 'Update failed',
+      description: 'Could not update profile settings',
+      status: 'error'
+    })
+  } finally {
+    updatingProfile.value = false
+  }
+}
+
 // Load dashboard data
 const loadDashboardData = async () => {
   try {
@@ -770,6 +1110,7 @@ const loadDashboardData = async () => {
 
       // Set books data
       recentBooks.value = books.slice(0, 5)
+      allBooks.value = books
 
       // Calculate stats from books data
       stats.value.totalBooks = books.length
@@ -818,6 +1159,14 @@ const loadDashboardData = async () => {
 // Lifecycle
 onMounted(async () => {
   await loadDashboardData()
+
+  // Set profile form data
+  profileForm.value = {
+    username: user.value?.username || '',
+    email: user.value?.email || '',
+    first_name: user.value?.first_name || '',
+    last_name: user.value?.last_name || ''
+  }
 
   // Start real-time activity simulation
   activityInterval.value = setInterval(simulateActivity, 30000) // Every 30 seconds

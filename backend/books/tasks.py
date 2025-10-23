@@ -86,7 +86,7 @@ def generate_book_content(self, book_id):
 @shared_task(bind=True, max_retries=2)
 def generate_book_covers(self, book_id):
     """
-    Generate 3 cover options for the book
+    Generate cover for the book - single cover for guided workflow, multiple for manual
     """
     try:
         # Get book instance
@@ -99,20 +99,35 @@ def generate_book_covers(self, book_id):
 
         logger.info(f"Starting cover generation for book {book_id}: {book.title}")
 
-        # Generate covers
-        cover_gen = CoverGeneratorProfessional()
-        covers = cover_gen.generate_three_covers(book)
+        # Check if this is a guided workflow book
+        is_guided = hasattr(book, 'book_style') and book.book_style is not None
 
-        if len(covers) == 0:
-            raise Exception("No covers were generated")
-
-        logger.info(f"Successfully generated {len(covers)} covers for book {book_id}")
-
-        # Update book status
-        book.status = 'cover_pending'
-        book.save()
-
-        return {'status': 'success', 'book_id': book_id, 'covers_count': len(covers)}
+        if is_guided:
+            # Generate single cover for guided workflow
+            cover_gen = CoverGeneratorProfessional()
+            cover = cover_gen.generate_single_cover(book)
+            
+            logger.info(f"Successfully generated single cover for guided book {book_id}")
+            
+            # For guided workflow, automatically create final PDF
+            create_final_book_pdf.delay(book_id)
+            
+            return {'status': 'success', 'book_id': book_id, 'covers_count': 1, 'guided': True}
+        else:
+            # Generate 3 covers for manual workflow
+            cover_gen = CoverGeneratorProfessional()
+            covers = cover_gen.generate_three_covers(book)
+            
+            if len(covers) == 0:
+                raise Exception("No covers were generated")
+            
+            logger.info(f"Successfully generated {len(covers)} covers for manual book {book_id}")
+            
+            # Update book status
+            book.status = 'cover_pending'
+            book.save()
+            
+            return {'status': 'success', 'book_id': book_id, 'covers_count': len(covers), 'guided': False}
 
     except Exception as e:
         logger.error(f"Cover generation failed for book {book_id}: {str(e)}")

@@ -85,29 +85,45 @@ class CoverSerializer(serializers.ModelSerializer):
 
 class BookSerializer(serializers.ModelSerializer):
     covers = CoverSerializer(many=True, read_only=True)
-    selected_cover = CoverSerializer(read_only=True)
+    selected_cover = serializers.SerializerMethodField()
     can_download = serializers.SerializerMethodField()
     download_url = serializers.SerializerMethodField()
     domain_name = serializers.CharField(source='domain.name', read_only=True)
     niche_name = serializers.CharField(source='niche.name', read_only=True)
     book_style_name = serializers.CharField(source='book_style.name', read_only=True)
-    cover_style_name = serializers.CharField(source='cover_style.name', read_only=True)
+    cover_style_name = serializers.CharField(source='cover_style.name', read_only=True, allow_null=True)
     user_username = serializers.CharField(source='user.username', read_only=True)
+    page_length = serializers.SerializerMethodField()
     
     class Meta:
         model = Book
         fields = ['id', 'user_username', 'title', 'domain', 'domain_name', 'niche', 'niche_name', 
                   'book_style', 'book_style_name', 'cover_style', 'cover_style_name',
                   'status', 'created_at', 'updated_at', 'completed_at', 'content_generated_at',
-                  'covers', 'selected_cover', 'can_download', 'download_url',
+                  'covers', 'selected_cover', 'can_download', 'download_url', 'page_length',
                   'error_message', 'mongodb_id']
         read_only_fields = ['id', 'title', 'status', 'created_at', 
                            'updated_at', 'completed_at', 'content_generated_at', 'error_message', 'mongodb_id']
     
+    def get_page_length(self, obj):
+        """Get page length from book style"""
+        if obj.book_style:
+            return obj.book_style.page_count_range[1]  # Return max pages
+        return 20  # Default fallback
+    
+    def get_selected_cover(self, obj):
+        """Get selected cover data, return None if no cover selected"""
+        selected_cover = obj.selected_cover
+        if selected_cover:
+            return CoverSerializer(selected_cover).data
+        return None
+    
     def get_can_download(self, obj):
+        """Check if book can be downloaded"""
         return obj.can_download()
     
     def get_download_url(self, obj):
+        """Get download URL if book is ready"""
         if obj.can_download():
             return f"/api/books/{obj.id}/download/"
         return None

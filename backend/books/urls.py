@@ -11,5 +11,6 @@ router.register(r'book-styles', views.BookStyleViewSet, basename='book-style')
 router.register(r'cover-styles', views.CoverStyleViewSet, basename='cover-style')
 
 urlpatterns = [
+    path('books/create-guided/', views.create_guided_book, name='create-guided-book'),
     path('', include(router.urls)),
 ]

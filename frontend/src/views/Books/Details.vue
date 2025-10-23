@@ -76,13 +76,13 @@
                 <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                   <dt class="text-sm font-medium text-gray-500">Domain</dt>
                   <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {{ formatDomain(book.domain) }}
+                    {{ formatDomain(book.domain_name) }}
                   </dd>
                 </div>
                 <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                   <dt class="text-sm font-medium text-gray-500">Sub-Niche</dt>
                   <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {{ formatNiche(book.sub_niche) }}
+                    {{ formatNiche(book.niche_name) }}
                   </dd>
                 </div>
                 <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
@@ -153,8 +153,8 @@
             </div>
           </div>
 
-          <!-- Cover Selection Card (show when covers are ready) -->
-          <div v-if="(book.status === 'content_generated' || book.status === 'cover_pending') && book.covers && book.covers.length > 0" class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+          <!-- Cover Selection Card (show when covers are ready for manual books only) -->
+          <div v-if="(book.status === 'content_generated' || book.status === 'cover_pending') && book.covers && book.covers.length > 0 && !book.book_style" class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
             <div class="flex items-start">
               <div class="flex-shrink-0">
                 <font-awesome-icon :icon="['fas', 'palette']" class="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
@@ -238,14 +238,14 @@
 
           <!-- Action Buttons -->
           <div class="flex space-x-4">
-            <a
+            <button
               v-if="book.can_download"
-              :href="book.download_url || '#'"
+              @click="downloadBook"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
             >
               <font-awesome-icon :icon="['fas', 'download']" class="mr-2" />
               Download PDF
-            </a>
+            </button>
 
             <button
               v-if="book.status === 'error' || book.status === 'ready'"
@@ -271,7 +271,8 @@ import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
 import CoverSelectionModal from '../../components/CoverSelectionModal.vue';
-import type { BookStatus, Domain, SubNiche } from '../../types';
+import apiClient from '../../services/api';
+import type { BookStatus } from '../../types';
 
 interface Props {
   id: string;
@@ -333,17 +334,18 @@ const startPolling = () => {
         // Get current status
         const status = booksStore.currentBook?.status;
         
-        // Show cover selection when content is generated or covers are pending selection
-        if ((status === 'content_generated' || status === 'cover_pending') && 
-            booksStore.currentBook?.covers && booksStore.currentBook.covers.length > 0) {
-          if (pollingInterval.value) {
-            clearInterval(pollingInterval.value);
-            pollingInterval.value = null;
+          // Show cover selection when content is generated or covers are pending selection (only for manual books)
+          if ((status === 'content_generated' || status === 'cover_pending') && 
+              booksStore.currentBook?.covers && booksStore.currentBook.covers.length > 0 &&
+              !booksStore.currentBook.book_style) {  // Only show for manual books without book_style
+            if (pollingInterval.value) {
+              clearInterval(pollingInterval.value);
+              pollingInterval.value = null;
+            }
+            // Show cover selection modal
+            showCoverModal.value = true;
+            return;
           }
-          // Show cover selection modal
-          showCoverModal.value = true;
-          return;
-        }
         
         // Stop polling for final statuses
         if (status === 'ready' || status === 'error') {
@@ -404,11 +406,11 @@ const getStatusLabel = (status: BookStatus) => {
   return labels[status];
 };
 
-const formatDomain = (domain: Domain) => {
+const formatDomain = (domain: string) => {
   return domain.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
-const formatNiche = (niche: SubNiche) => {
+const formatNiche = (niche: string) => {
   return niche.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
@@ -481,6 +483,47 @@ const handleDelete = async () => {
 
   if (result.success) {
     router.push('/profile/books');
+  }
+};
+
+const downloadBook = async () => {
+  if (!book.value) return;
+
+  try {
+    // Use apiClient instead of fetch for proper session authentication
+    const response = await apiClient.get(`/books/${book.value.id}/download/`, {
+      responseType: 'blob', // Important for file downloads
+    });
+
+    // Create blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${book.value.title || 'book'}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // Clean up blob URL
+    window.URL.revokeObjectURL(url);
+
+    // Show success message
+    if (typeof window !== 'undefined' && (window as any).$toast) {
+      (window as any).$toast.success('Book downloaded!', `Downloaded "${book.value.title || 'Untitled Book'}"`);
+    }
+  } catch (error: any) {
+    console.error('Failed to download book:', error);
+    
+    let errorMessage = 'Could not download the book';
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    }
+    
+    // Show error message
+    if (typeof window !== 'undefined' && (window as any).$toast) {
+      (window as any).$toast.error('Download failed', errorMessage);
+    }
   }
 };
 </script>

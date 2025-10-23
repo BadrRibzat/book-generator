@@ -61,7 +61,9 @@ export interface Book {
   id: number;
   title: string;
   domain: Domain;
-  sub_niche: SubNiche;
+  domain_name: string;
+  niche: SubNiche;
+  niche_name: string;
   page_length: PageLength;
   status: BookStatus;
   created_at: string;

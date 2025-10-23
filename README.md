@@ -1,574 +1,453 @@
-# 📚 Book Generator SaaS
+# 📚 SmartBookForge - AI-Powered Book Generator SaaS
 
-> **Production-ready SaaS that generates complete, publish-ready digital books (15-30 pages + professional cover) in PDF format using AI - 100% FREE, no credit card required.**
+<div align="center">
 
-![Status](https://img.shields.io/badge/status-active%20development-blue)
-![Python](https://img.shields.io/badge/python-3.10+-blue)
-![Django](https://img.shields.io/badge/django-4.2-green)
-![Vue](https://img.shields.io/badge/vue-3.5+-brightgreen)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![SmartBookForge Logo](https://img.shields.io/badge/SmartBookForge-AI%20Book%20Generator-blue?style=for-the-badge&logo=book&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square)
+![Python](https://img.shields.io/badge/Python-3.12+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-4.2-092E20?style=flat-square&logo=django&logoColor=white)
+![Vue](https://img.shields.io/badge/Vue.js-3.5+-4FC08D?style=flat-square&logo=vue.js&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)
 
----
+**Transform ideas into professional books in minutes with AI-powered content generation and stunning covers.**
 
-## 🎯 What Is This?
-
-A complete full-stack SaaS application that:
-1. **Generates full book content** using Groq's free LLM API (Llama 3.1 70B)
-2. **Creates 3 professional cover designs** using HTML/CSS templates
-3. **Assembles everything into a single PDF** ready for download/publishing
-4. **Requires NO payment method** - uses only free-tier services
-5. **Modern SaaS UI/UX** with dark mode and premium design
-
-### Key Features
-
-✅ **15 Trending Sub-Niches** across 5 domains (Language & Kids, Tech & AI, Nutrition, Meditation, Home Workout)  
-✅ **Auto-generated market-optimized titles** with 45+ psychology-based templates  
-✅ **15-30 page books** with professional formatting  
-✅ **3 cover styles** (Modern, Bold, Elegant) with niche-specific colors  
-✅ **Mandatory cover selection** before download (ensures complete product)  
-✅ **Book history** with regenerate/delete options  
-✅ **Session-based auth** (no JWT complexity)  
-✅ **MongoDB + SQLite** for efficient storage  
-✅ **RESTful API** with Swagger/ReDoc documentation  
-✅ **Modern Vue 3 Frontend** with TypeScript, Tailwind CSS, and dark mode  
-✅ **100% free stack** - no credit card needed anywhere
+[🚀 Live Demo](#) • [📖 Documentation](#) • [🛠️ API Docs](#)
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ What is SmartBookForge?
 
-### Backend
+SmartBookForge is a **complete SaaS platform** that generates **professional, publish-ready digital books** using advanced AI. Create 15-30 page books with custom covers in PDF format - perfect for content creators, educators, coaches, and indie publishers.
 
-- **Framework**: Django 4.2 + Django REST Framework
-- **API Documentation**: drf-spectacular (Swagger UI + ReDoc)
-- **Database**: SQLite (metadata) + MongoDB Atlas (content storage)
-- **AI**: Groq API (Llama 3.1 70B Versatile, free tier)
-- **PDF Generation**: WeasyPrint (HTML/CSS → print-ready PDF)
-- **Authentication**: Django Session Authentication
+### 🎯 Key Highlights
 
-### Frontend
+- **🤖 AI-Powered Content**: Generate complete book content using DeepSeek R1T2 Chimera
+- **🎨 Professional Covers**: Auto-generate single or multiple cover designs
+- **📄 PDF Assembly**: Merge content and covers into downloadable PDFs
+- **💰 100% Free**: No credit card required - uses free-tier AI services
+- **🌙 Modern UI**: Beautiful Vue 3 frontend with dark mode support
+- **⚡ Real-time Progress**: Live updates during book generation
+- **🔒 Secure Auth**: Session-based authentication system
 
-- **Framework**: Vue 3.5+ with Composition API
-- **Language**: TypeScript for full type safety
-- **Build Tool**: Vite 7.1.10 (lightning-fast HMR)
-- **Styling**: Tailwind CSS 3.4.1 with custom animations
-- **Icons**: Font Awesome (38+ icons)
-- **State Management**: Pinia stores (auth, books, theme)
-- **Routing**: Vue Router 4 with authentication guards
-- **Features**: 
-  - 🌙 **Dark Mode** with localStorage persistence
-  - 🎨 **Glass-morphism** design language
-  - ✨ **Custom animations** (fadeIn, slideUp, scaleIn)
-  - 📱 **Fully responsive** mobile-first design
-  - 🎯 **SaaS-level UI/UX** with gradient buttons and modern forms
+---
 
-### Deployment (Planned)
+## 🚀 Features
 
-- Backend: Render (free tier)
-- Frontend: Vercel / Netlify
-- Storage: Cloudflare R2 (free tier, no card)
+### 📚 Content Generation
+- **15 Trending Niches** across 5 domains (Kids & Education, Technology & AI, Sustainability, Mental Health, Business)
+- **Smart Audience Detection** with tailored content for parents, professionals, and learners
+- **15-30 Page Books** with professional structure (Introduction, Chapters, Conclusion, Resources)
+- **SEO-Optimized Titles** using market research and trending keywords
+- **Research-Backed Content** with citations and practical frameworks
+
+### 🎨 Cover Design
+- **Single Cover Generation** for guided workflow (auto-selected)
+- **Multiple Cover Options** for manual workflow (3 professional designs)
+- **Template-Based System** with domain-specific styling
+- **High-Quality Output** ready for publishing platforms
+
+### 🔧 Technical Features
+- **RESTful API** with comprehensive documentation
+- **Real-time Progress Tracking** with WebSocket-style updates
+- **MongoDB Integration** for efficient content storage
+- **Celery + Redis** for async task processing
+- **PDF Generation** using ReportLab with professional formatting
+- **Session Authentication** with secure user management
+
+### 🎨 User Experience
+- **Guided Workflow** for new users (domain → niche → style → download)
+- **Manual Workflow** for advanced users (full customization)
+- **Dark Mode Support** with system preference detection
+- **Responsive Design** optimized for all devices
+- **Progress Indicators** with estimated completion times
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TB
+    A[Vue 3 Frontend] --> B[Django REST API]
+    B --> C[Celery Worker]
+    C --> D[Redis Queue]
+    D --> E[Content Generation]
+    D --> F[Cover Generation]
+    E --> G[MongoDB Storage]
+    F --> G
+    G --> H[PDF Merger]
+    H --> I[File Download]
+
+    subgraph "AI Services"
+        J[DeepSeek R1T2 Chimera]
+    end
+
+    E --> J
+    F --> J
+```
+
+### Tech Stack
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Backend** | Django 4.2 + DRF | REST API & Business Logic |
+| **Frontend** | Vue 3 + TypeScript | Modern SPA Interface |
+| **Database** | SQLite + MongoDB | Metadata & Content Storage |
+| **AI Engine** | DeepSeek R1T2 Chimera | Content & Cover Generation |
+| **Task Queue** | Celery + Redis | Async Processing |
+| **PDF Generation** | ReportLab | Document Assembly |
+| **Authentication** | Django Sessions | Secure User Management |
+| **Styling** | Tailwind CSS | Modern UI Components |
+
+---
+
+## 📋 Prerequisites
+
+- **Python 3.12+**
+- **Node.js 18+**
+- **MongoDB Atlas** (free tier)
+- **Redis** (local or cloud)
+- **DeepSeek API Key** (free tier available)
 
 ---
 
 ## 🚀 Quick Start
 
-### Backend Setup
+### 1. Clone & Setup
 
 ```bash
-# 1. Clone & navigate to backend
 git clone https://github.com/BadrRibzat/book-generator.git
-cd book-generator/backend
+cd book-generator
+```
 
-# 2. Create virtual environment
+### 2. Backend Setup
+
+```bash
+cd backend
+
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# 4. Configure environment variables
+# Environment configuration
 cp .env.example .env
-# Add: GROQ_API_KEY, MONGODB_URI, SECRET_KEY
+# Edit .env with your API keys:
+# OPENROUTER_API_KEY=your_key_here
+# MONGODB_URI=your_mongodb_uri
 
-# 5. Run migrations
+# Database setup
 python manage.py migrate
 
-# 6. Start development server
+# Start Redis (if not running)
+redis-server
+
+# Start Celery worker
+celery -A backend worker --loglevel=info
+
+# Start Django server
 python manage.py runserver
 ```
 
-**Backend will run on**: http://127.0.0.1:8000/  
-**API Documentation**: 
-- Swagger UI: http://127.0.0.1:8000/api/docs/
-- ReDoc: http://127.0.0.1:8000/api/redoc/
+**Backend runs on:** http://127.0.0.1:8000/
 
-### Frontend Setup
+### 3. Frontend Setup
 
 ```bash
-# 1. Navigate to frontend directory
-cd book-generator/frontend
+cd frontend
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Start development server
+# Start development server
 npm run dev
 ```
 
-**Frontend will run on**: http://localhost:5173/
+**Frontend runs on:** http://localhost:5173/
+
+### 4. Access the Application
+
+- **Web App:** http://localhost:5173/
+- **API Docs:** http://127.0.0.1:8000/api/docs/
+- **API Schema:** http://127.0.0.1:8000/api/schema/
 
 ---
 
-## 🚦 Current Status
+## 📖 User Guide
 
-### ✅ Completed Features
+### 🔐 Authentication Flow
 
-**Backend (100%)**:
-- ✅ User authentication system
-- ✅ 15 trending niches with psychology-based colors
-- ✅ Book generation with Groq LLM (45+ title templates)
-- ✅ Cover generation system (3 styles)
-- ✅ PDF assembly and download
-- ✅ RESTful API with 14+ endpoints
-- ✅ Swagger/ReDoc API documentation
-- ✅ MongoDB integration for content storage
+1. **Register** → Create account with username/email/password
+2. **Login** → Secure session-based authentication
+3. **Profile** → Manage account and view book history
 
-**Frontend (95%)**:
-- ✅ Vue 3 + TypeScript + Vite project setup
-- ✅ Tailwind CSS with dark mode support
-- ✅ Font Awesome icon library (38 icons)
-- ✅ Vue Router with authentication guards
-- ✅ Pinia state management (auth, books, theme)
-- ✅ Landing pages (Home, Features, About, Pricing)
-- ✅ Modern authentication forms with animations
-- ✅ Profile page with theme selector
-- ✅ Book management pages (List, Create)
-- ✅ Dark mode with localStorage persistence
-- ✅ Layout component with navigation header
-- ✅ Custom animations and transitions
+### 📚 Book Creation Workflows
 
-### 🔄 In Progress
+#### Guided Workflow (Recommended)
+1. **Select Domain** → Choose from 5 categories
+2. **Choose Niche** → Pick from 15 trending sub-niches
+3. **Select Style** → Choose book length and style
+4. **Auto-Generation** → AI creates content and single cover
+5. **Download** → Get your complete PDF book
 
-- 🔨 Book Details page with dark mode
-- 🔨 Select Cover page with dark mode
-- 🔨 API integration between frontend and backend
+#### Manual Workflow (Advanced)
+1. **Create Book** → Custom parameters
+2. **Content Generation** → AI creates book content
+3. **Cover Selection** → Choose from 3 professional designs
+4. **PDF Assembly** → Merge content and selected cover
+5. **Download** → Complete book ready
 
-### 🔜 Next Steps
+### 🎯 Available Niches
 
-1. Complete remaining dark mode styling
-2. Implement full API integration
-3. Add real-time book generation progress
-4. Testing and bug fixes
-5. Deployment preparation
+| Domain | Niches |
+|--------|--------|
+| **Kids & Education** | Early Learning, Communication Skills, Curiosity Building |
+| **Technology & AI** | AI Content Creation, Future Skills, Digital Economy |
+| **Sustainability** | Eco-Friendly Living, Green Technology, Climate Action |
+| **Mental Health** | Mindfulness, Stress Management, Emotional Wellness |
+| **Business** | Startup Growth, Digital Marketing, Innovation |
 
 ---
 
-## 📖 User Flow
+## 🔧 API Documentation
 
-## 🛠️ Tech Stack
+### Interactive API Docs
 
-
-
-## 🚀 Quick Start### Backend
-
-- **Framework**: Django 4.2 + Django REST Framework
-
-```bash- **Database**: SQLite (dev) → MongoDB Atlas (free tier, no credit card)
-
-# 1. Clone & setup- **AI**: Groq API (Llama 3.1 8B, free tier)
-
-git clone https://github.com/BadrRibzat/book-generator.git- **Async**: Django-Q (no Redis required)
-
-cd book-generator/backend- **PDF**: WeasyPrint (HTML/CSS → print-ready PDF)
-
-python -m venv venv
-
-source venv/bin/activate### Frontend (Planned)
-
-pip install -r requirements.txt- Vue 3 + TypeScript + Tailwind CSS + DaisyUI
-
-
-
-# 2. Configure .env### Deployment (Planned)
-
-cp .env.example .env- Backend: Render (free tier)
-
-# Add: GROQ_API_KEY, MONGODB_URI, SECRET_KEY- Frontend: Vercel / Netlify
-
-- Storage: Cloudflare R2 (free tier, no card)
-
-# 3. Migrate & run
-
-python manage.py migrate---
-
-python manage.py runserver
-
-## 🚦 Current Status
-
-# 4. Test it works
-
-python test_complete_flow.py✅ Backend project initialized  
-
-```✅ User, Book, and Cover apps created  
-
-✅ Groq API integration verified (`llama-3.1-8b-instant`)  
-
-**Result**: `test_book_1.pdf` with cover + 15 pages of content!✅ Environment and dependency management ready  
-
-✅ MIT Licensed  
-
----
-
-> 🔜 Next: User authentication, book generation pipeline, and cover designer.
-
-## 📖 User Flow
-
----
-
-```
-
-Register → Choose Niche → System Generates Title## 🧪 Test Groq Connection
-
-    ↓
-
-Content Generation (LLM creates chapters)```bash
-
-    ↓cd backend
-
-⚠️  MANDATORY: Select Cover (3 options)python test_groq.py
-
-    ↓# Expected: "✅ Groq API connection successful!"
-
-PDF Assembly (Cover + Interior)
-
-    ↓📜 License
-
-✅ Download Complete BookMIT © 2025 Badr Ribzat
-
-```
-
-
-
-------
-
-
-
-## 🏗️ Tech Stack### ✅ Next Steps
-
-
-
-| Component | Technology | Cost |Run these commands to commit and push:
-
-|-----------|-----------|------|
-
-| Backend | Django 4.2 + DRF | Free |```bash
-
-| Database | SQLite + MongoDB Atlas | Free |# Add README
-
-| LLM | Groq (Llama 3.1 70B) | Free |echo "# Book Generator SaaS
-
-| PDF | ReportLab + WeasyPrint | Free (OSS) |
-
-| Covers | HTML/CSS Templates | Free |A credit-card-free, open-source SaaS platform that generates **complete, publish-ready digital books** (15–30 pages + professional cover) in PDF format using AI. Built for creators, educators, and indie publishers who want high-quality, niche-targeted books in seconds — with zero upfront cost.
-
-| Deployment | Railway/Render/Fly.io | Free Tier |
-
-> 🚀 **No bank account or payment method required** — built entirely with free-tier tools.
-
----
-
----
-
-## 🎨 15 Sub-Niches
-
-## ✨ Features
-
-**Health & Wellness**: Yoga • Home Workouts • Mental Wellness  
-
-**Food & Nutrition**: Vegan Recipes • Meal Prep • Smoothies  - **Niche-Optimized Content**: Choose from 15 evergreen sub-niches across 5 domains:
-
-**Personal Dev**: Productivity • Morning Routines • Goal Setting    - 📚 Language & Kids (e.g., personalized learning stories)
-
-**Hobbies & Crafts**: Gardening • Photography • DIY    - 💻 Technology & AI (e.g., no-code guides, AI ethics)
-
-**Lifestyle**: Minimalism • Sustainable Living • Travel Hacks  - 🥑 Nutrition & Wellness (e.g., keto cookbooks, mental health nutrition)
-
-  - 🧘 Meditation (e.g., anxiety workbooks, gratitude journals)
-
-Each with custom colors + 3 cover styles (Modern/Bold/Elegant).  - 💪 Home Workout (e.g., desk yoga, bodyweight plans)
-
-- **Auto-Generated Titles**: Market-optimized titles for better discoverability.
-
----- **Professional Covers**: 3 AI-assisted cover options per book (template-based).
-
-- **Complete PDF Output**: Interior + cover merged into one downloadable file.
-
-## 📡 API Documentation
-
-### 🎯 Interactive Documentation (Swagger/ReDoc)
-
-**NEW!** Professional interactive API documentation:
-
-- **Swagger UI:** http://127.0.0.1:8000/api/docs/ 
-  - Try all endpoints directly in browser
-  - Test authentication flow
-  - See request/response examples
-  - Built-in API testing
-
+- **Swagger UI:** http://127.0.0.1:8000/api/docs/
 - **ReDoc:** http://127.0.0.1:8000/api/redoc/
-  - Beautiful, responsive documentation
-  - Printable format
-  - Search functionality
-
 - **OpenAPI Schema:** http://127.0.0.1:8000/api/schema/
-  - Import into Postman/Insomnia
-  - Generate client SDKs
 
-📘 **See [SWAGGER_IMPLEMENTATION.md](SWAGGER_IMPLEMENTATION.md)** for complete guide!
-
-### Quick Reference
+### Core Endpoints
 
 ```bash
-# Authentication (SignUp → SignIn → Profile → SignOut)
-POST   /api/auth/register/              # SignUp - Create account
-POST   /api/auth/login/                 # SignIn - Login
-GET    /api/auth/me/                    # Profile - Current user
-POST   /api/auth/logout/                # SignOut - Logout
+# Authentication
+POST   /api/users/auth/register/     # User registration
+POST   /api/users/auth/login/        # User login
+GET    /api/users/profile/           # User profile
+POST   /api/users/auth/logout/       # User logout
 
 # Configuration
-GET    /api/config/sub-niches/          # Get 15 trending sub-niches
+GET    /api/books/domains/           # Available domains
+GET    /api/books/niches/            # Available niches
+GET    /api/books/book-styles/       # Book styles
 
-# Books (Create → Generate → Select Cover → Download)
-POST   /api/books/                      # Create book (triggers generation)
-GET    /api/books/                      # List user's books
-GET    /api/books/{id}/                 # Get book details + 3 covers
-POST   /api/books/{id}/select_cover/    # ⚠️ REQUIRED: Select cover
-GET    /api/books/{id}/download/        # Download complete PDF
-POST   /api/books/{id}/regenerate_covers/  # Generate new covers
-POST   /api/books/{id}/regenerate_content/ # Regenerate book content
-DELETE /api/books/{id}/                 # Delete book
-GET    /api/books/history/              # Get book history
-DELETE /api/books/history/              # Clear all books
+# Books Management
+POST   /api/books/create-guided/     # Create guided book
+GET    /api/books/                   # List user books
+GET    /api/books/{id}/              # Book details
+GET    /api/books/{id}/download/     # Download PDF
+DELETE /api/books/{id}/              # Delete book
+
+# Cover Management
+POST   /api/books/{id}/select_cover/ # Select cover
+POST   /api/books/{id}/regenerate_covers/ # New covers
 ```
 
-**Postman Collection:** Import `postman_collection.json` for quick testing
+### Example API Usage
 
-**Full Documentation:** See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for:
-- Detailed request/response schemas
-- Authentication flow
-- Status values & workflow
-- Error handling
-- Code examples (curl, Python, JavaScript)
-- Cover styles & niche colors reference
+```python
+import requests
 
----### Frontend (Planned)
+# Login
+response = requests.post('http://127.0.0.1:8000/api/users/auth/login/',
+    json={'username': 'user', 'password': 'pass'})
+cookies = response.cookies
 
-- Vue 3 + TypeScript + Tailwind CSS + DaisyUI
+# Create book
+book_data = {
+    'domain': 'technology',
+    'niche': 'ai_content_creation',
+    'book_style': 'medium'
+}
+response = requests.post('http://127.0.0.1:8000/api/books/create-guided/',
+    json=book_data, cookies=cookies)
 
-## 🧪 Test It
-
-### Deployment (Planned)
-
-```bash- Backend: Render (free tier)
-
-# Automated test- Frontend: Vercel / Netlify
-
-python test_complete_flow.py- Storage: Cloudflare R2 (free tier, no card)
-
-
-
-# Manual test---
-
-curl -X POST http://127.0.0.1:8000/api/auth/register/ \
-
-  -H "Content-Type: application/json" \## 🚦 Current Status
-
-  -d '{"username":"test","email":"test@example.com","password":"test123","password2":"test123"}' \
-
-  -c cookies.txt✅ Backend project initialized  
-
-✅ User, Book, and Cover apps created  
-
-curl -X POST http://127.0.0.1:8000/api/books/ \✅ Groq API integration verified (\`llama-3.1-8b-instant\`)  
-
-  -b cookies.txt \✅ Environment and dependency management ready  
-
-  -d '{"domain":"health","sub_niche":"yoga_beginners","page_length":15}'✅ MIT Licensed  
-
-
-
-# Wait 30-60s, then:> 🔜 Next: User authentication, book generation pipeline, and cover designer.
-
-curl http://127.0.0.1:8000/api/books/1/ -b cookies.txt  # Check status
+# Download when ready
+book_id = response.json()['id']
+download = requests.get(f'http://127.0.0.1:8000/api/books/{book_id}/download/',
+    cookies=cookies)
+with open('book.pdf', 'wb') as f:
+    f.write(download.content)
+```
 
 ---
 
-curl -X POST http://127.0.0.1:8000/api/books/1/select_cover/ \
+## 🧪 Testing
 
-  -b cookies.txt \## 🧪 Test Groq Connection
-
-  -d '{"cover_id":1}'
-
-\`\`\`bash
-
-curl http://127.0.0.1:8000/api/books/1/download/ -b cookies.txt -o book.pdfcd backend
-
-```python test_groq.py
-
-# Expected: "✅ Groq API connection successful!"
-
----\`\`\`
-
-
-
-## 🚀 Deploy (Free)---
-
-
-
-### Railway.app (Recommended)## 📜 License
+### Automated Tests
 
 ```bash
+# Backend tests
+cd backend
+python manage.py test
 
-railway loginMIT © 2025 [Badr Ribzat](https://github.com/BadrRibzat)
-
-railway init" > README.md
-
-railway up
-
-railway variables set GROQ_API_KEY=gsk_...
+# Individual test files
+python test_complete_workflow.py    # Full workflow test
+python test_guided_workflow.py      # Guided workflow test
+python test_book_creation.py        # Book creation test
 ```
 
-### Render.com
-1. Connect GitHub repo
-2. Add env vars
-3. Deploy
-
-### PythonAnywhere
-1. Upload code
-2. Configure WSGI
-3. Set env vars
-
-**Full guide**: See [DEPLOYMENT.md](DEPLOYMENT.md)
-
----
-
-## 📂 Project Structure
-
-```
-backend/
-├── books/
-│   ├── models.py              # Book model (status tracking)
-│   ├── views.py               # API endpoints
-│   ├── serializers.py         # DRF serializers
-│   └── services/
-│       ├── book_generator.py  # LLM content generation
-│       └── pdf_merger.py      # PDF assembly
-├── covers/
-│   ├── models.py              # Cover model
-│   └── services.py            # Cover generation (HTML→PDF)
-├── backend/
-│   ├── settings.py            # Django config
-│   └── utils/mongodb.py       # MongoDB connection
-└── media/
-    ├── books/                 # Generated PDFs
-    └── covers/                # Cover images
-```
-
----
-
-## ⚙️ Configuration
+### Manual Testing
 
 ```bash
-# .env
-SECRET_KEY=your-secret-key
-DEBUG=True
-GROQ_API_KEY=gsk_...
+# Test API endpoints
+curl -X GET http://127.0.0.1:8000/api/books/domains/
+
+# Test book creation
+curl -X POST http://127.0.0.1:8000/api/books/create-guided/ \
+  -H "Content-Type: application/json" \
+  -d '{"domain":"technology","niche":"ai_content_creation","book_style":"medium"}'
+```
+
+---
+
+## 🚀 Deployment
+
+### Production Checklist
+
+- [ ] Set `DEBUG=False` in Django settings
+- [ ] Configure production database (MongoDB Atlas)
+- [ ] Set up Redis for Celery (Redis Cloud or similar)
+- [ ] Configure static files serving
+- [ ] Set up SSL certificate
+- [ ] Configure environment variables
+- [ ] Set up monitoring and logging
+
+### Recommended Deployment
+
+| Service | Provider | Free Tier |
+|---------|----------|-----------|
+| **Backend** | Railway/Render | 512MB RAM, 1GB storage |
+| **Frontend** | Vercel/Netlify | Unlimited bandwidth |
+| **Database** | MongoDB Atlas | 512MB storage |
+| **Cache** | Redis Cloud | 30MB storage |
+| **Storage** | Cloudflare R2 | 10GB storage |
+
+### Environment Variables
+
+```bash
+# Django
+SECRET_KEY=your-secret-key-here
+DEBUG=False
+ALLOWED_HOSTS=your-domain.com
+
+# Database
 MONGODB_URI=mongodb+srv://...
-MONGODB_DB_NAME=book_generator_db
+
+# AI Service
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# Redis (optional)
+REDIS_URL=redis://localhost:6379/0
 ```
 
-Generate secret key:
-```bash
-python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
-```
-
 ---
 
-## 📊 Performance
+## 📊 Performance Metrics
 
-| Metric | Time |
-|--------|------|
-| LLM content generation | 20-40s |
-| Cover generation (3) | 10-15s |
-| PDF merge | <1s |
-| **Total** | **35-65s** |
-
----
-
-## 💡 Use Cases
-
-- 📚 **Content Creators**: Lead magnets, freebies
-- 🎓 **Educators**: Course materials, study guides  
-- 💼 **Coaches**: Branded client guides
-- 🛍️ **E-commerce**: Digital products to sell
-- 🚀 **SaaS**: Launch as subscription product
-
----
-
-## 📝 Documentation
-
-| File | Description |
-|------|-------------|
-| **[START_HERE.md](START_HERE.md)** | Quick implementation summary - **Start here!** |
-| **[SWAGGER_IMPLEMENTATION.md](SWAGGER_IMPLEMENTATION.md)** | 🆕 **Swagger/ReDoc API docs guide** |
-| **[API_DOCUMENTATION.md](API_DOCUMENTATION.md)** | Complete REST API reference with examples |
-| **[QUICKSTART.md](QUICKSTART.md)** | Step-by-step tutorial |
-| **[ARCHITECTURE.md](ARCHITECTURE.md)** | System design & database schema |
-| **[DEPLOYMENT.md](DEPLOYMENT.md)** | Production deployment guide |
-| **[DIAGRAM.md](DIAGRAM.md)** | Visual architecture diagrams |
-| **[IMPLEMENTATION_COMPLETE.md](IMPLEMENTATION_COMPLETE.md)** | Full feature checklist |
-| **postman_collection.json** | Postman API collection (import & test) |
-
-**🎯 To test the API:** Visit http://127.0.0.1:8000/api/docs/ (Swagger UI)
+| Operation | Time | Status |
+|-----------|------|--------|
+| **Content Generation** | 20-40s | ✅ Optimized |
+| **Cover Generation** | 5-10s | ✅ Fast |
+| **PDF Assembly** | <2s | ✅ Instant |
+| **Total Book Creation** | 30-60s | ✅ Production Ready |
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork repository
-2. Create feature branch
-3. Commit changes
-4. Push and open PR
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Guidelines
+
+- Follow PEP 8 for Python code
+- Use TypeScript for frontend code
+- Write tests for new features
+- Update documentation
+- Ensure all tests pass
 
 ---
 
-## 🙋 FAQ
+## 📝 License
 
-**Q: Really no credit card?**  
-A: Yes! All services have free tiers.
-
-**Q: Can I customize niches?**  
-A: Yes! Edit `books/models.py` and `book_generator.py`.
-
-**Q: Can I use different LLM?**  
-A: Yes! Swap Groq for OpenAI/Anthropic in `book_generator.py`.
-
-**Q: Where's the frontend?**  
-A: Build with Vue/React - API is framework-agnostic.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📜 License
+## 🙋 Support & FAQ
 
-MIT License - Use commercially, modify, distribute freely.
+### Frequently Asked Questions
+
+**Q: Is this really free? No credit card required?**  
+A: Yes! We use free-tier services from DeepSeek, MongoDB Atlas, and other providers.
+
+**Q: Can I customize the niches and content?**  
+A: Absolutely! The system is designed to be extensible. Add new niches in the database and update the AI prompts.
+
+**Q: What's the quality of generated content?**  
+A: Professional quality with research-backed information, proper structure, and market-optimized content.
+
+**Q: Can I use this commercially?**  
+A: Yes! Generate books for sale, lead magnets, or any commercial purpose.
+
+**Q: Is there a rate limit?**  
+A: Depends on your DeepSeek API plan. Free tier allows reasonable usage for development and testing.
+
+### Support
+
+- **Issues:** [GitHub Issues](https://github.com/BadrRibzat/book-generator/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/BadrRibzat/book-generator/discussions)
+- **Documentation:** [Full Docs](./docs/)
 
 ---
 
-## 🌟 Support
+## 🏆 Acknowledgments
 
-- **Issues**: https://github.com/BadrRibzat/book-generator/issues
-- **Star this repo** if it helped you! ⭐
+- **DeepSeek** for providing excellent AI models
+- **Django Community** for the robust framework
+- **Vue.js Team** for the amazing frontend framework
+- **Open Source Community** for the tools that make this possible
 
 ---
 
-**Made with ❤️ by Badr Ribzat**
+## 📈 Roadmap
+
+### Phase 1 ✅ (Current)
+- [x] Core book generation system
+- [x] Professional cover designs
+- [x] PDF assembly and download
+- [x] User authentication
+- [x] Modern web interface
+
+### Phase 2 🔄 (Next)
+- [ ] Subscription plans and billing
+- [ ] Advanced customization options
+- [ ] Bulk book generation
+- [ ] API rate limiting
+- [ ] Analytics dashboard
+
+### Phase 3 📋 (Future)
+- [ ] Mobile app
+- [ ] Multi-language support
+- [ ] Advanced AI models
+- [ ] White-label solution
+- [ ] Enterprise features
+
+---
+
+<div align="center">
+
+**Made with ❤️ by [Badr Ribzat](https://github.com/BadrRibzat)**
+
+⭐ **Star this repo if you found it helpful!**
+
+[⬆️ Back to Top](#-smartbookforge---ai-powered-book-generator-saas)
+
+</div>

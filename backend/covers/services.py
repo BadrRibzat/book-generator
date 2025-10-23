@@ -197,8 +197,8 @@ class CoverGeneratorProfessional:
         from covers.models import Cover
         
         print(f"\n=== Generating AI ReportLab Covers for Book: {book.title} ===")
-        print(f"Sub-niche: {book.sub_niche}")
-        print(f"Audience: {self._infer_audience(book.sub_niche)}")
+        print(f"Sub-niche: {book.niche.name}")
+        print(f"Audience: {self._infer_audience(book.niche.name)}")
         
         covers = []
         
@@ -495,8 +495,8 @@ def create_coverC(c):
         from covers.models import Cover
         
         print(f"\n=== Generating AI Covers for Book: {book.title} ===")
-        print(f"Sub-niche: {book.sub_niche}")
-        print(f"Audience: {self._infer_audience(book.sub_niche)}")
+        print(f"Sub-niche: {book.niche.name}")
+        print(f"Audience: {self._infer_audience(book.niche.name)}")
         
         covers = []
         
@@ -565,17 +565,455 @@ def create_coverC(c):
         print(f"\n=== Successfully generated {len(covers)} covers ===\n")
         return covers
     
+    def generate_single_cover(self, book):
+        """
+        Generate a single cover based on the book's selected cover style
+        """
+        from covers.models import Cover
+        
+        print(f"\n=== Generating Single Cover for Book: {book.title} ===")
+        print(f"Cover Style: {book.cover_style.name}")
+        
+        # Generate AI design concept for the specific style
+        try:
+            design_concept = self._generate_ai_cover_concept_for_style(book)
+            
+            if not design_concept:
+                raise Exception("Failed to generate design concept for cover style")
+            
+            print(f"Successfully generated AI design concept: {design_concept.get('concept_name', 'Design')}")
+            
+        except Exception as e:
+            print(f"AI cover generation failed: {str(e)}")
+            raise Exception(f"Cover generation failed: {str(e)}")
+        
+        # Create the cover
+        try:
+            print(f"\nCreating cover for style: {book.cover_style.name}")
+            
+            # Generate unique filename
+            clean_title = self._clean_filename(book.title)
+            filename = f"{clean_title}_cover_final_{random.randint(1000, 9999)}"
+            pdf_path = self.covers_dir / f"{filename}.pdf"
+            png_path = self.covers_dir / f"{filename}.png"
+            
+            # Create HTML with AI-generated design
+            html_content = self._create_ai_cover_html(book.title, design_concept)
+            
+            # Render to PDF (assuming we have weasyprint or similar)
+            # For now, create a simple ReportLab cover
+            self._create_simple_cover_pdf(book.title, design_concept, str(pdf_path))
+            
+            # Convert PDF to PNG for preview
+            self._pdf_to_png(str(pdf_path), str(png_path))
+            
+            # Create Cover object
+            cover = Cover.objects.create(
+                book=book,
+                template_style=f"ai_{design_concept.get('trend', 'modern')}_guided",
+                image_path=f"covers/{png_path.name}",
+                pdf_path=f"covers/{pdf_path.name}",
+                generation_params={
+                    'ai_generated': True,
+                    'design_concept': design_concept.get('concept_name', 'Guided Design'),
+                    'trend_style': design_concept.get('trend', 'modern'),
+                    'colors': design_concept.get('colors', {}),
+                    'mood': design_concept.get('mood', 'professional'),
+                    'guided_workflow': True,
+                }
+            )
+            
+            # Automatically select this cover
+            cover.select()
+            
+            print(f"✓ Cover created and selected successfully")
+            return cover
+            
+        except Exception as e:
+            print(f"✗ Cover creation failed: {str(e)}")
+            raise
+    
+    def generate_cover_prompts(self, book) -> list:
+        """
+        Generate 3 ReportLab cover design prompts for a book
+        Returns text prompts describing how to render covers using ReportLab
+        """
+        print(f"\n=== Generating ReportLab Cover Prompts for Book: {book.title} ===")
+        
+        try:
+            # Generate AI cover concepts
+            design_concepts = self._generate_ai_cover_concepts(book)
+            
+            if not design_concepts or len(design_concepts) < 3:
+                raise Exception("Failed to generate 3 design concepts from AI")
+            
+            print(f"Successfully generated {len(design_concepts)} AI design concepts")
+            
+            # Convert AI concepts to ReportLab prompts
+            prompts = []
+            for i, concept in enumerate(design_concepts[:3]):
+                prompt = self._convert_concept_to_reportlab_prompt(book.title, concept, i+1)
+                prompts.append(prompt)
+            
+            return prompts
+            
+        except Exception as e:
+            print(f"Cover prompt generation failed: {str(e)}")
+            # Return fallback prompts
+            return self._get_fallback_reportlab_prompts(book.title)
+    
+    def _convert_concept_to_reportlab_prompt(self, title: str, concept: dict, cover_number: int) -> str:
+        """Convert AI design concept to ReportLab rendering prompt"""
+        
+        trend = concept.get('trend', 'minimalist')
+        colors = concept.get('colors', {})
+        typography = concept.get('typography', 'Large bold sans-serif title')
+        visual_elements = concept.get('visual_elements', 'Simple geometric shapes')
+        layout = concept.get('layout', 'Centered title')
+        
+        # Split title for better layout
+        words = title.split()
+        if len(words) > 4:
+            mid = len(words) // 2
+            title_line1 = ' '.join(words[:mid])
+            title_line2 = ' '.join(words[mid:])
+        else:
+            title_line1 = title
+            title_line2 = ""
+        
+        prompt = f"""Cover {cover_number}: {concept.get('concept_name', 'Professional Design')}
+
+Use ReportLab to create a {trend} style cover for the book "{title}".
+
+Canvas Setup:
+- Page size: letter (8.5 x 11 inches)
+- Background color: {colors.get('background', '#FFFFFF')}
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold
+- Size: 48pt for primary, 32pt for secondary
+- Color: {colors.get('primary', '#000000')}
+- Position: Centered horizontally, vertically centered
+- Line spacing: 1.2
+
+Visual Elements:
+- Style: {trend}
+- Colors: Primary {colors.get('primary', '#000000')}, Secondary {colors.get('secondary', '#666666')}, Accent {colors.get('accent', '#999999')}
+- Elements: {visual_elements}
+
+Layout Instructions:
+{layout}
+
+ReportLab Code Structure:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+from reportlab.lib.units import inch
+
+def create_cover{cover_number}(c):
+    # Set up canvas
+    c.setPageSize(letter)
+    
+    # Background
+    c.setFillColor(HexColor('{colors.get('background', '#FFFFFF')}'))
+    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+    
+    # Title rendering
+    c.setFillColor(HexColor('{colors.get('primary', '#000000')}'))
+    c.setFont("Helvetica-Bold", 48)
+    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
+    {f'c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
+    
+    # Add visual elements based on {trend} style
+    # {visual_elements}
+```
+
+Accessibility: Ensure high contrast ratio between text and background colors."""
+        
+        return prompt
+    
+    def _get_fallback_reportlab_prompts(self, title: str) -> list:
+        """Return fallback ReportLab prompts if AI generation fails"""
+        
+        words = title.split()
+        if len(words) > 4:
+            mid = len(words) // 2
+            title_line1 = ' '.join(words[:mid])
+            title_line2 = ' '.join(words[mid:])
+        else:
+            title_line1 = title
+            title_line2 = ""
+        
+        return [
+            f"""Cover A: Modern Minimalist
+
+Use ReportLab to create a clean, modern cover for "{title}".
+
+Canvas Setup:
+- Page size: letter (8.5 x 11 inches)
+- Background: White (#FFFFFF)
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold, 48pt primary, 32pt secondary
+- Color: Navy blue (#1a365d)
+- Position: Centered
+
+Visual Elements:
+- Add a simple colored rectangle background
+- Use HexColor('#e2e8f0') for background shape
+
+ReportLab Code:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+
+def create_coverA(c):
+    c.setPageSize(letter)
+    c.setFillColor(HexColor('#e2e8f0'))
+    c.rect(0.5*inch, 0.5*inch, 7.5*inch, 10*inch, fill=1)
+    c.setFillColor(HexColor('#1a365d'))
+    c.setFont("Helvetica-Bold", 48)
+    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
+    {f'c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
+```""",
+            
+            f"""Cover B: Elegant Typography
+
+Use ReportLab to create an elegant typographic cover for "{title}".
+
+Canvas Setup:
+- Page size: letter
+- Background: Light gray gradient (#f8fafc to #e2e8f0)
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold, 52pt primary, 36pt secondary
+- Color: Dark blue (#2d3748)
+- Position: Left-aligned with margin
+
+Visual Elements:
+- Add decorative line under title
+- Use subtle background pattern
+
+ReportLab Code:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+
+def create_coverB(c):
+    c.setPageSize(letter)
+    # Gradient background simulation
+    c.setFillColor(HexColor('#f8fafc'))
+    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+    c.setFillColor(HexColor('#2d3748'))
+    c.setFont("Helvetica-Bold", 52)
+    c.drawString(1*inch, 7*inch, "{title_line1}")
+    {f'c.setFont("Helvetica-Bold", 36)\nc.drawString(1*inch, 6.5*inch, "{title_line2}")' if title_line2 else ''}
+    # Decorative line
+    c.setStrokeColor(HexColor('#4a5568'))
+    c.setLineWidth(3)
+    c.line(1*inch, 6*inch, 7.5*inch, 6*inch)
+```""",
+            
+            f"""Cover C: Bold Statement
+
+Use ReportLab to create a bold, striking cover for "{title}".
+
+Canvas Setup:
+- Page size: letter
+- Background: Dark with light text (#1a202c)
+
+Title Rendering:
+- Primary title: "{title_line1}"
+{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
+- Font: Helvetica-Bold, 56pt primary, 40pt secondary
+- Color: White (#ffffff)
+- Position: Centered
+
+Visual Elements:
+- High contrast design
+- Bold background shapes
+
+ReportLab Code:
+```python
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
+
+def create_coverC(c):
+    c.setPageSize(letter)
+    c.setFillColor(HexColor('#1a202c'))
+    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+    c.setFillColor(HexColor('#ffffff'))
+    c.setFont("Helvetica-Bold", 56)
+    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
+    {f'c.setFont("Helvetica-Bold", 40)\nc.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
+```"""
+        ]
+        """
+        Generate 3 AI-powered cover designs for a book
+        NO FALLBACK TEMPLATES - All designs are AI-generated
+        """
+        from covers.models import Cover
+        
+        print(f"\n=== Generating AI Covers for Book: {book.title} ===")
+        print(f"Sub-niche: {book.niche.name}")
+        print(f"Audience: {self._infer_audience(book.niche.name)}")
+        
+        covers = []
+        
+        # Generate AI ReportLab design concepts
+        try:
+            design_concepts = self._generate_ai_reportlab_concepts(book)
+            
+            if not design_concepts or len(design_concepts) < 3:
+                raise Exception("Failed to generate 3 design concepts from AI")
+            
+            print(f"Successfully generated {len(design_concepts)} AI design concepts")
+            
+        except Exception as e:
+            print(f"AI cover generation failed: {str(e)}")
+            raise Exception(f"Cover generation failed: {str(e)}")
+        
+        # Create covers from AI concepts
+        for i, concept in enumerate(design_concepts[:3]):  # Ensure exactly 3
+            try:
+                print(f"\nCreating cover {i+1}/3: {concept.get('concept_name', 'Design')}")
+                
+                # Generate unique filename
+                clean_title = self._clean_filename(book.title)
+                filename = f"{clean_title}_cover_{i+1}_{random.randint(1000, 9999)}"
+                image_path = self.covers_dir / f"{filename}.png"
+                pdf_path = self.covers_dir / f"{filename}.pdf"
+                
+                # Create HTML with AI-generated design
+                html_content = self._create_ai_cover_html(book.title, concept)
+                
+                # Render to PDF
+                html = HTML(string=html_content)
+                html.write_pdf(
+                    str(pdf_path),
+                    stylesheets=[CSS(string=self._get_modern_css())]
+                )
+                
+                # Convert PDF to PNG for preview
+                self._pdf_to_png(str(pdf_path), str(image_path))
+                
+                # Create Cover object
+                cover = Cover.objects.create(
+                    book=book,
+                    template_style=f"ai_{concept.get('trend', 'modern')}_{i+1}",
+                    image_path=f"covers/{image_path.name}",
+                    pdf_path=f"covers/{pdf_path.name}",
+                    generation_params={
+                        'ai_generated': True,
+                        'design_concept': concept.get('concept_name', 'Professional Design'),
+                        'trend_style': concept.get('trend', 'modern'),
+                        'colors': concept.get('colors', {}),
+                        'mood': concept.get('mood', 'professional'),
+                    }
+                )
+                covers.append(cover)
+                print(f"✓ Cover {i+1} created successfully")
+                
+            except Exception as e:
+                print(f"✗ Cover {i+1} creation failed: {str(e)}")
+                # Continue to try next cover instead of failing completely
+                continue
+        
+        if len(covers) == 0:
+            raise Exception("Failed to create any covers")
+        
+        print(f"\n=== Successfully generated {len(covers)} covers ===\n")
+        return covers
+    
+    def generate_single_cover(self, book):
+        """
+        Generate a single cover based on the book's selected cover style
+        """
+        from covers.models import Cover
+        
+        print(f"\n=== Generating Single Cover for Book: {book.title} ===")
+        print(f"Cover Style: {book.cover_style.name}")
+        
+        # Generate AI design concept for the specific style
+        try:
+            design_concept = self._generate_ai_cover_concept_for_style(book)
+            
+            if not design_concept:
+                raise Exception("Failed to generate design concept for cover style")
+            
+            print(f"Successfully generated AI design concept: {design_concept.get('concept_name', 'Design')}")
+            
+        except Exception as e:
+            print(f"AI cover generation failed: {str(e)}")
+            raise Exception(f"Cover generation failed: {str(e)}")
+        
+        # Create the cover
+        try:
+            print(f"\nCreating cover for style: {book.cover_style.name}")
+            
+            # Generate unique filename
+            clean_title = self._clean_filename(book.title)
+            filename = f"{clean_title}_cover_final_{random.randint(1000, 9999)}"
+            pdf_path = self.covers_dir / f"{filename}.pdf"
+            png_path = self.covers_dir / f"{filename}.png"
+            
+            # Create HTML with AI-generated design
+            html_content = self._create_ai_cover_html(book.title, design_concept)
+            
+            # Render to PDF (assuming we have weasyprint or similar)
+            # For now, create a simple ReportLab cover
+            self._create_simple_cover_pdf(book.title, design_concept, str(pdf_path))
+            
+            # Convert PDF to PNG for preview
+            self._pdf_to_png(str(pdf_path), str(png_path))
+            
+            # Create Cover object
+            cover = Cover.objects.create(
+                book=book,
+                template_style=f"ai_{design_concept.get('trend', 'modern')}_guided",
+                image_path=f"covers/{png_path.name}",
+                pdf_path=f"covers/{pdf_path.name}",
+                generation_params={
+                    'ai_generated': True,
+                    'design_concept': design_concept.get('concept_name', 'Guided Design'),
+                    'trend_style': design_concept.get('trend', 'modern'),
+                    'colors': design_concept.get('colors', {}),
+                    'mood': design_concept.get('mood', 'professional'),
+                    'guided_workflow': True,
+                }
+            )
+            
+            # Automatically select this cover
+            cover.select()
+            
+            print(f"✓ Cover created and selected successfully")
+            return cover
+            
+        except Exception as e:
+            print(f"✗ Cover creation failed: {str(e)}")
+            raise
+    
     def _generate_ai_reportlab_concepts(self, book) -> list:
         """Generate AI-powered ReportLab design concepts"""
         
         # Get trending context for the niche
-        trending_ctx = get_trending_context(book.sub_niche)
+        trending_ctx = get_trending_context(book.niche.name)
         trending_summary = f"{trending_ctx.get('category', 'Professional')} - {', '.join(trending_ctx.get('trends_2025', [])[:3])}"
         
         prompt = REPORTLAB_COVER_PROMPT.format(
             title=book.title,
-            audience=self._infer_audience(book.sub_niche),
-            sub_niche=book.sub_niche.replace('_', ' ').title(),
+            audience=self._infer_audience(book.niche.name),
+            sub_niche=book.niche.name,
             trending_info=trending_summary
         )
         
@@ -1458,10 +1896,262 @@ def create_coverC(c):
         except Exception as e:
             print(f"Fallback PNG creation error: {e}")
     
+    def generate_single_cover(self, book):
+        """
+        Generate a single cover based on the book's selected cover style
+        """
+        from covers.models import Cover
+        
+        print(f"\n=== Generating Single Cover for Book: {book.title} ===")
+        print(f"Cover Style: {book.cover_style.name}")
+        
+        # Generate AI design concept for the specific style
+        try:
+            design_concept = self._generate_ai_cover_concept_for_style(book)
+            
+            if not design_concept:
+                raise Exception("Failed to generate design concept for cover style")
+            
+            print(f"Successfully generated AI design concept: {design_concept.get('concept_name', 'Design')}")
+            
+        except Exception as e:
+            print(f"AI cover generation failed: {str(e)}")
+            raise Exception(f"Cover generation failed: {str(e)}")
+        
+        # Create the cover
+        try:
+            print(f"\nCreating cover for style: {book.cover_style.name}")
+            
+            # Generate unique filename
+            clean_title = self._clean_filename(book.title)
+            filename = f"{clean_title}_cover_final_{random.randint(1000, 9999)}"
+            pdf_path = self.covers_dir / f"{filename}.pdf"
+            png_path = self.covers_dir / f"{filename}.png"
+            
+            # Create simple ReportLab cover
+            self._create_simple_cover_pdf(book.title, design_concept, str(pdf_path))
+            
+            # Convert PDF to PNG for preview
+            self._pdf_to_png(str(pdf_path), str(png_path))
+            
+            # Create Cover object
+            cover = Cover.objects.create(
+                book=book,
+                template_style=f"ai_{design_concept.get('trend', 'modern')}_guided",
+                image_path=f"covers/{png_path.name}",
+                pdf_path=f"covers/{pdf_path.name}",
+                generation_params={
+                    'ai_generated': True,
+                    'design_concept': design_concept.get('concept_name', 'Guided Design'),
+                    'trend_style': design_concept.get('trend', 'modern'),
+                    'colors': design_concept.get('colors', {}),
+                    'mood': design_concept.get('mood', 'professional'),
+                    'guided_workflow': True,
+                }
+            )
+            
+            # Automatically select this cover
+            cover.select()
+            
+            print(f"✓ Cover created and selected successfully")
+            return cover
+            
+        except Exception as e:
+            print(f"✗ Cover creation failed: {str(e)}")
+            raise
+    
+    def _generate_ai_cover_concept_for_style(self, book) -> dict:
+        """Generate AI design concept specifically for the selected cover style"""
+        
+        # Get trending context for the niche
+        trending_ctx = get_trending_context(book.niche.name)
+        trending_summary = f"{trending_ctx.get('category', 'Professional')} - {', '.join(trending_ctx.get('trends_2025', [])[:3])}"
+        
+        # Map cover style to trend
+        style_to_trend = {
+            'minimalist': 'minimalist_abstract',
+            'futuristic': 'cyberpunk_futuristic', 
+            'playful': 'organic_shapes',
+            'elegant': 'vintage_modern',
+            'corporate': 'professional_minimal',
+            'artistic': 'abstract_art'
+        }
+        
+        target_trend = style_to_trend.get(book.cover_style.style, 'minimalist_abstract')
+        
+        prompt = f"""
+You are a senior book cover art director specializing in {target_trend} design aesthetics. Generate a single, professional cover design specifically for the {book.cover_style.name} style.
+
+Book Details:
+Title: "{book.title}"
+Audience: {self._infer_audience(book.niche.name)}
+Niche: "{book.niche.name}"
+Cover Style: {book.cover_style.name} - {book.cover_style.description}
+Trending Context: {trending_summary}
+
+Requirements:
+- Design must perfectly match the {book.cover_style.name} style
+- Use the ACTUAL BOOK TITLE "{book.title}" prominently
+- Create a marketable, professional design for digital publishing
+- Follow {target_trend} design principles
+
+Provide a complete design specification:
+1. **trend**: "{target_trend}"
+2. **concept_name**: Short catchy name for this design
+3. **description**: 2-3 sentences describing the visual approach
+4. **colors**: Object with primary, secondary, accent, background (hex codes)
+5. **typography**: Font family suggestions and hierarchy
+6. **visual_elements**: Specific shapes, patterns, or motifs for {target_trend} style
+7. **mood**: Emotional tone that fits the style
+8. **layout**: Description of text placement and visual balance
+9. **accessibility**: Contrast ratio notes and readability considerations
+
+FORMAT your response as VALID JSON only (no other text):
+{{
+  "trend": "{target_trend}",
+  "concept_name": "Professional {book.cover_style.name} Design",
+  "description": "A sophisticated design that captures the essence of {book.cover_style.name} style...",
+  "colors": {{
+    "primary": "#1a365d",
+    "secondary": "#4a5568", 
+    "accent": "#3b82f6",
+    "background": "#ffffff"
+  }},
+  "typography": "Clean sans-serif fonts with strong hierarchy",
+  "visual_elements": "Geometric shapes and subtle patterns",
+  "mood": "Professional and trustworthy",
+  "layout": "Centered title with balanced visual elements",
+  "accessibility": "High contrast text on light background"
+}}
+
+Remember:
+- Use the REAL book title "{book.title}" in your description
+- Make the design perfectly match {book.cover_style.name} style
+- Return ONLY valid JSON, no markdown code blocks or extra text
+"""
+        
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://book-generator.com",
+                    "X-Title": "Professional Cover Style Generator"
+                },
+                json={
+                    "model": self.model,
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": "You are a creative book cover designer who creates professional covers matching specific design styles. Always respond with ONLY valid JSON, no markdown code blocks or extra text."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 2000,
+                },
+                timeout=120
+            )
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            # Track token usage
+            if 'usage' in data:
+                input_tokens = data['usage'].get('prompt_tokens', 0)
+                output_tokens = data['usage'].get('completion_tokens', 0)
+                self.usage_tracker.record_usage(input_tokens, output_tokens)
+                print(f"Cover Style API Usage: {input_tokens} prompt + {output_tokens} completion tokens")
+            
+            content = data['choices'][0]['message']['content']
+            
+            # Clean up response
+            content_clean = content.strip()
+            if content_clean.startswith('```'):
+                lines = content_clean.split('\n')
+                content_clean = '\n'.join(lines[1:-1]) if len(lines) > 2 else content_clean
+                content_clean = content_clean.replace('```json', '').replace('```', '').strip()
+            
+            # Parse JSON response
+            try:
+                result = json.loads(content_clean)
+                print(f"Successfully parsed cover design for {book.cover_style.name} style")
+                return result
+            
+            except json.JSONDecodeError as je:
+                print(f"Failed to parse JSON response: {je}")
+                print(f"Raw response (first 500 chars): {content[:500]}")
+                raise Exception("AI returned invalid JSON for cover design")
+        
+        except requests.exceptions.RequestException as e:
+            print(f"OpenRouter API error: {str(e)}")
+            raise Exception(f"Cover style API request failed: {str(e)}")
+        
+        except Exception as e:
+            print(f"Cover style concept generation error: {str(e)}")
+            raise
+    
+    def _create_simple_cover_pdf(self, title: str, concept: dict, pdf_path: str):
+        """Create a simple ReportLab PDF cover based on the design concept"""
+        
+        try:
+            c = canvas.Canvas(pdf_path, pagesize=letter)
+            
+            colors = concept.get('colors', {})
+            bg_color = colors.get('background', '#ffffff')
+            primary_color = colors.get('primary', '#000000')
+            
+            # Background
+            if bg_color.startswith('#'):
+                c.setFillColor(HexColor(bg_color))
+            else:
+                c.setFillColor(HexColor('#ffffff'))
+            c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
+            
+            # Title
+            if primary_color.startswith('#'):
+                c.setFillColor(HexColor(primary_color))
+            else:
+                c.setFillColor(HexColor('#000000'))
+            c.setFont("Helvetica-Bold", 48)
+            
+            # Split title for better layout
+            words = title.split()
+            if len(words) > 4:
+                mid = len(words) // 2
+                title_line1 = ' '.join(words[:mid])
+                title_line2 = ' '.join(words[mid:])
+            else:
+                title_line1 = title
+                title_line2 = ""
+            
+            # Center the title
+            c.drawCentredString(4.25*inch, 6*inch, title_line1)
+            if title_line2:
+                c.setFont("Helvetica-Bold", 32)
+                c.drawCentredString(4.25*inch, 5.5*inch, title_line2)
+            
+            # Subtitle
+            c.setFillColor(HexColor(colors.get('secondary', '#666666')))
+            c.setFont("Helvetica", 24)
+            c.drawCentredString(4.25*inch, 4.5*inch, "Professional Guide")
+            
+            c.save()
+            print(f"✓ Simple cover PDF created: {pdf_path}")
+            
+        except Exception as e:
+            print(f"Simple cover PDF creation error: {str(e)}")
+            # Create fallback
+            self._create_fallback_reportlab_cover(title, pdf_path)
+    
     def _get_modern_css(self) -> str:
         """Return modern CSS styles for PDF generation"""
         return """
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&family=Nunito:wght@300;400;500;600;700;800;900&family=Oswald:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&family=Lato:wght@300;400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700;800;900&family=Crimson+Text:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
         
         * {
             margin: 0;
@@ -1486,7 +2176,3 @@ def create_coverC(c):
             text-transform: uppercase;
         }
         """
-
-
-# Maintain backwards compatibility
-CoverGenerator = CoverGeneratorProfessional

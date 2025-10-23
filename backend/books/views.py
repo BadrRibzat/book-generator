@@ -33,6 +33,34 @@ from covers.services import CoverGeneratorProfessional
 from backend.utils.mongodb import get_mongodb_db
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_guided_book(request):
+    """
+    Create book using the guided workflow with domain, niche, style, cover_style
+    """
+    serializer = BookCreateSerializer(data=request.data, context={'request': request})
+    serializer.is_valid(raise_exception=True)
+    book = serializer.save()
+    
+    # Trigger async content generation
+    try:
+        # Trigger the Celery task for content generation
+        generate_book_content.delay(book.id)
+        print(f"Triggered async content generation for book {book.id}")
+    except Exception as e:
+        book.status = 'error'
+        book.error_message = f"Failed to start content generation: {str(e)}"
+        book.save()
+    
+    # Return full book data including ID
+    response_data = BookSerializer(book).data
+    return Response(
+        response_data,
+        status=status.HTTP_201_CREATED
+    )
+
+
 class DomainViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for reading domains
@@ -89,22 +117,21 @@ class BookViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Book.objects.filter(user=self.request.user)
     
-    @action(detail=False, methods=['post'])
-    def create_guided(self, request):
+    def create(self, request, *args, **kwargs):
         """
-        Create book using the guided workflow with domain, niche, style, cover_style
+        Create a new book and return full book data
         """
-        serializer = BookCreateSerializer(data=request.data, context={'request': request})
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         book = serializer.save()
         
         # Trigger async content generation
         self._generate_book_content(book)
         
-        # Return full book data including ID
-        response_data = BookSerializer(book).data
+        # Return full book data using BookSerializer
+        response_serializer = BookSerializer(book)
         return Response(
-            response_data,
+            response_serializer.data,
             status=status.HTTP_201_CREATED
         )
     
@@ -363,43 +390,6 @@ class BookViewSet(viewsets.ModelViewSet):
             book.error_message = f"PDF creation failed: {str(e)}"
             book.save()
             raise
-    
-    @action(detail=True, methods=['get'])
-    def download(self, request, pk=None):
-        """
-        Step 3: Download final book (only if cover is selected)
-        """
-        book = self.get_object()
-        
-        if not book.can_download():
-            return Response(
-                {'error': 'Book not ready. Please select a cover first.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Get final PDF path from MongoDB
-        db = get_mongodb_db()
-        content_doc = db.book_contents.find_one({'book_id': book.id})
-        
-        if not content_doc or 'final_pdf_path' not in content_doc:
-            return Response(
-                {'error': 'Final PDF not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        # Serve the file
-        pdf_path = Path(settings.MEDIA_ROOT) / content_doc['final_pdf_path']
-        
-        if not pdf_path.exists():
-            raise Http404("PDF file not found")
-        
-        response = FileResponse(
-            open(pdf_path, 'rb'),
-            content_type='application/pdf'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{book.title}.pdf"'
-        
-        return response
     
     @action(detail=True, methods=['post'])
     def regenerate_content(self, request, pk=None):

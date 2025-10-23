@@ -224,8 +224,68 @@
                 </div>
               </div>
 
-              <!-- Step 4: Choose Book Length -->
+                            <!-- Step 3: Choose Cover Style -->
               <div v-show="currentStep === 3" class="space-y-6 animate-fade-in">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  <font-awesome-icon :icon="['fas', 'image']" class="mr-3 text-primary-600 dark:text-primary-400" />
+                  Choose Your Cover Style
+                </h2>
+                
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                  Select a cover style that matches your book's theme and audience. We'll generate professional covers based on your choice.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <label
+                    v-for="style in coverStyles"
+                    :key="style.id"
+                    class="group relative flex cursor-pointer rounded-2xl border-2 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex-col backdrop-blur-sm"
+                    :class="form.cover_style === style.id ? 'border-primary-500 ring-2 ring-primary-500 bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 shadow-primary-500/25' : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700 bg-white/50 dark:bg-gray-800/50'"
+                  >
+                    <input
+                      type="radio"
+                      name="cover_style"
+                      :value="style.id"
+                      v-model.number="form.cover_style"
+                      class="sr-only"
+                    />
+                    <div class="flex items-start mb-4">
+                      <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4 transition-all duration-300" :class="form.cover_style === style.id ? 'bg-primary-600 text-white shadow-lg' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/50'">
+                        <font-awesome-icon :icon="['fas', getCoverStyleIcon(style.style)]" class="h-6 w-6" />
+                      </div>
+                      <div class="flex-1">
+                        <span class="text-lg font-bold mb-2 block" :class="form.cover_style === style.id ? 'text-primary-900 dark:text-primary-100' : 'text-gray-900 dark:text-white'">
+                          {{ style.name }}
+                        </span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">
+                          {{ style.description }}
+                        </span>
+                      </div>
+                    </div>
+                    <font-awesome-icon
+                      v-if="form.cover_style === style.id"
+                      :icon="['fas', 'check-circle']"
+                      class="h-6 w-6 text-primary-600 dark:text-primary-400 absolute top-4 right-4 transition-all duration-300 animate-scale-in"
+                    />
+                  </label>
+                </div>
+
+                <!-- Info about cover generation -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mt-6">
+                  <div class="flex">
+                    <font-awesome-icon :icon="['fas', 'info-circle']" class="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+                    <div class="ml-3">
+                      <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">Cover Generation</h3>
+                      <div class="mt-2 text-sm text-blue-700 dark:text-blue-400">
+                        <p>Based on your selection, we'll generate a professional cover using AI and your chosen style.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 4: Choose Book Length -->
+              <div v-show="currentStep === 4" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'ruler']" class="mr-3 text-primary-600 dark:text-primary-400" />
                   Choose Your Book Length
@@ -277,7 +337,7 @@
               </div>
 
               <!-- Step 5: Target Audience -->
-              <div v-show="currentStep === 4" class="space-y-6 animate-fade-in">
+              <div v-show="currentStep === 5" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'users']" class="mr-3 text-primary-600 dark:text-primary-400" />
                   Define Your Target Audience
@@ -326,7 +386,7 @@
               </div>
 
               <!-- Step 6: Key Topics -->
-              <div v-show="currentStep === 5" class="space-y-6 animate-fade-in">
+              <div v-show="currentStep === 6" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'list-check']" class="mr-3 text-primary-600 dark:text-primary-400" />
                   Select Key Topics
@@ -378,7 +438,7 @@
               </div>
 
               <!-- Step 7: Writing Preferences -->
-              <div v-show="currentStep === 6" class="space-y-6 animate-fade-in">
+              <div v-show="currentStep === 7" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'pen-fancy']" class="mr-3 text-primary-600 dark:text-primary-400" />
                   Writing Style Preferences
@@ -427,7 +487,7 @@
               </div>
 
               <!-- Step 8: Review & Confirm -->
-              <div v-show="currentStep === 7" class="space-y-6 animate-fade-in">
+              <div v-show="currentStep === 8" class="space-y-6 animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
                   <font-awesome-icon :icon="['fas', 'check-square']" class="mr-3 text-primary-600 dark:text-primary-400" />
                   Review Your Book Configuration
@@ -465,6 +525,16 @@
                     <div class="ml-4">
                       <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Book Style</p>
                       <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getBookStyleLabel(form.book_style) }}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                      <font-awesome-icon :icon="['fas', 'image']" class="text-white" />
+                    </div>
+                    <div class="ml-4">
+                      <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Cover Style</p>
+                      <p class="text-lg font-bold text-gray-900 dark:text-white">{{ getCoverStyleLabel(form.cover_style) }}</p>
                     </div>
                   </div>
 
@@ -518,9 +588,8 @@
                       <div class="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
                         <ol class="list-decimal list-inside space-y-1">
                           <li>AI generates your book content based on selected style</li>
-                          <li>System creates 3 professional cover options</li>
-                          <li>You'll be redirected to select your favorite cover</li>
-                          <li>Final PDF will be assembled and ready to download</li>
+                          <li>System creates a professional cover based on your cover style selection</li>
+                          <li>Your book is automatically assembled and ready to download</li>
                         </ol>
                       </div>
                     </div>
@@ -551,7 +620,7 @@
                 <span v-if="!loading">
                   <font-awesome-icon v-if="currentStep < 3" :icon="['fas', 'arrow-right']" class="mr-3 h-4 w-4" />
                   <font-awesome-icon v-else :icon="['fas', 'magic']" class="mr-3 h-4 w-4" />
-                  {{ currentStep < 3 ? 'Continue' : 'Generate My Book' }}
+                  {{ currentStep < 4 ? 'Continue' : 'Generate My Book' }}
                 </span>
                 <span v-else class="flex items-center">
                   <font-awesome-icon :icon="['fas', 'spinner']" spin class="mr-3 h-4 w-4" />
@@ -622,7 +691,7 @@ const currentStep = ref(0);
 const loading = ref(false);
 const error = ref('');
 
-const steps = ['Domain', 'Niche', 'Book Style', 'Book Length', 'Target Audience', 'Key Topics', 'Writing Preferences', 'Confirm'];
+const steps = ['Domain', 'Niche', 'Book Style', 'Cover Style', 'Book Length', 'Target Audience', 'Key Topics', 'Writing Preferences', 'Confirm'];
 
 const form = ref({
   domain: '',
@@ -651,6 +720,7 @@ const domainIcons: Record<string, string> = {
 
 const allNiches = ref<any>({});
 const bookStyles = ref<any[]>([]);
+const coverStyles = ref<any[]>([]);
 const bookLengths = ref([
   { value: 'short', label: 'Short Book', description: 'Quick guide or introduction', pages: '15-25', icon: 'file-alt' },
   { value: 'medium', label: 'Standard Book', description: 'Comprehensive coverage', pages: '30-50', icon: 'book' },
@@ -704,14 +774,16 @@ const isStepValid = computed(() => {
     case 2:
       return form.value.book_style !== '';
     case 3:
-      return form.value.book_length !== '';
+      return form.value.cover_style !== '';
     case 4:
-      return form.value.target_audience !== '';
+      return form.value.book_length !== '';
     case 5:
-      return form.value.key_topics.length > 0;
+      return form.value.target_audience !== '';
     case 6:
-      return form.value.writing_preferences !== '';
+      return form.value.key_topics.length > 0;
     case 7:
+      return form.value.writing_preferences !== '';
+    case 8:
       return true;
     default:
       return false;
@@ -762,9 +834,14 @@ onMounted(async () => {
     const stylesResponse = await apiClient.get('/book-styles/');
     bookStyles.value = stylesResponse.data || [];
 
+    // Load cover styles
+    const coverStylesResponse = await apiClient.get('/cover-styles/');
+    coverStyles.value = coverStylesResponse.data || [];
+
     console.log('Loaded domains:', domains.value);
     console.log('Loaded niches:', allNiches.value);
     console.log('Loaded book styles:', bookStyles.value);
+    console.log('Loaded cover styles:', coverStyles.value);
   } catch (err) {
     error.value = 'Failed to load book configuration';
     console.error('Failed to load configuration:', err);
@@ -796,6 +873,18 @@ const getStyleIcon = (tone: string) => {
   return iconMap[tone] || 'book';
 };
 
+const getCoverStyleIcon = (style: string) => {
+  const iconMap: Record<string, string> = {
+    'minimalist': 'square',
+    'futuristic': 'rocket',
+    'playful': 'smile',
+    'elegant': 'crown',
+    'corporate': 'building',
+    'artistic': 'palette'
+  };
+  return iconMap[style] || 'image';
+};
+
 const getBookStyleLabel = (value: string) => {
   const style = bookStyles.value.find(s => s.id === value);
   return style ? style.name : value;
@@ -816,6 +905,11 @@ const getSelectedTopicsLabel = () => {
   return selectedTopics.map(t => t.name).join(', ') || 'None selected';
 };
 
+const getCoverStyleLabel = (value: string) => {
+  const style = coverStyles.value.find(s => s.id === value);
+  return style ? style.name : value;
+};
+
 const getWritingPreferenceLabel = (value: string) => {
   const preference = writingPreferences.value.find(p => p.value === value);
   return preference ? preference.label : value;
@@ -824,7 +918,7 @@ const getWritingPreferenceLabel = (value: string) => {
 const handleNext = async () => {
   error.value = '';
   
-  if (currentStep.value < 7) {
+  if (currentStep.value < 8) {
     currentStep.value++;
   } else {
     // Submit the form
@@ -844,7 +938,7 @@ const handleSubmit = async () => {
     error.value = '';
 
     console.log('Submitting book creation with data:', form.value);
-    const response = await apiClient.post('/books/', form.value);
+    const response = await apiClient.post('/books/create-guided/', form.value);
     const book = response.data;
 
     // Validate response has book ID before redirect

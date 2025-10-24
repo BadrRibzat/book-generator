@@ -14,6 +14,10 @@ from pathlib import Path
 import os
 from decouple import config
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -246,4 +250,26 @@ SPECTACULAR_SETTINGS = {
         {'name': 'Configuration', 'description': 'Get available domains and sub-niches'},
         {'name': 'Books', 'description': 'Book generation, cover selection, download, history'},
     ],
+}
+
+# PDF Generation Settings
+PDF_SETTINGS = {
+    'page_size': 'letter',
+    'margins': {
+        'top': 72,    # 1 inch
+        'bottom': 72,
+        'left': 72,
+        'right': 72
+    },
+    'fonts': {
+        'title': 'Montserrat-Bold',
+        'heading': 'Montserrat-Bold',
+        'body': 'Lora-Regular',
+        'fallback': 'Times-Roman'
+    },
+    'colors': {
+        'text': '#2d3748',
+        'heading': '#1a365d',
+        'accent': '#3182ce'
+    }
 }

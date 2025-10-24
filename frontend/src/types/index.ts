@@ -76,6 +76,8 @@ export interface Book {
   download_url: string | null;
   error_message: string | null;
   user_username?: string;
+  progress_percentage?: number;
+  current_step?: string;
 }
 
 export interface BookCreate {

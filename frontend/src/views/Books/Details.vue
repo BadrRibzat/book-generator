@@ -419,6 +419,11 @@ const formatDate = (date: string) => {
 };
 
 const getCurrentStepText = (status: BookStatus) => {
+  // Use the real current_step from the book if available, otherwise fall back to status-based text
+  if (book.value?.current_step) {
+    return book.value.current_step;
+  }
+  
   const steps: Record<BookStatus, string> = {
     draft: 'Initializing...',
     generating: 'Generating AI content',
@@ -431,6 +436,11 @@ const getCurrentStepText = (status: BookStatus) => {
 };
 
 const getProgressPercentage = (status: BookStatus) => {
+  // Use the real progress_percentage from the book if available, otherwise fall back to status-based percentages
+  if (book.value?.progress_percentage !== undefined && book.value.progress_percentage !== null) {
+    return book.value.progress_percentage;
+  }
+  
   const percentages: Record<BookStatus, number> = {
     draft: 10,
     generating: 40,

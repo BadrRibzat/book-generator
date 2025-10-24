@@ -18,57 +18,12 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from .usage_tracker import UsageTracker
 from .trending import get_trending_context, get_related_niches, format_trending_bullets
+from .multi_llm_generator import MultiLLMOrchestrator
+from .pdf_generator_pro import ProfessionalPDFGenerator
+import logging
 
 
-# Core AI Prompt for SmartBookForge
-SMARTBOOK_AI_PROMPT = """
-You are the AI engine of SmartBookForge, a SaaS platform that generates professional, on-demand PDF books with custom covers for two audiences: parents of preschoolers and digital marketers.
-
-Follow this exact workflow:
-
-1. AUDIENCE SELECTION:
-Ask the user to choose between:
-- Parents → Focus: early education, communication, curiosity, bedtime stories
-- Digital Marketers → Focus: trending digital products (AI, sustainability, future skills, mental health tech)
-
-2. DOMAIN/NICHE SELECTION:
-Based on audience choice, present relevant domains and niches:
-PARENTS: Bedtime Stories, Early Learning, Communication Skills, Emotional Development, Curiosity Building
-DIGITAL MARKETERS: AI Content Creation, Sustainability Tech, Future Skills, Mental Health Tech, Digital Economy
-
-3. BOOK LENGTH:
-Offer: 15, 20, 25, or 30 pages
-
-4. CONFIRMATION:
-Summarize all choices and wait for user confirmation
-
-5. BOOK GENERATION:
-Once confirmed, generate:
-- SEO-friendly title based on niche
-- Book content: 60% practical + 40% foundational
-- Structured: title, TOC, chapters, conclusion
-- Clear, audience-appropriate language
-- Output as clean, PDF-ready markdown
-
-6. COVER PROMPTS:
-Generate 3 cover design prompts for ReportLab-based PDF templates. Each must:
-- Reference a domain-specific template (e.g., "AI Tech", "Mindful Parenting")
-- Specify font, size, color, position for the book title overlay
-- Describe layout using ReportLab terms: canvas, Drawing, Rect, HexColor, String, etc.
-- Be labeled Cover A, Cover B, Cover C
-
-Constraints:
-- Use only OpenRouter DeepSeek R1T2 Chimera
-- Never assume—always guide via explicit choices
-- All output must integrate with Django + ReportLab + Celery
-
-Current Request: {user_request}
-Audience: {audience}
-Niche: {niche}
-Page Length: {page_length}
-
-Generate the complete book with all sections.
-"""
+logger = logging.getLogger(__name__)
 
 
 # Professional Book Prompt (15-30 pages minimum)
@@ -150,21 +105,19 @@ Now write the FULL BOOK per the above requirements. Make sure to write at least 
 
 class BookGeneratorProfessional:
     """
-    Professional book generator using OpenRouter DeepSeek R1T2 Chimera
-    Generates 15-30 page books with proper trending context and audience detection
+    Professional book generation using multiple LLMs
     """
-    
+
     def __init__(self):
-        self.api_key = settings.OPENROUTER_API_KEY
-        if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY not found in settings")
-        
-        self.base_url = "https://openrouter.ai/api/v1"
-        self.model = "deepseek/deepseek-chat"  # DeepSeek R1T2 Chimera
-        self.usage_tracker = UsageTracker()
-        self.media_root = Path(settings.MEDIA_ROOT)
-        self.books_dir = self.media_root / 'books'
-        self.books_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.llm_orchestrator = MultiLLMOrchestrator()
+            self.llm_available = True
+        except ValueError as e:
+            print(f"Warning: {e}")
+            self.llm_orchestrator = None
+            self.llm_available = False
+
+        self.pdf_generator = ProfessionalPDFGenerator()
     
     def infer_audience(self, book) -> str:
         """Detect audience based on book's niche and domain"""
@@ -277,201 +230,171 @@ class BookGeneratorProfessional:
             print(f"OpenRouter API error: {str(e)}")
             raise Exception(f"OpenRouter API error: {str(e)}")
     
-    def generate_smartbook_content(self, book, audience: str = None, user_request: str = None) -> Dict[str, Any]:
-        """Generate book content using SmartBookForge AI workflow"""
-        
-        # Determine audience if not provided
-        if not audience:
-            audience = self.infer_audience(book)
-        
-        # Use new model fields for the prompt
-        domain_name = book.domain.name if book.domain else "General"
-        niche_name = book.niche.name if book.niche else "General Interest"
-        page_length = book.book_style.length if book.book_style else 'medium'
-
-        # Build the SmartBook prompt
-        prompt = SMARTBOOK_AI_PROMPT.format(
-            user_request=user_request or f"Generate a {page_length}-page book about {domain_name}: {niche_name}",
-            audience=audience,
-            niche=f"{domain_name}: {niche_name}",
-            page_length=page_length
-        )
-        
-        system_msg = {
-            "role": "system",
-            "content": "You are the AI engine of SmartBookForge. Follow the exact workflow: guide user through audience selection, domain/niche choice, book length selection, confirmation, then generate complete book with cover prompts. Be interactive and never assume choices."
-        }
-        
-        user_msg = {
-            "role": "user",
-            "content": prompt
-        }
-        
-        print(f"Generating SmartBook content for: {domain_name} - {niche_name} ({page_length} pages) - Audience: {audience}")
-        
-        # Calculate required tokens
-        required_tokens = int(self._get_page_count_from_length(page_length) * 650 * 1.5)
-        max_tokens = max(required_tokens, 16000)
-        
-        print(f"Using max_tokens={max_tokens} for SmartBook generation")
-        
-        result = self.call_openrouter_chat(
-            [system_msg, user_msg],
-            temperature=0.7,
-            max_tokens=max_tokens
-        )
-        
-        content = result["data"]["choices"][0]["message"]["content"]
-        usage = result.get("usage", {})
-        
-        # Parse the SmartBook response
-        parsed_data = self.parse_smartbook_response(content, self._get_page_count_from_length(page_length))
-        
-        # Update book title if generated
-        if parsed_data.get('title') and book.title in ["Untitled Book", "Generating..."]:
-            book.title = parsed_data['title']
-            book.save()
-        
-        return {
-            "title": parsed_data.get('title', book.title),
-            "content": content,
-            "chapters": parsed_data.get("chapters", []),
-            "cover_prompts": parsed_data.get("cover_prompts", []),
-            "audience": audience,
-            "usage": usage,
-            "latency_sec": result["latency_sec"]
-        }
-
-    def _get_page_count_from_length(self, length: str) -> int:
-        """Convert length string to page count"""
-        length_map = {
-            'short': 18,  # 15-20 pages
-            'medium': 22,  # 20-25 pages
-            'full': 27  # 25-30 pages
-        }
-        return length_map.get(length, 22)  # Default to medium
-    
-    def parse_smartbook_response(self, content: str, page_length: int) -> Dict[str, Any]:
-        """Parse SmartBook AI response into structured data"""
-        
-        result = {
-            'title': None,
-            'chapters': [],
-            'cover_prompts': []
-        }
-        
-        lines = content.split('\n')
-        current_section = None
-        
-        for line in lines:
-            line_strip = line.strip()
-            
-            if not line_strip:
-                continue
-            
-            # Extract title
-            if not result['title'] and (line_strip.startswith('Title:') or line_strip.startswith('Book Title:')):
-                result['title'] = line_strip.split(':', 1)[-1].strip()
-                continue
-            
-            # Extract cover prompts
-            if 'Cover A:' in line_strip or 'Cover B:' in line_strip or 'Cover C:' in line_strip:
-                current_section = 'cover_prompts'
-                result['cover_prompts'].append(line_strip)
-                continue
-            elif current_section == 'cover_prompts' and line_strip.startswith(('Cover ', 'Use ReportLab', 'Canvas', 'Title', 'Visual', 'ReportLab')):
-                if result['cover_prompts']:
-                    result['cover_prompts'][-1] += '\n' + line_strip
-                continue
-            
-            # Extract chapters
-            if line_strip.startswith('#') and ('Chapter' in line_strip or 'Introduction' in line_strip or 'Conclusion' in line_strip):
-                current_section = 'chapters'
-                result['chapters'].append({
-                    'title': line_strip.lstrip('#').strip(),
-                    'content': []
-                })
-                continue
-            elif current_section == 'chapters' and result['chapters']:
-                result['chapters'][-1]['content'].append(line)
-        
-        # Fallback parsing if structured parsing fails
-        if not result['chapters']:
-            result['chapters'] = self.parse_book_content(content, page_length).get('chapters', [])
-        
-        # Fallback cover prompts
-        if not result['cover_prompts']:
-            result['cover_prompts'] = self._get_fallback_cover_prompts(result.get('title', 'Professional Book'))
-        
-        return result
-    
-    def _get_fallback_cover_prompts(self, title: str) -> list:
-        """Get fallback cover prompts if parsing fails"""
-        return [
-            f"Cover A: Modern Professional\nUse ReportLab canvas.drawString() to overlay '{title}' in Helvetica-Bold 48pt centered on a clean background.",
-            f"Cover B: Elegant Typography\nUse ReportLab Paragraph with custom styles to render '{title}' with sophisticated typography.",
-            f"Cover C: Bold Statement\nUse ReportLab canvas with high contrast colors to display '{title}' prominently."
-        ]
-    
     def generate_book_content(self, book):
-        """Generate complete book content using OpenRouter"""
-        prompt = self.build_book_prompt(book)
-        
-        system_msg = {
-            "role": "system",
-            "content": "You are a professional book author who creates comprehensive, valuable, and well-structured books. Follow instructions precisely and produce high-quality, original content with proper length and depth."
-        }
-        
-        user_msg = {
-            "role": "user",
-            "content": prompt
-        }
-        
-        # Use new model fields
-        domain_name = book.domain.name if book.domain else "General"
-        niche_name = book.niche.name if book.niche else "General Interest"
-        page_length = self._get_page_count_from_length(book.book_style.length) if book.book_style else 22
+        """Generate complete book content using multi-LLM strategy"""
+        if not self.llm_available:
+            raise Exception("LLM orchestrator not available - OPENROUTER_API_KEY not set")
 
-        print(f"Generating book content for: {domain_name} - {niche_name} ({page_length} pages)")
-        
-        # Calculate required tokens based on page length
-        # ~500 words per page, ~1.3 tokens per word = ~650 tokens per page
-        # Add 50% buffer for formatting and structure
-        required_tokens = int(page_length * 650 * 1.5)
-        max_tokens = max(required_tokens, 16000)  # Minimum 16K tokens
-        
-        print(f"Using max_tokens={max_tokens} for {page_length} pages")
-        
-        result = self.call_openrouter_chat(
-            [system_msg, user_msg],
-            temperature=0.7,
-            max_tokens=max_tokens
-        )
-        
-        content = result["data"]["choices"][0]["message"]["content"]
-        usage = result.get("usage", {})
-        
-        # Extract title and design brief
-        title = self.extract_title(content) or self.generate_fallback_title(f"{domain_name} {niche_name}")
-        design_brief = self.extract_design_brief(content) or self.design_brief_from_book(book)
-        
-        # Update book title if extracted (check for placeholder titles)
-        if title and book.title in ["Untitled Book", "Generating..."]:
-            book.title = title
-            book.save()
-        
-        # Parse content into structured chapters
-        parsed_content = self.parse_book_content(content, page_length)
-        
-        return {
-            "title": title,
-            "content": content,
-            "chapters": parsed_content.get("chapters", []),
-            "usage": usage,
-            "latency_sec": result["latency_sec"],
-            "design_brief": design_brief,
-            "audience": self.infer_audience(book)
+        try:
+            content_data = {}
+
+            # 1. Generate Introduction (creative model)
+            logger.info("Generating introduction...")
+            intro_prompt = self._create_intro_prompt(book)
+            content_data['introduction'] = self.llm_orchestrator.generate_with_fallback(
+                prompt=intro_prompt,
+                task_type='content_creative',
+                max_tokens=1500
+            )
+
+            # Enhance introduction
+            content_data['introduction'] = self.llm_orchestrator.enhance_content(
+                content_data['introduction']
+            )
+
+            # 2. Generate Chapters (primary + technical models)
+            chapters = []
+            chapter_count = self._get_chapter_count(book.book_style)
+
+            for i in range(chapter_count):
+                logger.info(f"Generating chapter {i+1}/{chapter_count}...")
+                chapter_title = self._generate_chapter_title(book, i)
+
+                # Use primary model for main content
+                chapter_content = self.llm_orchestrator.generate_chapter(
+                    chapter_title=chapter_title,
+                    context={
+                        'book_title': book.title,
+                        'domain': book.domain.name,
+                        'niche': book.niche.name,
+                        'audience': book.book_style.target_audience
+                    },
+                    word_count=1000  # Target 1000 words per chapter
+                )
+
+                # Validate and enhance if needed
+                if len(chapter_content.split()) < 500:
+                    logger.warning(f"Chapter {i+1} too short, enhancing...")
+                    chapter_content = self.llm_orchestrator.enhance_content(chapter_content)
+
+                chapters.append({
+                    'title': chapter_title,
+                    'content': chapter_content
+                })
+
+            content_data['chapters'] = chapters
+
+            # 3. Generate Conclusion (creative model)
+            logger.info("Generating conclusion...")
+            conclusion_prompt = self._create_conclusion_prompt(book)
+            content_data['conclusion'] = self.llm_orchestrator.generate_with_fallback(
+                prompt=conclusion_prompt,
+                task_type='content_creative',
+                max_tokens=1200
+            )
+
+            # 4. Generate Takeaways (marketing model)
+            logger.info("Generating actionable takeaways...")
+            takeaways_prompt = self._create_takeaways_prompt(book)
+            content_data['takeaways'] = self.llm_orchestrator.generate_with_fallback(
+                prompt=takeaways_prompt,
+                task_type='content_marketing',
+                max_tokens=1000
+            )
+
+            return content_data
+
+        except Exception as e:
+            logger.error(f"Book content generation failed: {str(e)}")
+            raise
+    
+    def _get_chapter_count(self, book_style) -> int:
+        """Determine number of chapters based on book length"""
+        if not book_style:
+            return 5
+
+        length_map = {
+            'short': 4,   # 15-20 pages
+            'medium': 6,  # 20-25 pages
+            'full': 8     # 25-30 pages
         }
+
+        return length_map.get(book_style.length, 5)
+    
+    def _create_intro_prompt(self, book) -> str:
+        """Create prompt for introduction generation"""
+        return f"""Write a compelling introduction for a professional book.
+
+Book Title: {book.title}
+Domain: {book.domain.name if book.domain else ''}
+Niche: {book.niche.name if book.niche else ''}
+Target Audience: {book.book_style.target_audience if book.book_style else 'professionals'}
+
+Requirements:
+1. Write 800-1000 words
+2. Hook the reader in the first paragraph
+3. Explain why this topic matters NOW (2025-2027 trends)
+4. Outline what readers will learn
+5. Use conversational yet professional tone
+6. Include relevant statistics or market data
+7. Create excitement and anticipation
+
+Write a powerful introduction that makes readers eager to continue:"""
+
+    def _create_conclusion_prompt(self, book) -> str:
+        """Create prompt for conclusion generation"""
+        return f"""Write a compelling conclusion for a professional book.
+
+Book Title: {book.title}
+Domain: {book.domain.name if book.domain else ''}
+Niche: {book.niche.name if book.niche else ''}
+
+Requirements:
+1. Write 600-800 words
+2. Summarize key insights and takeaways
+3. Provide forward-looking perspective (2025-2027)
+4. End with inspiring call to action
+5. Reinforce the book's value proposition
+6. Create lasting impact and motivation
+
+Write a powerful conclusion that leaves readers transformed:"""
+
+    def _create_takeaways_prompt(self, book) -> str:
+        """Create prompt for actionable takeaways generation"""
+        return f"""Create actionable takeaways section for a professional book.
+
+Book Title: {book.title}
+Domain: {book.domain.name if book.domain else ''}
+Niche: {book.niche.name if book.niche else ''}
+
+Requirements:
+1. Write 400-600 words
+2. List 8-12 specific, actionable steps
+3. Focus on immediate implementation
+4. Include measurable outcomes
+5. Prioritize high-impact actions
+6. Use clear, numbered format
+
+Create practical takeaways that readers can implement immediately:"""
+
+    def _generate_chapter_title(self, book, chapter_index: int) -> str:
+        """Generate appropriate chapter title based on book content"""
+        # This is a simplified version - in production you'd use AI to generate
+        base_titles = [
+            "Understanding the Fundamentals",
+            "Building Strong Foundations",
+            "Advanced Strategies and Techniques",
+            "Real-World Applications",
+            "Overcoming Common Challenges",
+            "Future Trends and Innovations",
+            "Implementation and Best Practices",
+            "Measuring Success and ROI"
+        ]
+
+        if chapter_index < len(base_titles):
+            return base_titles[chapter_index]
+        else:
+            return f"Chapter {chapter_index + 1}: Advanced Concepts"
     
     def extract_title(self, text: str) -> Optional[str]:
         """Extract title from generated content"""
@@ -644,128 +567,14 @@ class BookGeneratorProfessional:
             }
         }
     
-    def create_pdf(self, book, content_data: Dict[str, Any]) -> str:
-        """Create professional PDF with enhanced formatting"""
-        # Use clean filename from book title
-        clean_title = self.clean_filename(book.title)
-        filename = f"{clean_title}_interior.pdf"
-        pdf_path = self.books_dir / filename
-        
-        # Create PDF document
-        doc = SimpleDocTemplate(
-            str(pdf_path),
-            pagesize=letter,
-            rightMargin=72,
-            leftMargin=72,
-            topMargin=72,
-            bottomMargin=72,
-            title=book.title,
-            author="AI Book Generator Pro"
-        )
-        
-        # Container for PDF elements
-        story = []
-        styles = getSampleStyleSheet()
-        
-        # Professional styles
-        title_style = ParagraphStyle(
-            'ProfessionalTitle',
-            parent=styles['Heading1'],
-            fontSize=32,
-            textColor='#1a365d',
-            spaceAfter=50,
-            alignment=TA_CENTER,
-            fontName='Helvetica-Bold',
-            leading=38
-        )
-        
-        chapter_style = ParagraphStyle(
-            'ChapterTitle',
-            parent=styles['Heading1'],
-            fontSize=22,
-            textColor='#2d3748',
-            spaceAfter=30,
-            spaceBefore=50,
-            fontName='Helvetica-Bold',
-            leading=26
-        )
-        
-        section_style = ParagraphStyle(
-            'SectionHeading',
-            parent=styles['Heading2'],
-            fontSize=16,
-            textColor='#4a5568',
-            spaceAfter=18,
-            spaceBefore=24,
-            fontName='Helvetica-Bold',
-            leading=20
-        )
-        
-        body_style = ParagraphStyle(
-            'ProfessionalBody',
-            parent=styles['BodyText'],
-            fontSize=11,
-            leading=19,
-            alignment=TA_JUSTIFY,
-            spaceAfter=14,
-            fontName='Helvetica',
-            textColor='#2d3748'
-        )
-        
-        # Title page
-        story.append(Spacer(1, 3*inch))
-        story.append(Paragraph(book.title, title_style))
-        story.append(Spacer(1, 0.5*inch))
-        story.append(PageBreak())
-        
-        # Table of contents
-        toc_style = ParagraphStyle(
-            'TOC',
-            parent=styles['BodyText'],
-            fontSize=12,
-            leading=18,
-            spaceAfter=10,
-            fontName='Helvetica'
-        )
-        
-        story.append(Paragraph("Table of Contents", chapter_style))
-        story.append(Spacer(1, 0.4*inch))
-        
-        chapters_data = content_data.get('chapters', [])
-        for i, chapter in enumerate(chapters_data, 1):
-            toc_entry = f"{i}. {chapter.get('title', 'Chapter')}"
-            story.append(Paragraph(toc_entry, toc_style))
-        
-        story.append(PageBreak())
-        
-        # Add chapters with enhanced formatting
-        for chapter in chapters_data:
-            # Chapter title
-            story.append(Paragraph(chapter.get('title', 'Chapter'), chapter_style))
-            story.append(Spacer(1, 0.3*inch))
-            
-            # Chapter content
-            for para in chapter.get('content', []):
-                if para.strip():
-                    # Detect subsection headings
-                    if self.is_heading(para):
-                        story.append(Paragraph(para.strip(), section_style))
-                    else:
-                        # Format body text
-                        formatted_text = self.format_body_text(para)
-                        if formatted_text:
-                            story.append(Paragraph(formatted_text, body_style))
-            
-            story.append(PageBreak())
-        
-        # Build PDF
-        try:
-            doc.build(story)
-            print(f"Successfully created PDF: {pdf_path}")
-            return str(pdf_path)
-        except Exception as e:
-            print(f"PDF creation error: {str(e)}")
-            raise Exception(f"Failed to create PDF: {str(e)}")
+    def create_pdf(self, book, content_data: Dict) -> str:
+        """Create professional PDF"""
+        output_filename = f"{self._clean_filename(book.title)}_interior.pdf"
+        output_path = Path(settings.MEDIA_ROOT) / 'books' / output_filename
+
+        self.pdf_generator.create_book_pdf(book, content_data, str(output_path))
+
+        return str(output_path)
     
     def is_heading(self, text: str) -> bool:
         """Detect if text is a heading"""

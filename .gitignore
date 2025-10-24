@@ -27,6 +27,10 @@ Thumbs.db
 
 # Logs
 *.log
+server_log.txt
+
+# API Usage Tracking
+token_usage.json
 
 # Caches and large temporary files
 *.cache

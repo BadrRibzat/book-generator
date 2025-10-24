@@ -298,7 +298,8 @@ class BookViewSet(viewsets.ModelViewSet):
             
             # Check if file exists
             from pathlib import Path
-            pdf_path = Path(final_pdf_path)
+            from django.conf import settings
+            pdf_path = Path(settings.MEDIA_ROOT) / final_pdf_path
             if not pdf_path.exists():
                 return Response(
                     {'error': 'PDF file not found on server'},

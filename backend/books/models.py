@@ -212,6 +212,10 @@ class Book(models.Model):
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
+    # Progress tracking
+    progress_percentage = models.IntegerField(default=0, help_text="Generation progress 0-100")
+    current_step = models.CharField(max_length=100, blank=True, help_text="Current generation step")
+    
     # MongoDB reference for content
     mongodb_id = models.CharField(max_length=100, blank=True, null=True)
     

@@ -1,19 +1,19 @@
 {
-  "total_tokens": 47643,
-  "total_cost": 0.07645325,
-  "total_input_tokens": 17003,
-  "total_output_tokens": 30640,
+  "total_tokens": 95943,
+  "total_cost": 0.15202145,
+  "total_input_tokens": 35423,
+  "total_output_tokens": 60520,
   "monthly_usage": {
     "2025-10": {
-      "total_tokens": 47643,
-      "total_cost": 0.07645325,
-      "input_tokens": 17003,
-      "output_tokens": 30640,
+      "total_tokens": 95943,
+      "total_cost": 0.15202145,
+      "input_tokens": 35423,
+      "output_tokens": 60520,
       "operations": {
-        "generation": 25
+        "generation": 51
       },
       "models": {
-        "deepseek/deepseek-r1-turbo": 47643
+        "deepseek/deepseek-r1-turbo": 95943
       }
     }
   },
@@ -242,6 +242,240 @@
       "output_tokens": 302,
       "total_tokens": 851,
       "cost": 0.0009633299999999999
+    },
+    {
+      "timestamp": "2025-10-24T11:43:05.466380",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 867,
+      "output_tokens": 2058,
+      "total_tokens": 2925,
+      "cost": 0.00498387
+    },
+    {
+      "timestamp": "2025-10-24T11:43:12.036259",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 869,
+      "output_tokens": 2254,
+      "total_tokens": 3123,
+      "cost": 0.00541421
+    },
+    {
+      "timestamp": "2025-10-24T11:43:18.699589",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 549,
+      "output_tokens": 275,
+      "total_tokens": 824,
+      "cost": 0.0009042
+    },
+    {
+      "timestamp": "2025-10-24T11:43:29.468397",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 545,
+      "output_tokens": 325,
+      "total_tokens": 870,
+      "cost": 0.0010114999999999998
+    },
+    {
+      "timestamp": "2025-10-24T11:44:19.583163",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 869,
+      "output_tokens": 1721,
+      "total_tokens": 2590,
+      "cost": 0.00424694
+    },
+    {
+      "timestamp": "2025-10-24T11:45:27.409380",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 554,
+      "output_tokens": 299,
+      "total_tokens": 853,
+      "cost": 0.00095951
+    },
+    {
+      "timestamp": "2025-10-24T11:45:31.637701",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 552,
+      "output_tokens": 309,
+      "total_tokens": 861,
+      "cost": 0.0009803099999999999
+    },
+    {
+      "timestamp": "2025-10-24T11:59:33.066104",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 870,
+      "output_tokens": 1668,
+      "total_tokens": 2538,
+      "cost": 0.004131419999999999
+    },
+    {
+      "timestamp": "2025-10-24T12:00:00.018433",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 539,
+      "output_tokens": 271,
+      "total_tokens": 810,
+      "cost": 0.0008899399999999999
+    },
+    {
+      "timestamp": "2025-10-24T12:18:57.286262",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 870,
+      "output_tokens": 2349,
+      "total_tokens": 3219,
+      "cost": 0.005622809999999999
+    },
+    {
+      "timestamp": "2025-10-24T12:19:25.603938",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 537,
+      "output_tokens": 305,
+      "total_tokens": 842,
+      "cost": 0.0009632999999999999
+    },
+    {
+      "timestamp": "2025-10-24T12:19:53.567765",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 870,
+      "output_tokens": 1696,
+      "total_tokens": 2566,
+      "cost": 0.0041927399999999995
+    },
+    {
+      "timestamp": "2025-10-24T12:25:39.560979",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 867,
+      "output_tokens": 1799,
+      "total_tokens": 2666,
+      "cost": 0.004416659999999999
+    },
+    {
+      "timestamp": "2025-10-24T12:25:50.396174",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 547,
+      "output_tokens": 273,
+      "total_tokens": 820,
+      "cost": 0.00089872
+    },
+    {
+      "timestamp": "2025-10-24T12:28:53.213556",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 871,
+      "output_tokens": 1919,
+      "total_tokens": 2790,
+      "cost": 0.00468166
+    },
+    {
+      "timestamp": "2025-10-24T12:29:10.502204",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 557,
+      "output_tokens": 345,
+      "total_tokens": 902,
+      "cost": 0.0010619
+    },
+    {
+      "timestamp": "2025-10-24T12:31:41.468116",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 867,
+      "output_tokens": 1959,
+      "total_tokens": 2826,
+      "cost": 0.004767059999999999
+    },
+    {
+      "timestamp": "2025-10-24T12:31:57.388098",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 533,
+      "output_tokens": 313,
+      "total_tokens": 846,
+      "cost": 0.00097862
+    },
+    {
+      "timestamp": "2025-10-24T12:35:00.892686",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 869,
+      "output_tokens": 2183,
+      "total_tokens": 3052,
+      "cost": 0.00525872
+    },
+    {
+      "timestamp": "2025-10-24T12:35:20.388359",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 569,
+      "output_tokens": 322,
+      "total_tokens": 891,
+      "cost": 0.00101813
+    },
+    {
+      "timestamp": "2025-10-24T17:51:11.493745",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 871,
+      "output_tokens": 1987,
+      "total_tokens": 2858,
+      "cost": 0.004830579999999999
+    },
+    {
+      "timestamp": "2025-10-24T17:51:39.143440",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 548,
+      "output_tokens": 309,
+      "total_tokens": 857,
+      "cost": 0.00097811
+    },
+    {
+      "timestamp": "2025-10-24T17:59:26.930311",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 868,
+      "output_tokens": 2234,
+      "total_tokens": 3102,
+      "cost": 0.00536986
+    },
+    {
+      "timestamp": "2025-10-24T17:59:40.823264",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 542,
+      "output_tokens": 329,
+      "total_tokens": 871,
+      "cost": 0.00101861
+    },
+    {
+      "timestamp": "2025-10-24T18:18:43.127667",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 867,
+      "output_tokens": 2074,
+      "total_tokens": 2941,
+      "cost": 0.00501891
+    },
+    {
+      "timestamp": "2025-10-24T18:18:51.562768",
+      "model": "deepseek/deepseek-r1-turbo",
+      "operation": "generation",
+      "input_tokens": 553,
+      "output_tokens": 304,
+      "total_tokens": 857,
+      "cost": 0.0009699099999999999
     }
   ]
 }

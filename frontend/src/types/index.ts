@@ -3,6 +3,8 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 export interface UserRegistration {
@@ -64,6 +66,7 @@ export interface Book {
   domain_name: string;
   niche: SubNiche;
   niche_name: string;
+  sub_niche?: SubNiche;
   page_length: PageLength;
   status: BookStatus;
   created_at: string;
@@ -78,6 +81,8 @@ export interface Book {
   user_username?: string;
   progress_percentage?: number;
   current_step?: string;
+  book_style?: string;
+  cover_style?: string;
 }
 
 export interface BookCreate {

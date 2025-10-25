@@ -77,89 +77,58 @@
               </button>
             </div>
 
-            <!-- Parents Plan -->
-            <div class="card-modern interactive-card relative transform scale-105 shadow-glass-lg">
-              <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+            <!-- Dynamic Paid Plans -->
+            <div
+              v-for="(plan, index) in subscriptionPlans"
+              :key="plan.id"
+              class="card-modern interactive-card relative transform"
+              :class="index === 0 ? 'scale-105 shadow-glass-lg' : ''"
+            >
+              <div v-if="index === 0" class="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg">
                   MOST POPULAR
                 </div>
               </div>
               <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">For Parents</h3>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ plan.name }}</h3>
                 <div class="mb-4">
-                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$12</span>
-                  <span class="text-gray-600 dark:text-gray-400">/month</span>
+                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">${{ plan.price }}</span>
+                  <span class="text-gray-600 dark:text-gray-400">/{{ plan.interval }}</span>
                 </div>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">Perfect for parents of preschoolers</p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">{{ plan.description || 'Perfect for creators' }}</p>
               </div>
 
               <ul class="space-y-3 mb-8">
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">8 books per month</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">{{ plan.max_books_per_month }} books per month</span>
                 </li>
                 <li class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">15-20 pages per book</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">Up to {{ plan.max_pages_per_book }} pages per book</span>
                 </li>
-                <li class="flex items-start">
+                <li v-if="plan.priority_support" class="flex items-start">
                   <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">All parent domains & niches</span>
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">Priority support</span>
                 </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'xmark']" class="text-red-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm line-through">Commercial license</span>
+                <li v-if="plan.custom_covers" class="flex items-start">
+                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">Custom covers</span>
+                </li>
+                <li v-if="plan.api_access" class="flex items-start">
+                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
+                  <span class="text-gray-700 dark:text-gray-300 text-sm">API access</span>
                 </li>
               </ul>
 
               <button
-                @click="selectPlan('parents')"
+                @click="selectPlan(plan.name.toLowerCase().replace(/\s+/g, '_'))"
                 class="block w-full text-center px-6 py-3 btn-primary text-base font-medium rounded-xl transition-all shadow-lg hover:shadow-xl"
-                :disabled="currentPlan === 'parents'"
+                :disabled="currentPlan === plan.name.toLowerCase().replace(/\s+/g, '_')"
               >
-                {{ currentPlan === 'parents' ? '✓ Current Plan' : 'Start Parents Plan' }}
+                {{ currentPlan === plan.name.toLowerCase().replace(/\s+/g, '_') ? '✓ Current Plan' : `Subscribe to ${plan.name}` }}
               </button>
             </div>
-
-            <!-- Creators Plan -->
-            <div class="card-modern interactive-card relative">
-              <div class="text-center mb-6">
-                <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">For Creators</h3>
-                <div class="mb-4">
-                  <span class="text-5xl font-extrabold text-gray-900 dark:text-white">$29</span>
-                  <span class="text-gray-600 dark:text-gray-400">/month</span>
-                </div>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">For digital marketers & content creators</p>
-              </div>
-
-              <ul class="space-y-3 mb-8">
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">12 books per month</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">15-30 pages per book</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">All domains & niches</span>
-                </li>
-                <li class="flex items-start">
-                  <font-awesome-icon :icon="['fas', 'check']" class="text-green-500 mt-1 mr-3 flex-shrink-0" />
-                  <span class="text-gray-700 dark:text-gray-300 text-sm">Commercial license included</span>
-                </li>
-              </ul>
-
-              <button
-                @click="notifyAtLaunch('creators')"
-                class="block w-full text-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-base font-medium rounded-xl transition-all shadow-lg hover:shadow-xl hover:from-purple-700 hover:to-indigo-700"
-              >
-                Notify Me at Launch
-              </button>
-            </div>
-
-
           </div>
         </div>
       </section>
@@ -255,6 +224,14 @@
         </div>
       </section>
     </div>
+
+    <!-- Stripe Checkout Modal -->
+    <StripeCheckoutModal
+      v-if="showCheckoutModal && selectedPlan"
+      :plan="selectedPlan"
+      @close="showCheckoutModal = false; selectedPlan = null"
+      @success="handleCheckoutSuccess"
+    />
   </Layout>
 </template>
 
@@ -262,10 +239,13 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { usePaymentStore } from '../stores/payment'
 import Layout from '../components/Layout.vue'
+import StripeCheckoutModal from '../components/StripeCheckoutModal.vue'
 import apiClient from '../services/api'
 
 const authStore = useAuthStore()
+const paymentStore = usePaymentStore()
 const router = useRouter()
 
 // State
@@ -273,6 +253,8 @@ const subscriptionPlans = ref<any[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const referralCode = ref<string | null>(null)
+const showCheckoutModal = ref(false)
+const selectedPlan = ref<any>(null)
 
 // FAQs data
 const faqs = ref([
@@ -304,23 +286,22 @@ const faqs = ref([
 
 // Computed
 const currentPlan = computed(() => {
-  return authStore.userProfile?.subscription_tier || 'free'
+  if (!paymentStore.currentSubscription) return 'free'
+  return paymentStore.currentSubscription.plan.name.toLowerCase().replace(/\s+/g, '_')
 })
 
 // Get current plan display name
 const currentPlanName = computed(() => {
-  const tier = currentPlan.value
-  if (tier === 'parents') return 'Parents'
-  if (tier === 'creators') return 'Creators'
-  return 'Free'
+  if (!paymentStore.currentSubscription) return 'Free'
+  return paymentStore.currentSubscription.plan.name
 })
 
 // Methods
 async function fetchSubscriptionPlans() {
   try {
     loading.value = true
-    const response = await apiClient.get('/users/subscription-plans/')
-    subscriptionPlans.value = response.data
+    await paymentStore.fetchSubscriptionPlans()
+    subscriptionPlans.value = paymentStore.subscriptionPlans
   } catch (err: any) {
     console.error('Failed to fetch subscription plans:', err)
     error.value = 'Failed to load subscription plans'
@@ -340,17 +321,26 @@ async function selectPlan(planTier: string) {
     return
   }
 
-  // For paid plans, redirect to payment/checkout
-  // This will be implemented when Stripe integration is ready
-  console.log(`Selected plan: ${planTier}`)
-  
-  // Placeholder for now - in production this would redirect to Stripe Checkout
-  alert(`Plan selection for ${planTier} will be implemented with Stripe integration. Current plan: ${currentPlanName.value}`)
+  // Find the plan
+  const plan = subscriptionPlans.value.find(p => p.name.toLowerCase().replace(' ', '_') === planTier)
+  if (!plan) {
+    console.error('Plan not found:', planTier)
+    return
+  }
+
+  // Open checkout modal
+  selectedPlan.value = plan
+  showCheckoutModal.value = true
 }
 
-async function notifyAtLaunch(planTier: string) {
-  // Placeholder for launch notification signup
-  alert(`You'll be notified when the ${planTier} plan launches!`)
+async function handleCheckoutSuccess(subscription: any) {
+  console.log('Subscription created:', subscription)
+  // Refresh subscription data
+  await paymentStore.fetchCurrentSubscription()
+
+  // Close modal
+  showCheckoutModal.value = false
+  selectedPlan.value = null
 }
 
 async function generateReferralCode() {
@@ -378,6 +368,15 @@ async function copyReferralCode() {
 // Lifecycle
 onMounted(async () => {
   await fetchSubscriptionPlans()
+
+  // Fetch current subscription if authenticated
+  if (authStore.isAuthenticated) {
+    try {
+      await paymentStore.fetchCurrentSubscription()
+    } catch (err) {
+      console.log('No active subscription found')
+    }
+  }
 })
 </script>
 

@@ -69,6 +69,12 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/Books/List.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/profile/subscription',
+    name: 'ProfileSubscription',
+    component: () => import('../views/Profile.vue'),
+    meta: { requiresAuth: true },
+  },
   
   // Book detail routes - support both /profile/books/:id and /books/:id to prevent 404 errors
   {

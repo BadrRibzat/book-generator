@@ -35,6 +35,11 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(','
 
 OPENROUTER_API_KEY = config('OPENROUTER_API_KEY')
 
+# Stripe Configuration
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -53,6 +58,7 @@ INSTALLED_APPS = [
     'users',
     'books',
     'covers',
+    'payments',
 ]
 
 MIDDLEWARE = [

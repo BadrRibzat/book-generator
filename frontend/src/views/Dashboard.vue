@@ -655,6 +655,9 @@ interface Book {
   created_at: string
   domain?: string
   sub_niche?: string
+  niche?: string
+  book_style?: string
+  cover_style?: string
 }
 
 interface UserProfile {
@@ -1053,8 +1056,10 @@ const updateProfile = async () => {
     await apiClient.patch('/users/profile/', profileForm.value)
     
     // Update user data
-    authStore.user.username = profileForm.value.username
-    authStore.user.email = profileForm.value.email
+    if (authStore.user) {
+      authStore.user.username = profileForm.value.username
+      authStore.user.email = profileForm.value.email
+    }
     
     addActivity({
       type: 'book_created',

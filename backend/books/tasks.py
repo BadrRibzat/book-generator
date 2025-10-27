@@ -1,6 +1,7 @@
 # books/tasks.py
 """
 Celery tasks for book generation pipeline
+Uses Custom LLM - NO OpenRouter, NO rate limits
 """
 
 from celery import shared_task
@@ -10,7 +11,7 @@ from pathlib import Path
 import logging
 
 from .models import Book
-from .services.book_generator import BookGeneratorProfessional
+from .services.custom_llm_book_generator import CustomLLMBookGenerator  # NEW: Custom LLM
 from .services.pdf_merger import PDFMerger
 from covers.services import CoverGeneratorProfessional
 from backend.utils.mongodb import get_mongodb_db
@@ -21,7 +22,8 @@ logger = logging.getLogger(__name__)
 @shared_task(bind=True, max_retries=3)
 def generate_book_content(self, book_id):
     """
-    Generate book content using AI and create interior PDF
+    Generate book content using Custom LLM (NO OpenRouter)
+    Unlimited generation with no rate limits
     """
     try:
         # Get book instance
@@ -30,23 +32,23 @@ def generate_book_content(self, book_id):
         # Update status and progress
         book.status = 'generating'
         book.progress_percentage = 10
-        book.current_step = 'Initializing content generation'
+        book.current_step = 'Initializing custom LLM generation'
         book.save()
 
-        logger.info(f"Starting content generation for book {book_id}: {book.title}")
+        logger.info(f"🚀 Starting CUSTOM LLM generation for book {book_id}: {book.title}")
 
         # Update progress
-        book.progress_percentage = 20
-        book.current_step = 'Generating book content with AI'
+        book.progress_percentage = 15
+        book.current_step = 'Using custom trained model (no API limits)'
         book.save()
 
-        # Generate content using the updated book generator
-        generator = BookGeneratorProfessional()
+        # Generate content using CUSTOM LLM (NO external APIs)
+        generator = CustomLLMBookGenerator()
         content_data = generator.generate_book_content(book)
 
         # Update progress
-        book.progress_percentage = 60
-        book.current_step = 'Creating interior PDF'
+        book.progress_percentage = 70
+        book.current_step = 'Creating interior PDF with ReportLab'
         book.save()
 
         # Create interior PDF
@@ -58,23 +60,20 @@ def generate_book_content(self, book_id):
         book.save()
 
         # Store content in MongoDB
-        db = get_mongodb_db()
-        result = db.book_contents.insert_one({
-            'book_id': book.id,
-            'content': content_data,
-            'interior_pdf_path': interior_pdf_path,
-            'created_at': timezone.now().isoformat()
-        })
+        mongodb_id = generator.save_to_mongodb(book.id, content_data, interior_pdf_path)
 
         # Update book
-        book.mongodb_id = str(result.inserted_id)
+        book.mongodb_id = mongodb_id
         book.status = 'content_generated'
         book.content_generated_at = timezone.now()
         book.progress_percentage = 90
-        book.current_step = 'Content generation completed'
+        book.current_step = 'Content generation completed - NO API limits used!'
         book.save()
 
-        logger.info(f"Content generation completed for book {book_id}")
+        logger.info(f"✅ CUSTOM LLM generation completed for book {book_id}")
+        logger.info(f"   Words: {content_data['metadata']['total_words']}")
+        logger.info(f"   Chapters: {content_data['metadata']['total_chapters']}")
+        logger.info(f"   External API calls: {content_data['metadata']['api_calls_used']}")
 
         # Trigger cover generation
         generate_book_covers.delay(book_id)
@@ -238,7 +237,7 @@ def create_final_book_pdf(self, book_id):
             book.current_step = 'Regenerating interior PDF'
             book.save()
 
-            generator = BookGeneratorProfessional()
+            generator = CustomLLMBookGenerator()  # Use Custom LLM
             content_data = content_doc.get('content', {})
             if content_data:
                 interior_pdf_path = generator.create_pdf(book, content_data)

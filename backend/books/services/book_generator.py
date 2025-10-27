@@ -1,7 +1,10 @@
 # books/services/book_generator_new.py
 """
-Professional Book Generator using OpenRouter DeepSeek R1T2 Chimera
-Implements comprehensive prompts for 15-30 page professional books with 2025-2027 trends
+DEPRECATED: This file is no longer used
+Use: customllm.services.custom_book_generator.CustomLLMBookGenerator
+
+Professional Book Generator - Old OpenRouter Implementation
+Kept for reference only - DO NOT USE IN PRODUCTION
 """
 
 import os
@@ -18,7 +21,8 @@ from reportlab.lib.units import inch
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
 from .usage_tracker import UsageTracker
 from .trending import get_trending_context, get_related_niches, format_trending_bullets
-from .multi_llm_generator import MultiLLMOrchestrator
+# DEPRECATED - DO NOT USE
+# from .llm_orchestrator import LLMOrchestrator
 from .pdf_generator_pro import ProfessionalPDFGenerator
 import logging
 
@@ -110,7 +114,7 @@ class BookGeneratorProfessional:
 
     def __init__(self):
         try:
-            self.llm_orchestrator = MultiLLMOrchestrator()
+            self.llm_orchestrator = LLMOrchestrator()
             self.llm_available = True
         except ValueError as e:
             print(f"Warning: {e}")
@@ -231,51 +235,52 @@ class BookGeneratorProfessional:
             raise Exception(f"OpenRouter API error: {str(e)}")
     
     def generate_book_content(self, book):
-        """Generate complete book content using multi-LLM strategy"""
+        """Generate complete book content using new LLM orchestrator with dynamic fonts"""
         if not self.llm_available:
             raise Exception("LLM orchestrator not available - OPENROUTER_API_KEY not set")
 
         try:
             content_data = {}
+            
+            # Get book context for orchestrator
+            book_context = {
+                'title': book.title,
+                'domain': book.domain.name if book.domain else 'General',
+                'niche': book.niche.name if book.niche else 'General Interest',
+                'audience': self.infer_audience(book),
+                'style': book.book_style.tone if book.book_style else 'professional',
+                'length': book.book_style.length if book.book_style else 'medium'
+            }
 
-            # 1. Generate Introduction (creative model)
-            logger.info("Generating introduction...")
-            intro_prompt = self._create_intro_prompt(book)
-            content_data['introduction'] = self.llm_orchestrator.generate_with_fallback(
-                prompt=intro_prompt,
-                task_type='content_creative',
-                max_tokens=1500
-            )
+            # 1. Generate outline using optimized outline model
+            logger.info("Generating book outline...")
+            outline = self.llm_orchestrator.generate_outline(book_context)
+            content_data['outline'] = outline
 
-            # Enhance introduction
-            content_data['introduction'] = self.llm_orchestrator.enhance_content(
-                content_data['introduction']
-            )
-
-            # 2. Generate Chapters (primary + technical models)
+            # 2. Generate chapters using content generation model with token validation
             chapters = []
             chapter_count = self._get_chapter_count(book.book_style)
+            length_setting = book.book_style.length if book.book_style else 'medium'
 
             for i in range(chapter_count):
                 logger.info(f"Generating chapter {i+1}/{chapter_count}...")
-                chapter_title = self._generate_chapter_title(book, i)
+                chapter_title = self._generate_chapter_title_from_outline(outline, i)
 
-                # Use primary model for main content
-                chapter_content = self.llm_orchestrator.generate_chapter(
+                # Use new orchestrator with length validation
+                chapter_content = self.llm_orchestrator.generate_chapter_content(
                     chapter_title=chapter_title,
-                    context={
-                        'book_title': book.title,
-                        'domain': book.domain.name,
-                        'niche': book.niche.name,
-                        'audience': book.book_style.target_audience
-                    },
-                    word_count=1000  # Target 1000 words per chapter
+                    book_context=book_context,
+                    length_setting=length_setting
                 )
 
-                # Validate and enhance if needed
-                if len(chapter_content.split()) < 500:
-                    logger.warning(f"Chapter {i+1} too short, enhancing...")
-                    chapter_content = self.llm_orchestrator.enhance_content(chapter_content)
+                # Optional: Review and refine for premium books
+                if hasattr(book, 'quality_level') and book.quality_level == 'premium':
+                    logger.info(f"Reviewing chapter {i+1}...")
+                    chapter_content = self.llm_orchestrator.review_and_refine_content(
+                        content=chapter_content,
+                        chapter_title=chapter_title,
+                        book_context=book_context
+                    )
 
                 chapters.append({
                     'title': chapter_title,
@@ -284,22 +289,32 @@ class BookGeneratorProfessional:
 
             content_data['chapters'] = chapters
 
-            # 3. Generate Conclusion (creative model)
-            logger.info("Generating conclusion...")
-            conclusion_prompt = self._create_conclusion_prompt(book)
-            content_data['conclusion'] = self.llm_orchestrator.generate_with_fallback(
-                prompt=conclusion_prompt,
-                task_type='content_creative',
-                max_tokens=1200
+            # 3. Generate cover brief for font selection
+            logger.info("Generating cover design brief...")
+            cover_brief = self.llm_orchestrator.generate_cover_brief({
+                'title': book.title,
+                'domain': book.domain.name if book.domain else '',
+                'niche': book.niche.name if book.niche else '',
+                'style': book.book_style.name if book.book_style else 'Professional'
+            })
+            content_data['cover_brief'] = cover_brief
+
+            # 4. Generate introduction
+            logger.info("Generating introduction...")
+            intro_prompt = self._create_intro_prompt(book)
+            content_data['introduction'] = self.llm_orchestrator.generate_chapter_content(
+                chapter_title="Introduction",
+                book_context=book_context,
+                length_setting='short'  # Shorter for intro
             )
 
-            # 4. Generate Takeaways (marketing model)
-            logger.info("Generating actionable takeaways...")
-            takeaways_prompt = self._create_takeaways_prompt(book)
-            content_data['takeaways'] = self.llm_orchestrator.generate_with_fallback(
-                prompt=takeaways_prompt,
-                task_type='content_marketing',
-                max_tokens=1000
+            # 5. Generate conclusion
+            logger.info("Generating conclusion...")
+            conclusion_prompt = self._create_conclusion_prompt(book)
+            content_data['conclusion'] = self.llm_orchestrator.generate_chapter_content(
+                chapter_title="Conclusion",
+                book_context=book_context,
+                length_setting='short'  # Shorter for conclusion
             )
 
             return content_data
@@ -396,6 +411,31 @@ Create practical takeaways that readers can implement immediately:"""
         else:
             return f"Chapter {chapter_index + 1}: Advanced Concepts"
     
+    def _generate_chapter_title_from_outline(self, outline: str, chapter_index: int) -> str:
+        """Extract chapter title from outline or generate fallback"""
+        try:
+            # Try to parse chapter titles from outline
+            lines = outline.split('\n')
+            chapter_markers = ['chapter', 'section', '##']
+            
+            chapter_count = 0
+            for line in lines:
+                line_lower = line.lower().strip()
+                if any(marker in line_lower for marker in chapter_markers):
+                    if chapter_count == chapter_index:
+                        # Clean up the title
+                        title = line.strip().lstrip('#').strip()
+                        title = title.replace('**', '').replace('*', '').strip()
+                        if title and len(title) < 150:
+                            return title
+                    chapter_count += 1
+            
+            # Fallback to generated titles
+            return self._generate_chapter_title(None, chapter_index)
+        except Exception as e:
+            logger.warning(f"Failed to extract chapter title from outline: {e}")
+            return self._generate_chapter_title(None, chapter_index)
+    
     def extract_title(self, text: str) -> Optional[str]:
         """Extract title from generated content"""
         lines = text.split('\n')
@@ -449,16 +489,6 @@ Create practical takeaways that readers can implement immediately:"""
         """Generate fallback title if extraction fails"""
         title_base = sub_niche.replace('_', ' ').title()
         return f"The {title_base} Handbook: Professional Guide for 2025"
-    
-    def clean_filename(self, name: str) -> str:
-        """Clean title for filename"""
-        # Remove special characters, keep alphanumeric, spaces, hyphens, underscores
-        cleaned = ''.join(c for c in name if c.isalnum() or c in (' ', '-', '_'))
-        # Truncate if too long
-        cleaned = cleaned[:100]
-        # Replace multiple spaces with single underscore
-        cleaned = '_'.join(cleaned.split())
-        return cleaned or "Professional_Book"
     
     def parse_book_content(self, content: str, page_length: int) -> Dict[str, Any]:
         """Parse book content into structured chapters"""
@@ -568,13 +598,30 @@ Create practical takeaways that readers can implement immediately:"""
         }
     
     def create_pdf(self, book, content_data: Dict) -> str:
-        """Create professional PDF"""
+        """Create professional PDF with dynamic font selection"""
         output_filename = f"{self._clean_filename(book.title)}_interior.pdf"
         output_path = Path(settings.MEDIA_ROOT) / 'books' / output_filename
 
-        self.pdf_generator.create_book_pdf(book, content_data, str(output_path))
+        # Get cover brief for font selection (if available)
+        cover_brief = content_data.get('cover_brief', self.design_brief_from_book(book))
+        
+        # Create PDF generator with AI-selected fonts
+        pdf_gen = ProfessionalPDFGenerator.create_with_book_context(book, cover_brief)
+        
+        # Generate the PDF
+        pdf_gen.create_book_pdf(book, content_data, str(output_path))
 
         return str(output_path)
+    
+    def _clean_filename(self, name: str) -> str:
+        """Clean title for filename"""
+        # Remove special characters, keep alphanumeric, spaces, hyphens, underscores
+        cleaned = ''.join(c for c in name if c.isalnum() or c in (' ', '-', '_'))
+        # Truncate if too long
+        cleaned = cleaned[:100]
+        # Replace multiple spaces with single underscore
+        cleaned = '_'.join(cleaned.split())
+        return cleaned or "Professional_Book"
     
     def is_heading(self, text: str) -> bool:
         """Detect if text is a heading"""

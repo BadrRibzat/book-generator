@@ -1,134 +1,259 @@
-"""
-Enhanced LLM Orchestrator with Cloudflare Integration
-Optimizes book generation using specialized models for different tasks
-Integrates Cloudflare AI for image generation and token tracking
-"""
+""""""
 
-import os
-import requests
-import time
-import logging
-from typing import Dict, List, Optional, Any
-from openai import OpenAI
-from .usage_tracker import UsageTracker
+Cloudflare AI Client for Image GenerationCloudflare AI Client for Image Generation
 
-logger = logging.getLogger(__name__)
+DEPRECATED: Text generation now uses customllm.services.custom_book_generatorDEPRECATED: Text generation now uses CustomLLMBookGenerator
+
+This file kept only for backward compatibility with cover generationThis file kept only for Cloudflare image generation functionality
+
+""""""
 
 
-class CloudflareAIClient:
-    """
-    Cloudflare AI integration for image generation and token tracking
-    """
-    
-    def __init__(self):
-        self.api_key = os.getenv('CLOUDFLAR_KEY')
-        self.global_api_key = os.getenv('GLOBAL_API_KEY')
-        self.account_id = os.getenv('CLOUDFLARE_ACCOUNT_ID', '')
-        
-        if not self.api_key:
-            logger.warning("CLOUDFLAR_KEY not set - Cloudflare features disabled")
-        
-        self.base_url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/ai/run"
-        self.usage_tracker = UsageTracker()
-    
-    def generate_image(self, prompt: str, **kwargs) -> Optional[bytes]:
-        """
-        Generate image using Cloudflare AI Workers
-        
-        Args:
-            prompt: Image generation prompt
-            **kwargs: Additional parameters (width, height, steps, etc.)
-        
-        Returns:
-            bytes: Image data or None if failed
-        """
-        if not self.api_key or not self.account_id:
-            logger.error("Cloudflare credentials not configured")
-            return None
-        
-        try:
-            # Cloudflare AI image generation model
-            model = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
-            
-            headers = {
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "prompt": prompt,
-                "num_steps": kwargs.get('steps', 20),
-                "guidance": kwargs.get('guidance', 7.5),
-            }
-            
-            response = requests.post(
-                f"{self.base_url}/{model}",
-                headers=headers,
-                json=payload,
-                timeout=60
-            )
-            
-            response.raise_for_status()
-            
-            # Track Cloudflare usage
-            self.usage_tracker.record_cloudflare_usage('image_generation', 1)
-            
-            return response.content
-            
-        except Exception as e:
-            logger.error(f"Cloudflare image generation failed: {str(e)}")
-            return None
-    
-    def count_tokens(self, text: str) -> int:
-        """
-        Estimate token count using Cloudflare AI tokenization
-        Fallback to simple estimation if Cloudflare unavailable
-        
-        Args:
-            text: Text to count tokens for
-            
-        Returns:
-            int: Approximate token count
-        """
-        # Simple estimation: ~4 characters per token for English
-        return len(text) // 4
+
+import osimport os
+
+import requestsimport requests
+
+import loggingimport logging
+
+from typing import Optionalfrom typing import Optional
 
 
-class LLMOrchestrator:
-    """
-    Enhanced LLM orchestration with model specialization and Cloudflare integration
-    """
-    
-    def __init__(self):
-        self.api_key = os.getenv("OPENROUTER_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY environment variable not set")
-        
-        self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=self.api_key
-        )
-        
-        self.cloudflare = CloudflareAIClient()
-        self.usage_tracker = UsageTracker()
-        
-        # Optimized model mapping for different tasks (verified working models)
-        self.models = {
-            # Outline Generation: Fast structural planning (10B activated, 230B total)
-            'outline': 'minimax/minimax-m2:free',
+
+logger = logging.getLogger(__name__)logger = logging.getLogger(__name__)
+
+
+
+
+
+class CloudflareAIClient:class CloudflareAIClient:
+
+    """    """
+
+    Cloudflare AI integration for image generation ONLY    Cloudflare AI integration for image generation and token tracking
+
+    All text generation moved to customllm.services.local_llm_engine    """
+
+    """    
+
+        def __init__(self):
+
+    def __init__(self):        self.api_key = os.getenv('CLOUDFLAR_KEY')
+
+        self.api_key = os.getenv('CLOUDFLAR_KEY') or os.getenv('CLOUDFLARE_API_TOKEN')        self.global_api_key = os.getenv('GLOBAL_API_KEY')
+
+        self.account_id = os.getenv('CLOUDFLARE_ACCOUNT_ID', '')        self.account_id = os.getenv('CLOUDFLARE_ACCOUNT_ID', '')
+
+                
+
+        if not self.api_key:        if not self.api_key:
+
+            logger.warning("Cloudflare API key not set - Image generation disabled")            logger.warning("CLOUDFLAR_KEY not set - Cloudflare features disabled")
+
+                
+
+        if not self.account_id or self.account_id == 'YOUR_ACCOUNT_ID_HERE':        self.base_url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/ai/run"
+
+            logger.warning("Cloudflare Account ID not set - Image generation disabled")        self.usage_tracker = UsageTracker()
+
             
-            # Content Generation: High-quality verbose content (9B with reasoning)
-            'content_generation': 'nvidia/nemotron-nano-9b-v2:free',
+
+        self.base_url = f"https://api.cloudflare.com/client/v4/accounts/{self.account_id}/ai/run"    def generate_image(self, prompt: str, **kwargs) -> Optional[bytes]:
+
+            """
+
+    def generate_image(self, prompt: str, **kwargs) -> Optional[bytes]:        Generate image using Cloudflare AI Workers
+
+        """        
+
+        Generate image using Cloudflare AI Workers        Args:
+
+                    prompt: Image generation prompt
+
+        Args:            **kwargs: Additional parameters (width, height, steps, etc.)
+
+            prompt: Image generation prompt        
+
+            **kwargs: Additional parameters (width, height, steps, etc.)        Returns:
+
+                    bytes: Image data or None if failed
+
+        Returns:        """
+
+            bytes: Image data or None if failed        if not self.api_key or not self.account_id:
+
+        """            logger.error("Cloudflare credentials not configured")
+
+        if not self.api_key or not self.account_id or self.account_id == 'YOUR_ACCOUNT_ID_HERE':            return None
+
+            logger.warning("Cloudflare not configured - skipping image generation")        
+
+            return None        try:
+
+                    # Cloudflare AI image generation model
+
+        try:            model = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
+
+            # Cloudflare AI image generation model            
+
+            model = "@cf/stabilityai/stable-diffusion-xl-base-1.0"            headers = {
+
+                            "Authorization": f"Bearer {self.api_key}",
+
+            headers = {                "Content-Type": "application/json"
+
+                "Authorization": f"Bearer {self.api_key}",            }
+
+                "Content-Type": "application/json"            
+
+            }            payload = {
+
+                            "prompt": prompt,
+
+            payload = {                "num_steps": kwargs.get('steps', 20),
+
+                "prompt": prompt,                "guidance": kwargs.get('guidance', 7.5),
+
+                "num_steps": kwargs.get('steps', 20),            }
+
+                "guidance": kwargs.get('guidance', 7.5),            
+
+            }            response = requests.post(
+
+                            f"{self.base_url}/{model}",
+
+            logger.info(f"Generating image with Cloudflare AI: {prompt[:50]}...")                headers=headers,
+
+                            json=payload,
+
+            response = requests.post(                timeout=60
+
+                f"{self.base_url}/{model}",            )
+
+                headers=headers,            
+
+                json=payload,            response.raise_for_status()
+
+                timeout=60            
+
+            )            # Track Cloudflare usage
+
+                        self.usage_tracker.record_cloudflare_usage('image_generation', 1)
+
+            response.raise_for_status()            
+
+                        return response.content
+
+            logger.info("✅ Image generated successfully with Cloudflare")            
+
+            return response.content        except Exception as e:
+
+                        logger.error(f"Cloudflare image generation failed: {str(e)}")
+
+        except Exception as e:            return None
+
+            logger.error(f"❌ Cloudflare image generation failed: {str(e)}")    
+
+            return None    def count_tokens(self, text: str) -> int:
+
+            """
+
+    def test_connection(self) -> bool:        Estimate token count using Cloudflare AI tokenization
+
+        """Test Cloudflare API connection"""        Fallback to simple estimation if Cloudflare unavailable
+
+        if not self.api_key or not self.account_id or self.account_id == 'YOUR_ACCOUNT_ID_HERE':        
+
+            return False        Args:
+
+                    text: Text to count tokens for
+
+        try:            
+
+            # Simple test prompt        Returns:
+
+            result = self.generate_image("test image", steps=1)            int: Approximate token count
+
+            return result is not None        """
+
+        except:        # Simple estimation: ~4 characters per token for English
+
+            return False        return len(text) // 4
+
+
+
+
+
+# DEPRECATED: LLMOrchestrator removed - use customllm.services.custom_book_generator.CustomBookGeneratorclass LLMOrchestrator:
+
+# This class is kept for backward compatibility but should not be used    """
+
+class LLMOrchestrator:    Enhanced LLM orchestration with model specialization and Cloudflare integration
+
+    """    """
+
+    DEPRECATED: This class is no longer used    
+
+    Use: customllm.services.custom_book_generator.CustomBookGenerator    def __init__(self):
+
+            self.api_key = os.getenv("OPENROUTER_API_KEY")
+
+    Kept only for backward compatibility during migration        if not self.api_key:
+
+    """            raise ValueError("OPENROUTER_API_KEY environment variable not set")
+
             
-            # Content Review: Editing and refinement (24B params)
-            'content_review': 'mistralai/mistral-small-3.2-24b-instruct:free',
+
+    def __init__(self):        self.client = OpenAI(
+
+        logger.warning(            base_url="https://openrouter.ai/api/v1",
+
+            "⚠️ LLMOrchestrator is DEPRECATED!\n"            api_key=self.api_key
+
+            "   Use: from customllm.services.custom_book_generator import CustomBookGenerator\n"        )
+
+            "   This provides unlimited generation with no rate limits."        
+
+        )        self.cloudflare = CloudflareAIClient()
+
+        self.cloudflare = CloudflareAIClient()        self.usage_tracker = UsageTracker()
+
             
-            # Cover Design: Creative descriptive prompts (24B params)
-            'cover_design': 'mistralai/mistral-small-3.2-24b-instruct:free',
-            
-            # Fallback model
-            'fallback': 'mistralai/mistral-small-3.2-24b-instruct:free',
-        }
+
+    def generate_outline(self, book_context):        # Optimized model mapping for different tasks (verified working models)
+
+        raise NotImplementedError(        self.models = {
+
+            "LLMOrchestrator is deprecated. "            # Outline Generation: Fast structural planning (10B activated, 230B total)
+
+            "Use CustomBookGenerator.generate_book_outline() instead"            'outline': 'minimax/minimax-m2:free',
+
+        )            
+
+                # Content Generation: High-quality verbose content (9B with reasoning)
+
+    def generate_chapter_content(self, *args, **kwargs):            'content_generation': 'nvidia/nemotron-nano-9b-v2:free',
+
+        raise NotImplementedError(            
+
+            "LLMOrchestrator is deprecated. "            # Content Review: Editing and refinement (24B params)
+
+            "Use CustomBookGenerator.generate_chapter() instead"            'content_review': 'mistralai/mistral-small-3.2-24b-instruct:free',
+
+        )            
+
+                # Cover Design: Creative descriptive prompts (24B params)
+
+    def review_and_improve_content(self, *args, **kwargs):            'cover_design': 'mistralai/mistral-small-3.2-24b-instruct:free',
+
+        raise NotImplementedError(            
+
+            "LLMOrchestrator is deprecated. "            # Fallback model
+
+            "Use CustomBookGenerator.refine_content() instead"            'fallback': 'mistralai/mistral-small-3.2-24b-instruct:free',
+
+        )        }
+
         
         # Dynamic token thresholds with 20% buffers
         self.token_thresholds = {

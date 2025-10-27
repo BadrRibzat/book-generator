@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'books',
     'covers',
     'payments',
+    'customllm',  # Custom LLM integration with Cloudflare
 ]
 
 MIDDLEWARE = [

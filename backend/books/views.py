@@ -64,10 +64,22 @@ def create_guided_book(request):
 class DomainViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for reading domains
+    Only returns the 3 trained domains for custom LLM
     """
-    queryset = Domain.objects.filter(is_active=True)
     serializer_class = DomainSerializer
     permission_classes = [AllowAny]
+    
+    def get_queryset(self):
+        # Only return the 3 trained domains (using books app slugs)
+        trained_domain_slugs = [
+            'ai_automation',
+            'parenting_preschool_learning', 
+            'ecommerce_digital_products'
+        ]
+        return Domain.objects.filter(
+            is_active=True,
+            slug__in=trained_domain_slugs
+        ).order_by('order')
 
 
 class NicheViewSet(viewsets.ReadOnlyModelViewSet):

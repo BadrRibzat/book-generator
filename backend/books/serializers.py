@@ -88,6 +88,9 @@ class BookSerializer(serializers.ModelSerializer):
     selected_cover = serializers.SerializerMethodField()
     can_download = serializers.SerializerMethodField()
     download_url = serializers.SerializerMethodField()
+    # Return slugs for domain and niche for frontend compatibility
+    domain = serializers.CharField(source='domain.slug', read_only=True)
+    niche = serializers.CharField(source='niche.slug', read_only=True)
     domain_name = serializers.CharField(source='domain.name', read_only=True)
     niche_name = serializers.CharField(source='niche.name', read_only=True)
     book_style_name = serializers.CharField(source='book_style.name', read_only=True)

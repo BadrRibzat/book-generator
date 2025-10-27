@@ -44,6 +44,7 @@ class UserProfile(models.Model):
             ('free', 'Free'),
             ('parents', 'For Parents'),
             ('creators', 'For Creators'),
+            ('testing', 'Testing (Unlimited)'),
         ],
         default='free'
     )
@@ -95,7 +96,10 @@ class UserProfile(models.Model):
     
     def can_create_book(self):
         """Check if user can create a new book based on their monthly limits"""
-        if self.subscription_tier == 'free':
+        if self.subscription_tier == 'testing':
+            # Testing tier has unlimited books
+            return True
+        elif self.subscription_tier == 'free':
             return self.books_used_this_month < 2
         elif self.subscription_tier == 'parents':
             return self.books_used_this_month < 8

@@ -394,8 +394,35 @@ const fetchConfig = async () => {
     loading.value = true;
     error.value = null;
 
-    const response = await apiClient.get('/config/sub-niches/');
-    configData.value = response.data;
+    // Fetch domains from correct API endpoint
+    const domainsResponse = await apiClient.get('/domains/');
+    
+    // Transform domains to include niches
+    const domainsWithNiches: any = {};
+    
+    for (const domain of domainsResponse.data) {
+      // Fetch niches for each domain
+      const nichesResponse = await apiClient.get(`/niches/?domain=${domain.slug}`);
+      
+      // Transform to match expected format
+      const niche_map: any = {};
+      for (const niche of nichesResponse.data) {
+        niche_map[niche.slug] = {
+          name: niche.name,
+          description: niche.description || `Specialized content in ${domain.name}`
+        };
+      }
+      
+      domainsWithNiches[domain.slug] = {
+        name: domain.name,
+        description: domain.description || `Trending ${domain.name} content`,
+        sub_niches: niche_map
+      };
+    }
+    
+    configData.value = {
+      sub_niches: domainsWithNiches
+    };
 
     console.log('Loaded config data:', configData.value);
   } catch (err: any) {

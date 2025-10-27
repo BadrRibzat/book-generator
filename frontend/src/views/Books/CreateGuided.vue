@@ -59,7 +59,7 @@
                 </h2>
                 
                 <p class="text-gray-600 dark:text-gray-400 mb-6">
-                  Select the main category that best fits your book concept. We've curated 5 trending domains with proven market demand.
+                  Select the main category that best fits your book concept. We've curated 3 trending domains with custom-trained AI models for unlimited generation.
                 </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -640,7 +640,7 @@
             Why These Niches?
           </h3>
           <p class="text-lg text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
-            Our 32 sub-niches across 4 trending domains are carefully curated based on 2025 market research and audience demand.
+            Our 9 sub-niches across 3 trending domains are carefully curated and powered by custom-trained AI models for unlimited, instant book generation.
           </p>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="flex items-start">
@@ -691,7 +691,7 @@ const currentStep = ref(0);
 const loading = ref(false);
 const error = ref('');
 
-const steps = ['Domain', 'Niche', 'Book Style', 'Cover Style', 'Book Length', 'Target Audience', 'Key Topics', 'Writing Preferences', 'Confirm'];
+const steps = ['Domain', 'Niche', 'Book Style', 'Cover Style', 'Book Length', 'Target Audience', 'Key Topics', 'Writing Preferences', 'Confirm', 'Generate'];
 
 const form = ref({
   domain: '',
@@ -705,17 +705,15 @@ const form = ref({
 });
 
 const domains = ref<Array<{value: string, label: string, description?: string, icon?: string}>>([
-  { value: 'ai_digital_transformation', label: 'AI & Digital Transformation' },
-  { value: 'sustainability_green_tech', label: 'Sustainability & Green Tech' },
-  { value: 'mental_health_tech', label: 'Mental Health Technology' },
-  { value: 'future_skills', label: 'Future Skills & Technologies' }
+  { value: 'ai_automation', label: 'AI & Automation', description: 'AI tools, automation strategies, and intelligent systems' },
+  { value: 'parenting', label: 'Parenting: Pre-school Speech & Learning', description: 'Early childhood development, speech therapy, and preschool learning' },
+  { value: 'ecommerce', label: 'E-commerce & Digital Products', description: 'Online business, digital products, and e-commerce strategies' }
 ]);
 
 const domainIcons: Record<string, string> = {
-  'ai_digital_transformation': 'robot',
-  'sustainability_green_tech': 'leaf',
-  'mental_health_tech': 'brain',
-  'future_skills': 'rocket'
+  'ai_automation': 'robot',
+  'parenting': 'child',
+  'ecommerce': 'shopping-cart'
 };
 
 const allNiches = ref<any>({});

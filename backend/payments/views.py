@@ -35,7 +35,23 @@ class UserSubscriptionView(generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        return get_object_or_404(Subscription, user=self.request.user)
+        """Get the user's current/latest subscription"""
+        # Return subscription if exists, otherwise return None (frontend handles gracefully)
+        try:
+            return Subscription.objects.filter(user=self.request.user).latest('created_at')
+        except Subscription.DoesNotExist:
+            return None
+    
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            # Return empty response instead of 404 when no subscription exists
+            return Response({
+                'status': 'no_subscription',
+                'message': 'No active subscription found'
+            }, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class CreateSubscriptionView(APIView):

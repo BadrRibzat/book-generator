@@ -10,40 +10,200 @@ from reportlab.platypus import (
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
+import requests
+import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
+
+
+class GoogleFontsIntegration:
+    """
+    Google Fonts CSS2 API integration for dynamic font loading
+    """
+    
+    FONT_CACHE_DIR = Path('/tmp/book_generator_fonts')
+    
+    def __init__(self):
+        self.FONT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        self.loaded_fonts = set()
+    
+    def load_google_font(self, font_family: str, weight: int = 400) -> Optional[str]:
+        """
+        Load Google Font and return ReportLab-compatible font name
+        
+        Args:
+            font_family: Google Font family name (e.g., 'Inter', 'Lato')
+            weight: Font weight (400=normal, 700=bold)
+            
+        Returns:
+            str: ReportLab font name or None if failed
+        """
+        font_name = f"{font_family.replace(' ', '')}-{weight}"
+        
+        if font_name in self.loaded_fonts:
+            return font_name
+        
+        try:
+            # Download font from Google Fonts API
+            font_url = f"https://fonts.googleapis.com/css2?family={font_family.replace(' ', '+')}:wght@{weight}&display=swap"
+            response = requests.get(font_url, timeout=10)
+            response.raise_for_status()
+            
+            # Parse CSS to find .ttf URL
+            css_content = response.text
+            # Extract URL from @font-face src
+            import re
+            ttf_url_match = re.search(r'url\((https://[^)]+\.ttf)\)', css_content)
+            
+            if ttf_url_match:
+                ttf_url = ttf_url_match.group(1)
+                
+                # Download .ttf file
+                ttf_response = requests.get(ttf_url, timeout=15)
+                ttf_response.raise_for_status()
+                
+                # Save to cache
+                font_file = self.FONT_CACHE_DIR / f"{font_name}.ttf"
+                font_file.write_bytes(ttf_response.content)
+                
+                # Register with ReportLab
+                pdfmetrics.registerFont(TTFont(font_name, str(font_file)))
+                
+                self.loaded_fonts.add(font_name)
+                logger.info(f"Loaded Google Font: {font_name}")
+                
+                return font_name
+            else:
+                logger.warning(f"Could not find TTF URL for {font_family}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to load Google Font {font_family}: {str(e)}")
+            return None
+    
+    def get_fallback_font(self, category: str = 'clean_sans') -> str:
+        """
+        Get system fallback font based on category
+        
+        Args:
+            category: Font category
+            
+        Returns:
+            str: System font name
+        """
+        fallbacks = {
+            'clean_sans': 'Helvetica',
+            'elegant_serif': 'Times-Roman',
+            'hand_written': 'Helvetica',
+            'modern_geometric': 'Helvetica',
+            'classic_traditional': 'Times-Roman'
+        }
+        return fallbacks.get(category, 'Helvetica')
 
 class ProfessionalPDFGenerator:
     """
     Generate beautifully formatted PDFs with professional typography
+    Supports dynamic font selection based on cover brief and domain
     """
 
-    def __init__(self):
+    def __init__(self, font_theme=None):
+        """
+        Initialize PDF generator with optional font theme
+        
+        Args:
+            font_theme: FontTheme model instance (optional)
+        """
+        self.font_theme = font_theme
+        self.google_fonts = GoogleFontsIntegration()
         self.setup_fonts()
         self.setup_styles()
 
     def setup_fonts(self):
         """
-        Register professional fonts (using system fonts or download free ones)
+        Register professional fonts dynamically based on font theme
         """
-        # Try to register common professional fonts
-        font_paths = {
-            'Montserrat-Bold': '/usr/share/fonts/truetype/montserrat/Montserrat-Bold.ttf',
-            'Montserrat-Regular': '/usr/share/fonts/truetype/montserrat/Montserrat-Regular.ttf',
-            'Lora-Regular': '/usr/share/fonts/truetype/lora/Lora-Regular.ttf',
-            'Lora-Bold': '/usr/share/fonts/truetype/lora/Lora-Bold.ttf',
-        }
+        if self.font_theme:
+            # Load Google Fonts dynamically
+            self.header_font = self.google_fonts.load_google_font(
+                self.font_theme.header_font,
+                self.font_theme.header_weight
+            )
+            self.body_font = self.google_fonts.load_google_font(
+                self.font_theme.body_font,
+                self.font_theme.body_weight
+            )
+            
+            # Fallback to system fonts if Google Fonts failed
+            if not self.header_font:
+                self.header_font = self.google_fonts.get_fallback_font(self.font_theme.category)
+            if not self.body_font:
+                self.body_font = self.google_fonts.get_fallback_font(self.font_theme.category)
+                
+            logger.info(f"Using font theme: {self.font_theme.name} (Header: {self.header_font}, Body: {self.body_font})")
+        else:
+            # Default fonts (backward compatibility)
+            self.header_font = 'Helvetica-Bold'
+            self.body_font = 'Times-Roman'
+            
+            # Try to load system professional fonts
+            font_paths = {
+                'Montserrat-Bold': '/usr/share/fonts/truetype/montserrat/Montserrat-Bold.ttf',
+                'Lora-Regular': '/usr/share/fonts/truetype/lora/Lora-Regular.ttf',
+            }
 
-        for font_name, font_path in font_paths.items():
-            try:
-                if os.path.exists(font_path):
-                    pdfmetrics.registerFont(TTFont(font_name, font_path))
-            except Exception as e:
-                print(f"Could not load {font_name}: {e}")
+            for font_name, font_path in font_paths.items():
+                try:
+                    if os.path.exists(font_path):
+                        pdfmetrics.registerFont(TTFont(font_name, font_path))
+                        if 'Bold' in font_name:
+                            self.header_font = font_name
+                        else:
+                            self.body_font = font_name
+                except Exception as e:
+                    logger.warning(f"Could not load {font_name}: {e}")
+    
+    @classmethod
+    def create_with_book_context(cls, book, cover_brief: str = None):
+        """
+        Create PDF generator with automatic font theme selection
+        
+        Args:
+            book: Book model instance
+            cover_brief: Optional cover brief for AI-based font selection
+            
+        Returns:
+            ProfessionalPDFGenerator instance
+        """
+        try:
+            from books.models import FontTheme
+            
+            if cover_brief:
+                # Select font theme based on AI cover brief
+                font_theme = FontTheme.select_font_theme_from_brief(cover_brief, book.domain)
+            elif book.domain:
+                # Select domain-specific font theme
+                font_theme = FontTheme.objects.filter(
+                    domain=book.domain,
+                    is_active=True
+                ).first()
+            else:
+                # Use default font theme
+                font_theme = FontTheme.objects.filter(
+                    is_default=True,
+                    is_active=True
+                ).first()
+            
+            return cls(font_theme=font_theme)
+            
+        except Exception as e:
+            logger.error(f"Font theme selection failed: {str(e)}, using defaults")
+            return cls()  # Fallback to default fonts
 
     def setup_styles(self):
         """
-        Create professional paragraph styles
+        Create professional paragraph styles with dynamic fonts
         """
         self.styles = getSampleStyleSheet()
 
@@ -55,7 +215,7 @@ class ProfessionalPDFGenerator:
             textColor=HexColor('#1a365d'),
             spaceAfter=30,
             alignment=TA_CENTER,
-            fontName='Montserrat-Bold' if 'Montserrat-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold',
+            fontName=self.header_font,
             leading=50
         ))
 
@@ -67,7 +227,7 @@ class ProfessionalPDFGenerator:
             textColor=HexColor('#2c5282'),
             spaceAfter=20,
             spaceBefore=30,
-            fontName='Montserrat-Bold' if 'Montserrat-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold',
+            fontName=self.header_font,
             leading=34
         ))
 
@@ -79,11 +239,11 @@ class ProfessionalPDFGenerator:
             textColor=HexColor('#2d3748'),
             spaceAfter=12,
             spaceBefore=18,
-            fontName='Montserrat-Bold' if 'Montserrat-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold',
+            fontName=self.header_font,
             leading=22
         ))
 
-        # Body Text Style - ENHANCED
+        # Body Text Style - ENHANCED with dynamic font
         self.styles.add(ParagraphStyle(
             name='BookBody',
             parent=self.styles['BodyText'],
@@ -92,7 +252,7 @@ class ProfessionalPDFGenerator:
             spaceAfter=14,
             spaceBefore=0,
             alignment=TA_JUSTIFY,
-            fontName='Lora-Regular' if 'Lora-Regular' in pdfmetrics.getRegisteredFontNames() else 'Times-Roman',
+            fontName=self.body_font,
             leading=21,  # 1.5 line spacing
             firstLineIndent=0
         ))

@@ -1,14 +1,14 @@
 from django.core.management.base import BaseCommand
-from books.models import Domain, Niche, BookStyle, CoverStyle
+from books.models import Domain, Niche, BookStyle, CoverStyle, FontTheme
 
 
 class Command(BaseCommand):
-    help = 'Populate initial data for domains, niches, book styles, and cover styles'
+    help = 'Populate initial data for domains, niches, book styles, cover styles, and font themes'
 
     def handle(self, *args, **options):
         self.stdout.write('Populating initial data...')
 
-        # Create domains
+        # Create domains - with new trending domains
         domains_data = [
             {
                 'name': 'AI & Digital Transformation',
@@ -32,10 +32,10 @@ class Command(BaseCommand):
                 'order': 3
             },
             {
-                'name': 'Future Skills & Digital Economy',
-                'slug': 'future_skills',
-                'description': 'Future-ready skills and digital economy trends',
-                'icon': 'fas fa-rocket',
+                'name': 'E-commerce & Digital Products',  # NEW - Replaces old domain
+                'slug': 'ecommerce_digital_products',
+                'description': 'Online business, digital products, and e-commerce strategies',
+                'icon': 'fas fa-shopping-cart',
                 'order': 4
             },
             {
@@ -53,17 +53,17 @@ class Command(BaseCommand):
                 'order': 6
             },
             {
-                'name': 'Health & Wellness',
-                'slug': 'health-wellness',
-                'description': 'Fitness, nutrition, mental health, and lifestyle',
-                'icon': 'fas fa-heartbeat',
+                'name': 'Parenting: Pre-school Speech & Learning',  # NEW - Replaces old domain
+                'slug': 'parenting_preschool_learning',
+                'description': 'Early childhood development, speech therapy, and preschool learning',
+                'icon': 'fas fa-child',
                 'order': 7
             },
             {
-                'name': 'Personal Development',
-                'slug': 'personal-development',
-                'description': 'Self-improvement, motivation, and life skills',
-                'icon': 'fas fa-user-graduate',
+                'name': 'AI & Automation',  # NEW - Replaces old domain
+                'slug': 'ai_automation',
+                'description': 'AI tools, automation strategies, and intelligent systems',
+                'icon': 'fas fa-cogs',
                 'order': 8
             },
             {
@@ -92,13 +92,34 @@ class Command(BaseCommand):
             if created:
                 self.stdout.write(f'Created domain: {domain.name}')
 
-        # Create niches
+        # Create niches with micro-workflows for new domains
         niches_data = [
             # AI & Digital Transformation
             {'domain': 'ai_digital_transformation', 'name': 'AI Business Automation', 'slug': 'ai_business_automation', 'audience': 'Business owners and managers', 'order': 1},
             {'domain': 'ai_digital_transformation', 'name': 'AI Ethics & Governance', 'slug': 'ai_ethics_governance', 'audience': 'Policy makers and executives', 'order': 2},
             {'domain': 'ai_digital_transformation', 'name': 'ChatGPT Productivity', 'slug': 'chatgpt_productivity', 'audience': 'Office workers and students', 'order': 3},
             {'domain': 'ai_digital_transformation', 'name': 'Machine Learning Basics', 'slug': 'machine_learning_basics', 'audience': 'Non-technical professionals', 'order': 4},
+
+            # E-commerce & Digital Products (NEW - 5 micro-workflows)
+            {'domain': 'ecommerce_digital_products', 'name': 'Dropshipping Mastery', 'slug': 'dropshipping_mastery', 'audience': 'Aspiring e-commerce entrepreneurs', 'order': 1},
+            {'domain': 'ecommerce_digital_products', 'name': 'Digital Product Creation', 'slug': 'digital_product_creation', 'audience': 'Content creators and course makers', 'order': 2},
+            {'domain': 'ecommerce_digital_products', 'name': 'Amazon FBA Success', 'slug': 'amazon_fba_success', 'audience': 'Online sellers', 'order': 3},
+            {'domain': 'ecommerce_digital_products', 'name': 'Shopify Store Building', 'slug': 'shopify_store_building', 'audience': 'E-commerce store owners', 'order': 4},
+            {'domain': 'ecommerce_digital_products', 'name': 'Print on Demand Business', 'slug': 'print_on_demand', 'audience': 'Creative entrepreneurs', 'order': 5},
+
+            # Parenting: Pre-school Speech & Learning (NEW - 5 micro-workflows)
+            {'domain': 'parenting_preschool_learning', 'name': 'Speech Development 3-6 Years', 'slug': 'speech_development_3_6', 'audience': 'Parents and caregivers', 'order': 1},
+            {'domain': 'parenting_preschool_learning', 'name': 'Phonics & Early Reading', 'slug': 'phonics_early_reading', 'audience': 'Parents and educators', 'order': 2},
+            {'domain': 'parenting_preschool_learning', 'name': 'Preschool Learning Activities', 'slug': 'preschool_activities', 'audience': 'Parents and early educators', 'order': 3},
+            {'domain': 'parenting_preschool_learning', 'name': 'Language Delay Support', 'slug': 'language_delay_support', 'audience': 'Parents with speech-delayed children', 'order': 4},
+            {'domain': 'parenting_preschool_learning', 'name': 'Bilingual Preschool Learning', 'slug': 'bilingual_preschool', 'audience': 'Multilingual families', 'order': 5},
+
+            # AI & Automation (NEW - 5 micro-workflows)
+            {'domain': 'ai_automation', 'name': 'No-Code AI Tools', 'slug': 'no_code_ai_tools', 'audience': 'Non-technical professionals', 'order': 1},
+            {'domain': 'ai_automation', 'name': 'Marketing Automation', 'slug': 'marketing_automation', 'audience': 'Digital marketers', 'order': 2},
+            {'domain': 'ai_automation', 'name': 'Workflow Automation', 'slug': 'workflow_automation', 'audience': 'Operations managers', 'order': 3},
+            {'domain': 'ai_automation', 'name': 'AI Content Creation', 'slug': 'ai_content_creation', 'audience': 'Content creators', 'order': 4},
+            {'domain': 'ai_automation', 'name': 'RPA for Business', 'slug': 'rpa_business', 'audience': 'Business process managers', 'order': 5},
 
             # Business
             {'domain': 'business', 'name': 'Entrepreneurship', 'slug': 'entrepreneurship', 'audience': 'Aspiring entrepreneurs', 'order': 1},
@@ -118,29 +139,11 @@ class Command(BaseCommand):
             {'domain': 'education', 'name': 'Language Learning', 'slug': 'language_learning', 'audience': 'Language learners', 'order': 3},
             {'domain': 'education', 'name': 'Test Prep', 'slug': 'test_prep', 'audience': 'Students', 'order': 4},
 
-            # Future Skills
-            {'domain': 'future_skills', 'name': 'Blockchain Fundamentals', 'slug': 'blockchain_fundamentals', 'audience': 'Finance and tech professionals', 'order': 1},
-            {'domain': 'future_skills', 'name': 'Cybersecurity Essentials', 'slug': 'cybersecurity_essentials', 'audience': 'All internet users', 'order': 2},
-            {'domain': 'future_skills', 'name': 'Metaverse Skills', 'slug': 'metaverse_skills', 'audience': 'Tech innovators', 'order': 3},
-            {'domain': 'future_skills', 'name': 'Remote Work Mastery', 'slug': 'remote_work_mastery', 'audience': 'Remote workers', 'order': 4},
-
-            # Health & Wellness
-            {'domain': 'health-wellness', 'name': 'Fitness', 'slug': 'fitness', 'audience': 'Fitness enthusiasts', 'order': 1},
-            {'domain': 'health-wellness', 'name': 'Nutrition', 'slug': 'nutrition', 'audience': 'Health-conscious individuals', 'order': 2},
-            {'domain': 'health-wellness', 'name': 'Mental Health', 'slug': 'mental_health', 'audience': 'General public', 'order': 3},
-            {'domain': 'health-wellness', 'name': 'Weight Loss', 'slug': 'weight_loss', 'audience': 'Weight loss seekers', 'order': 4},
-
             # Mental Health Tech
             {'domain': 'mental_health_tech', 'name': 'AI Mental Health Apps', 'slug': 'ai_mental_health_apps', 'audience': 'Healthcare providers', 'order': 1},
             {'domain': 'mental_health_tech', 'name': 'Digital Wellness Tools', 'slug': 'digital_wellness_tools', 'audience': 'Wellness seekers', 'order': 2},
             {'domain': 'mental_health_tech', 'name': 'Mental Health Wearables', 'slug': 'mental_health_wearables', 'audience': 'Health-conscious individuals', 'order': 3},
             {'domain': 'mental_health_tech', 'name': 'Teletherapy Platforms', 'slug': 'teletherapy_platforms', 'audience': 'Therapists and patients', 'order': 4},
-
-            # Personal Development
-            {'domain': 'personal-development', 'name': 'Productivity', 'slug': 'productivity', 'audience': 'Professionals and students', 'order': 1},
-            {'domain': 'personal-development', 'name': 'Motivation', 'slug': 'motivation', 'audience': 'General public', 'order': 2},
-            {'domain': 'personal-development', 'name': 'Communication', 'slug': 'communication', 'audience': 'Professionals', 'order': 3},
-            {'domain': 'personal-development', 'name': 'Mindfulness', 'slug': 'mindfulness', 'audience': 'Stress management seekers', 'order': 4},
 
             # Sustainability
             {'domain': 'sustainability_green_tech', 'name': 'Carbon Neutral Living', 'slug': 'carbon_neutral_living', 'audience': 'Environmentally conscious consumers', 'order': 1},
@@ -204,5 +207,148 @@ class Command(BaseCommand):
             )
             if created:
                 self.stdout.write(f'Created cover style: {cover.name}')
+
+        # Create font themes with domain-specific and AI brief keywords
+        font_themes_data = [
+            # Default professional theme
+            {
+                'name': 'Professional Default',
+                'category': 'clean_sans',
+                'description': 'Clean modern fonts for professional content',
+                'domain': None,
+                'header_font': 'Inter',
+                'body_font': 'Lato',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['professional', 'clean', 'modern', 'minimal', 'corporate'],
+                'priority': 100,
+                'is_default': True
+            },
+            # Tech/AI domains
+            {
+                'name': 'Tech Modern',
+                'category': 'modern_geometric',
+                'description': 'Modern geometric fonts for tech content',
+                'domain': domains.get('ai_digital_transformation'),
+                'header_font': 'Roboto',
+                'body_font': 'Open Sans',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['tech', 'digital', 'ai', 'futuristic', 'modern', 'innovation'],
+                'priority': 90
+            },
+            {
+                'name': 'Automation Clean',
+                'category': 'clean_sans',
+                'description': 'Clean fonts for automation content',
+                'domain': domains.get('ai_automation'),
+                'header_font': 'Work Sans',
+                'body_font': 'Source Sans Pro',
+                'header_weight': 600,
+                'body_weight': 400,
+                'ai_brief_keywords': ['automation', 'workflow', 'system', 'process'],
+                'priority': 85
+            },
+            # E-commerce
+            {
+                'name': 'E-commerce Bold',
+                'category': 'clean_sans',
+                'description': 'Bold readable fonts for e-commerce',
+                'domain': domains.get('ecommerce_digital_products'),
+                'header_font': 'Montserrat',
+                'body_font': 'Lato',
+                'header_weight': 800,
+                'body_weight': 400,
+                'ai_brief_keywords': ['commerce', 'business', 'selling', 'marketing', 'bold'],
+                'priority': 85
+            },
+            # Parenting/Kids
+            {
+                'name': 'Friendly Rounded',
+                'category': 'hand_written',
+                'description': 'Friendly fonts for parenting and kids content',
+                'domain': domains.get('parenting_preschool_learning'),
+                'header_font': 'Quicksand',
+                'body_font': 'Nunito',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['playful', 'kids', 'family', 'friendly', 'warm', 'children', 'preschool'],
+                'priority': 90
+            },
+            # Sustainability
+            {
+                'name': 'Eco Natural',
+                'category': 'elegant_serif',
+                'description': 'Natural elegant fonts for sustainability',
+                'domain': domains.get('sustainability_green_tech'),
+                'header_font': 'Merriweather',
+                'body_font': 'Lora',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['eco', 'natural', 'sustainable', 'green', 'organic', 'earth'],
+                'priority': 85
+            },
+            # Mental Health
+            {
+                'name': 'Calm Serene',
+                'category': 'elegant_serif',
+                'description': 'Calm serif fonts for wellness content',
+                'domain': domains.get('mental_health_tech'),
+                'header_font': 'Crimson Text',
+                'body_font': 'Source Serif Pro',
+                'header_weight': 600,
+                'body_weight': 400,
+                'ai_brief_keywords': ['calm', 'wellness', 'mental', 'mindful', 'serene', 'peaceful'],
+                'priority': 85
+            },
+            # Creative Arts
+            {
+                'name': 'Creative Artistic',
+                'category': 'hand_written',
+                'description': 'Artistic fonts for creative content',
+                'domain': domains.get('creative-arts'),
+                'header_font': 'Playfair Display',
+                'body_font': 'Raleway',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['creative', 'artistic', 'design', 'elegant', 'stylish'],
+                'priority': 85
+            },
+            # Global fallback themes
+            {
+                'name': 'Elegant Serif',
+                'category': 'elegant_serif',
+                'description': 'Classic elegant serif fonts',
+                'domain': None,
+                'header_font': 'Playfair Display',
+                'body_font': 'Source Serif Pro',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['elegant', 'sophisticated', 'classic', 'traditional', 'formal'],
+                'priority': 70
+            },
+            {
+                'name': 'Hand-Written Style',
+                'category': 'hand_written',
+                'description': 'Hand-written style fonts for personal touch',
+                'domain': None,
+                'header_font': 'Dancing Script',
+                'body_font': 'Cabin',
+                'header_weight': 700,
+                'body_weight': 400,
+                'ai_brief_keywords': ['personal', 'casual', 'handwritten', 'informal', 'friendly'],
+                'priority': 60
+            },
+        ]
+
+        for font_data in font_themes_data:
+            # Handle domain None case
+            domain_obj = font_data.pop('domain')
+            font_theme, created = FontTheme.objects.get_or_create(
+                name=font_data['name'],
+                defaults={**font_data, 'domain': domain_obj}
+            )
+            if created:
+                self.stdout.write(f'Created font theme: {font_theme.name}')
 
         self.stdout.write(self.style.SUCCESS('Successfully populated initial data!'))

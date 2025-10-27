@@ -134,6 +134,165 @@ class CoverStyle(models.Model):
         return f"{self.name} ({self.style})"
 
 
+class FontTheme(models.Model):
+    """
+    Font theme configuration with domain-based defaults and AI brief override
+    Integrates with Google Fonts CSS2 API for dynamic font loading
+    """
+    FONT_CATEGORY_CHOICES = [
+        ('clean_sans', 'Clean Sans-Serif'),
+        ('elegant_serif', 'Elegant Serif'),
+        ('hand_written', 'Hand-Written/Script'),
+        ('modern_geometric', 'Modern Geometric'),
+        ('classic_traditional', 'Classic Traditional'),
+    ]
+    
+    name = models.CharField(max_length=100, unique=True)
+    category = models.CharField(max_length=30, choices=FONT_CATEGORY_CHOICES)
+    description = models.TextField(blank=True)
+    
+    # Domain relationship (optional - can be domain-specific or global)
+    domain = models.ForeignKey(
+        Domain, 
+        on_delete=models.SET_NULL, 
+        related_name='font_themes',
+        blank=True,
+        null=True,
+        help_text="If set, this font theme is default for this domain"
+    )
+    
+    # Font family names (Google Fonts compatible)
+    header_font = models.CharField(
+        max_length=100,
+        default='Inter',
+        help_text="Google Font name for headers (e.g., 'Inter', 'Playfair Display')"
+    )
+    body_font = models.CharField(
+        max_length=100,
+        default='Lato',
+        help_text="Google Font name for body text (e.g., 'Lato', 'Source Serif Pro')"
+    )
+    
+    # Font weights
+    header_weight = models.IntegerField(
+        default=700,
+        help_text="Font weight for headers (400=normal, 700=bold, 900=black)"
+    )
+    body_weight = models.IntegerField(
+        default=400,
+        help_text="Font weight for body text (400=normal, 600=semi-bold)"
+    )
+    
+    # AI brief keywords for auto-selection
+    ai_brief_keywords = models.JSONField(
+        default=list,
+        help_text="Keywords in cover brief that trigger this font theme (e.g., ['modern', 'tech', 'minimal'])"
+    )
+    
+    # Google Fonts CSS2 API URL (auto-generated)
+    google_fonts_url = models.TextField(
+        blank=True,
+        help_text="Auto-generated Google Fonts CSS2 API URL"
+    )
+    
+    # Priority for auto-selection (higher = preferred)
+    priority = models.IntegerField(default=50)
+    
+    # Status
+    is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(
+        default=False,
+        help_text="Use as default when no domain or AI match"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-priority', 'name']
+        indexes = [
+            models.Index(fields=['domain', 'is_active']),
+            models.Index(fields=['category']),
+            models.Index(fields=['is_default']),
+        ]
+    
+    def __str__(self):
+        domain_str = f" ({self.domain.name})" if self.domain else " (Global)"
+        return f"{self.name}{domain_str}"
+    
+    def save(self, *args, **kwargs):
+        """Auto-generate Google Fonts CSS2 API URL"""
+        if self.header_font and self.body_font:
+            # Build Google Fonts CSS2 API URL
+            # Format: https://fonts.googleapis.com/css2?family=Font+Name:wght@weight&family=Font2:wght@weight&display=swap
+            header_family = self.header_font.replace(' ', '+')
+            body_family = self.body_font.replace(' ', '+')
+            
+            self.google_fonts_url = (
+                f"https://fonts.googleapis.com/css2?"
+                f"family={header_family}:wght@{self.header_weight}&"
+                f"family={body_family}:wght@{self.body_weight}&"
+                f"display=swap"
+            )
+        
+        # Ensure only one default exists
+        if self.is_default:
+            FontTheme.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        
+        super().save(*args, **kwargs)
+    
+    @classmethod
+    def select_font_theme_from_brief(cls, cover_brief: str, domain=None) -> 'FontTheme':
+        """
+        Select appropriate font theme based on cover brief AI analysis
+        
+        Args:
+            cover_brief: AI-generated cover design brief
+            domain: Book domain (optional)
+            
+        Returns:
+            FontTheme: Best matching font theme
+        """
+        brief_lower = cover_brief.lower()
+        
+        # Try domain-specific themes first
+        if domain:
+            domain_themes = cls.objects.filter(domain=domain, is_active=True)
+            
+            for theme in domain_themes:
+                keywords = theme.ai_brief_keywords or []
+                if any(keyword.lower() in brief_lower for keyword in keywords):
+                    return theme
+        
+        # Try global themes with keyword matching
+        global_themes = cls.objects.filter(domain__isnull=True, is_active=True).order_by('-priority')
+        
+        for theme in global_themes:
+            keywords = theme.ai_brief_keywords or []
+            if any(keyword.lower() in brief_lower for keyword in keywords):
+                return theme
+        
+        # Fallback to default
+        default = cls.objects.filter(is_default=True, is_active=True).first()
+        if default:
+            return default
+        
+        # Ultimate fallback - create or get a basic theme
+        basic_theme, created = cls.objects.get_or_create(
+            name='Professional Default',
+            defaults={
+                'category': 'clean_sans',
+                'header_font': 'Inter',
+                'body_font': 'Lato',
+                'header_weight': 700,
+                'body_weight': 400,
+                'is_default': True,
+                'ai_brief_keywords': ['professional', 'clean', 'modern']
+            }
+        )
+        return basic_theme
+
+
 class Book(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Draft'),

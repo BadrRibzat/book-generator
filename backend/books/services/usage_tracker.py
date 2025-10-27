@@ -20,6 +20,12 @@ class UsageTracker:
         }
         self.monthly_limit = 87700000000  # 87.7B tokens (adjust based on actual limits)
         self._lock = threading.Lock()  # Thread safety for concurrent access
+        
+        # Cloudflare AI pricing (approximate)
+        self.cloudflare_pricing = {
+            'image_generation': 0.01,  # $0.01 per image
+            'token_counting': 0.0,  # Free
+        }
 
     def record_usage(self, input_tokens, output_tokens, model="deepseek/deepseek-r1-turbo", operation="generation"):
         """
@@ -97,6 +103,50 @@ class UsageTracker:
             except Exception as e:
                 print(f"Usage tracking error: {e}")
                 return None
+    
+    def record_cloudflare_usage(self, operation_type, count=1):
+        """
+        Record Cloudflare AI usage
+        
+        Args:
+            operation_type: Type of Cloudflare operation (image_generation, token_counting)
+            count: Number of operations
+        """
+        with self._lock:
+            try:
+                data = self._load_usage_data()
+                
+                # Initialize Cloudflare tracking if not exists
+                if 'cloudflare_usage' not in data:
+                    data['cloudflare_usage'] = {
+                        'total_operations': 0,
+                        'total_cost': 0.0,
+                        'by_type': {}
+                    }
+                
+                # Calculate cost
+                cost = self.cloudflare_pricing.get(operation_type, 0) * count
+                
+                # Update totals
+                data['cloudflare_usage']['total_operations'] += count
+                data['cloudflare_usage']['total_cost'] += cost
+                
+                # Update by type
+                if operation_type not in data['cloudflare_usage']['by_type']:
+                    data['cloudflare_usage']['by_type'][operation_type] = {
+                        'count': 0,
+                        'cost': 0.0
+                    }
+                
+                data['cloudflare_usage']['by_type'][operation_type]['count'] += count
+                data['cloudflare_usage']['by_type'][operation_type]['cost'] += cost
+                
+                self._save_usage_data(data)
+                
+                print(f"Cloudflare {operation_type}: {count} operations, ${cost:.4f}")
+                
+            except Exception as e:
+                print(f"Cloudflare usage tracking error: {e}")
 
     def get_remaining_tokens(self):
         """Get remaining tokens for the current month"""

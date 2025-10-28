@@ -46,6 +46,12 @@ def generate_book_content(self, book_id):
         generator = CustomLLMBookGenerator()
         content_data = generator.generate_book_content(book)
 
+        # Update book title with the generated title
+        generated_title = content_data.get('title', 'Complete Guide')
+        if generated_title and generated_title != 'Generating...':
+            book.title = generated_title
+            logger.info(f"📚 Updated book title to: {generated_title}")
+
         # Update progress
         book.progress_percentage = 70
         book.current_step = 'Creating interior PDF with ReportLab'

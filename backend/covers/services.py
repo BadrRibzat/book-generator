@@ -1173,8 +1173,74 @@ def create_coverC(c):
             # Create a fallback simple cover
             self._create_fallback_reportlab_cover(title, pdf_path)
     
+    def _smart_wrap_title(self, canvas_obj, text: str, max_width: float, font_name: str, initial_font_size: int) -> list:
+        """
+        Smart text wrapping that considers actual text width in ReportLab
+        
+        Args:
+            canvas_obj: ReportLab canvas object
+            text: Title text to wrap
+            max_width: Maximum width in points/inches
+            font_name: Font name to use
+            initial_font_size: Starting font size
+        
+        Returns:
+            List of text lines that fit within max_width
+        """
+        canvas_obj.setFont(font_name, initial_font_size)
+        
+        # Check if the whole title fits on one line
+        text_width = canvas_obj.stringWidth(text, font_name, initial_font_size)
+        if text_width <= max_width:
+            return [text]
+        
+        # Split by natural break points: colons, semicolons, em-dashes
+        if ':' in text:
+            parts = text.split(':', 1)
+            line1 = parts[0].strip()
+            line2 = parts[1].strip()
+            
+            # Check if both parts fit on their own lines
+            width1 = canvas_obj.stringWidth(line1, font_name, initial_font_size)
+            width2 = canvas_obj.stringWidth(line2, font_name, initial_font_size * 0.9)
+            
+            if width1 <= max_width and width2 <= max_width:
+                return [line1, line2]
+        
+        # Fall back to word-based wrapping
+        words = text.split()
+        lines = []
+        current_line = []
+        
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            test_width = canvas_obj.stringWidth(test_line, font_name, initial_font_size)
+            
+            if test_width <= max_width:
+                current_line.append(word)
+            else:
+                if current_line:
+                    lines.append(' '.join(current_line))
+                current_line = [word]
+        
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        # Limit to 3 lines maximum for aesthetics
+        if len(lines) > 3:
+            # Combine into 3 lines by redistributing words
+            total_words = text.split()
+            third = len(total_words) // 3
+            lines = [
+                ' '.join(total_words[:third]),
+                ' '.join(total_words[third:third*2]),
+                ' '.join(total_words[third*2:])
+            ]
+        
+        return lines if lines else [text]
+    
     def _create_fallback_reportlab_cover(self, title: str, pdf_path: str):
-        """Create a simple fallback ReportLab cover"""
+        """Create a simple fallback ReportLab cover with smart text wrapping"""
         
         try:
             c = canvas.Canvas(pdf_path, pagesize=letter)
@@ -1183,25 +1249,28 @@ def create_coverC(c):
             c.setFillColor(HexColor('#f8fafc'))
             c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
             
-            # Title
+            # Title with smart wrapping
             c.setFillColor(HexColor('#1a365d'))
-            c.setFont("Helvetica-Bold", 48)
             
-            # Split title if too long
-            words = title.split()
-            if len(words) > 4:
-                mid = len(words) // 2
-                title_line1 = ' '.join(words[:mid])
-                title_line2 = ' '.join(words[mid:])
+            # Use smart wrapping for title
+            title_lines = self._smart_wrap_title(c, title, max_width=7*inch, font_name="Helvetica-Bold", initial_font_size=48)
+            
+            # Calculate optimal font size
+            if len(title_lines) == 1:
+                font_size = 48 if len(title_lines[0]) < 40 else 42
+            elif len(title_lines) == 2:
+                font_size = 40 if max(len(line) for line in title_lines) < 30 else 36
             else:
-                title_line1 = title
-                title_line2 = ""
+                font_size = 32
             
-            # Center the title
-            c.drawCentredString(4.25*inch, 6*inch, title_line1)
-            if title_line2:
-                c.setFont("Helvetica-Bold", 32)
-                c.drawCentredString(4.25*inch, 5.5*inch, title_line2)
+            # Draw title lines
+            line_height = font_size * 1.2
+            start_y = 6.5*inch if len(title_lines) <= 2 else 6.8*inch
+            
+            for i, line in enumerate(title_lines):
+                c.setFont("Helvetica-Bold", font_size if i == 0 else font_size * 0.9)
+                y_position = start_y - (i * line_height * 0.8)
+                c.drawCentredString(4.25*inch, y_position, line)
             
             # Subtitle
             c.setFillColor(HexColor('#4a5568'))
@@ -2142,28 +2211,31 @@ Remember:
                 c.setFillColor(HexColor('#ffffff'))
             c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
             
-            # Title
+            # Title with smart wrapping
             if primary_color.startswith('#'):
                 c.setFillColor(HexColor(primary_color))
             else:
                 c.setFillColor(HexColor('#000000'))
-            c.setFont("Helvetica-Bold", 48)
             
-            # Split title for better layout
-            words = title.split()
-            if len(words) > 4:
-                mid = len(words) // 2
-                title_line1 = ' '.join(words[:mid])
-                title_line2 = ' '.join(words[mid:])
+            # Smart title wrapping based on character length and text width
+            title_lines = self._smart_wrap_title(c, title, max_width=7*inch, font_name="Helvetica-Bold", initial_font_size=48)
+            
+            # Calculate optimal font size based on number of lines and content
+            if len(title_lines) == 1:
+                font_size = 48 if len(title_lines[0]) < 40 else 42
+            elif len(title_lines) == 2:
+                font_size = 40 if max(len(line) for line in title_lines) < 30 else 36
             else:
-                title_line1 = title
-                title_line2 = ""
+                font_size = 32
             
-            # Center the title
-            c.drawCentredString(4.25*inch, 6*inch, title_line1)
-            if title_line2:
-                c.setFont("Helvetica-Bold", 32)
-                c.drawCentredString(4.25*inch, 5.5*inch, title_line2)
+            # Draw title lines centered with proper spacing
+            line_height = font_size * 1.2
+            start_y = 6.5*inch if len(title_lines) <= 2 else 6.8*inch
+            
+            for i, line in enumerate(title_lines):
+                c.setFont("Helvetica-Bold", font_size if i == 0 else font_size * 0.9)
+                y_position = start_y - (i * line_height * 0.8)
+                c.drawCentredString(4.25*inch, y_position, line)
             
             # Subtitle
             c.setFillColor(HexColor(colors.get('secondary', '#666666')))

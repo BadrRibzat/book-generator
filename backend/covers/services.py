@@ -174,16 +174,18 @@ Remember:
 class CoverGeneratorProfessional:
     """
     Professional AI cover generator using ReportLab with comprehensive graphical designs
-    Generates covers with titles using AI-powered ReportLab prompts
+    Uses Cloudflare AI for design concepts (NO OpenRouter)
     """
     
     def __init__(self):
-        self.api_key = settings.OPENROUTER_API_KEY
-        if not self.api_key:
-            raise ValueError("OPENROUTER_API_KEY not found in settings")
+        # Use Cloudflare AI instead of OpenRouter
+        from customllm.services.cloudflare_client import CloudflareAIClient
+        try:
+            self.cloudflare_client = CloudflareAIClient()
+        except Exception as e:
+            print(f"⚠️  Cloudflare AI not available, will use fallback designs: {e}")
+            self.cloudflare_client = None
         
-        self.base_url = "https://openrouter.ai/api/v1"
-        self.model = "deepseek/deepseek-chat"
         self.usage_tracker = UsageTracker()
         self.media_root = Path(settings.MEDIA_ROOT)
         self.covers_dir = self.media_root / 'covers'
@@ -1018,43 +1020,28 @@ def create_coverC(c):
         )
         
         try:
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://book-generator.com",
-                    "X-Title": "Professional ReportLab Cover Generator"
-                },
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a creative ReportLab graphics designer who creates professional PDF book covers. Always respond with ONLY valid JSON, no markdown code blocks or extra text."
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "temperature": 0.8,
-                    "max_tokens": 4000,
-                },
-                timeout=120
-            )
-            
-            response.raise_for_status()
-            data = response.json()
-            
-            # Track token usage
-            if 'usage' in data:
-                input_tokens = data['usage'].get('prompt_tokens', 0)
-                output_tokens = data['usage'].get('completion_tokens', 0)
-                self.usage_tracker.record_usage(input_tokens, output_tokens)
-                print(f"ReportLab Cover API Usage: {input_tokens} prompt + {output_tokens} completion tokens")
-            
-            content = data['choices'][0]['message']['content']
+            # Use Cloudflare AI instead of OpenRouter
+            if self.cloudflare_client:
+                print("🌩️  Using Cloudflare AI for cover design generation")
+                system_prompt = "You are a creative ReportLab graphics designer who creates professional PDF book covers. Always respond with ONLY valid JSON, no markdown code blocks or extra text."
+                full_prompt = f"{system_prompt}\n\n{prompt}"
+                
+                result = self.cloudflare_client.call_model(
+                    prompt=full_prompt,
+                    max_tokens=4000,
+                    temperature=0.8
+                )
+                
+                if not result.get('success'):
+                    print(f"⚠️  Cloudflare AI failed: {result.get('error')}, using fallback")
+                    raise Exception(f"Cloudflare API failed: {result.get('error')}")
+                
+                content = result.get('response', '')
+                print(f"✓ Cloudflare AI response received ({len(content)} chars)")
+            else:
+                # No Cloudflare available, use fallback
+                print("⚠️  No AI available, using fallback designs")
+                raise Exception("No AI client available for cover generation")
             
             # Clean up response (remove markdown code blocks if present)
             content_clean = content.strip()
@@ -1081,13 +1068,11 @@ def create_coverC(c):
                 print(f"Raw response (first 500 chars): {content[:500]}")
                 raise Exception("AI returned invalid JSON for ReportLab cover designs")
         
-        except requests.exceptions.RequestException as e:
-            print(f"OpenRouter API error: {str(e)}")
-            raise Exception(f"ReportLab Cover API request failed: {str(e)}")
-        
         except Exception as e:
-            print(f"ReportLab cover concept generation error: {str(e)}")
-            raise
+            print(f"❌ Cover concept generation error: {str(e)}")
+            print("⚠️  Falling back to default designs")
+            # Return fallback designs instead of failing
+            return self._get_fallback_designs()
     
     def _create_reportlab_cover_pdf(self, title: str, concept: dict, pdf_path: str):
         """Create a ReportLab PDF cover using AI-generated code"""
@@ -1229,6 +1214,50 @@ def create_coverC(c):
         except Exception as e:
             print(f"Fallback cover creation failed: {e}")
             raise
+    
+    def _get_fallback_designs(self) -> list:
+        """Return simple fallback designs when AI is not available"""
+        return [
+            {
+                'trend': 'minimalist_modern',
+                'concept_name': 'Clean Professional',
+                'reportlab_code': '',
+                'colors': {
+                    'primary': '#1a365d',
+                    'secondary': '#4a5568',
+                    'accent': '#3b82f6',
+                    'background': '#ffffff'
+                },
+                'layout_description': 'Centered title with clean background',
+                'accessibility_notes': 'High contrast'
+            },
+            {
+                'trend': 'elegant_serif',
+                'concept_name': 'Professional Elegant',
+                'reportlab_code': '',
+                'colors': {
+                    'primary': '#2d3748',
+                    'secondary': '#718096',
+                    'accent': '#4299e1',
+                    'background': '#f7fafc'
+                },
+                'layout_description': 'Elegant serif typography',
+                'accessibility_notes': 'AAA compliant'
+            },
+            {
+                'trend': 'modern_bold',
+                'concept_name': 'Bold Impact',
+                'reportlab_code': '',
+                'colors': {
+                    'primary': '#000000',
+                    'secondary': '#4a5568',
+                    'accent': '#dc2626',
+                    'background': '#ffffff'
+                },
+                'layout_description': 'Bold statement design',
+                'accessibility_notes': 'Maximum contrast'
+            }
+        ]
     
     def _infer_audience(self, sub_niche: str) -> str:
         """Infer audience from sub-niche"""
@@ -2031,43 +2060,28 @@ Remember:
 """
         
         try:
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://book-generator.com",
-                    "X-Title": "Professional Cover Style Generator"
-                },
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "You are a creative book cover designer who creates professional covers matching specific design styles. Always respond with ONLY valid JSON, no markdown code blocks or extra text."
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 2000,
-                },
-                timeout=120
-            )
-            
-            response.raise_for_status()
-            data = response.json()
-            
-            # Track token usage
-            if 'usage' in data:
-                input_tokens = data['usage'].get('prompt_tokens', 0)
-                output_tokens = data['usage'].get('completion_tokens', 0)
-                self.usage_tracker.record_usage(input_tokens, output_tokens)
-                print(f"Cover Style API Usage: {input_tokens} prompt + {output_tokens} completion tokens")
-            
-            content = data['choices'][0]['message']['content']
+            # Use Cloudflare AI instead of OpenRouter
+            if self.cloudflare_client:
+                print("🌩️  Using Cloudflare AI for cover style generation")
+                system_prompt = "You are a creative book cover designer who creates professional covers matching specific design styles. Always respond with ONLY valid JSON, no markdown code blocks or extra text."
+                full_prompt = f"{system_prompt}\n\n{prompt}"
+                
+                result = self.cloudflare_client.call_model(
+                    prompt=full_prompt,
+                    max_tokens=2000,
+                    temperature=0.7
+                )
+                
+                if not result.get('success'):
+                    print(f"⚠️  Cloudflare AI failed: {result.get('error')}, using fallback")
+                    return self._get_fallback_cover_concept(book)
+                
+                content = result.get('response', '')
+                print(f"✓ Cloudflare AI response received ({len(content)} chars)")
+            else:
+                # No Cloudflare available, use fallback
+                print("⚠️  No AI available, using fallback design")
+                return self._get_fallback_cover_concept(book)
             
             # Clean up response
             content_clean = content.strip()
@@ -2087,13 +2101,29 @@ Remember:
                 print(f"Raw response (first 500 chars): {content[:500]}")
                 raise Exception("AI returned invalid JSON for cover design")
         
-        except requests.exceptions.RequestException as e:
-            print(f"OpenRouter API error: {str(e)}")
-            raise Exception(f"Cover style API request failed: {str(e)}")
-        
         except Exception as e:
-            print(f"Cover style concept generation error: {str(e)}")
-            raise
+            print(f"❌ Cover style concept generation error: {str(e)}")
+            print("⚠️  Falling back to default cover design")
+            return self._get_fallback_cover_concept(book)
+    
+    def _get_fallback_cover_concept(self, book) -> dict:
+        """Return a simple fallback cover concept when AI is not available"""
+        return {
+            'trend': 'minimalist_professional',
+            'concept_name': 'Professional Clean Design',
+            'description': f'A clean, professional cover for "{book.title}"',
+            'colors': {
+                'primary': '#1a365d',
+                'secondary': '#4a5568',
+                'accent': '#3b82f6',
+                'background': '#ffffff'
+            },
+            'typography': 'Bold sans-serif title, clean subtitle',
+            'visual_elements': 'Simple geometric shapes',
+            'mood': 'Professional and trustworthy',
+            'layout': 'Centered title with balanced spacing',
+            'accessibility': 'High contrast AAA compliant'
+        }
     
     def _create_simple_cover_pdf(self, title: str, concept: dict, pdf_path: str):
         """Create a simple ReportLab PDF cover based on the design concept"""

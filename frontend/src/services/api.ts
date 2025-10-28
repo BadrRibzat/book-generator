@@ -9,9 +9,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true, // Important for session-based auth - sends cookies
+  xsrfCookieName: 'csrftoken',
+  xsrfHeaderName: 'X-CSRFToken',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
   // Extended timeout for long-running operations like book generation
   timeout: 1200000, // 20 minutes (1200000ms) to handle 30+ page books

@@ -37,7 +37,7 @@ class CoverStyleAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'domain', 'niche', 'book_style', 'status', 'created_at']
+    list_display = ['title', 'user', 'domain', 'niche', 'book_style', 'status', 'quality_score', 'created_at']
     list_filter = ['status', 'domain', 'niche', 'book_style', 'created_at']
     search_fields = ['title', 'user__username', 'user__email']
     readonly_fields = ['created_at', 'updated_at', 'generation_started_at', 'generation_completed_at']

@@ -69,6 +69,31 @@ npm run dev
 ### Build
 
 ```bash
+## E2E Browser Tests (Playwright)
+
+We use Playwright for real browser UI/UX tests.
+
+### Install Playwright (one-time)
+
+```bash
+npm install
+npx playwright install  # installs browsers
+```
+
+If you're on Linux and missing system dependencies, use:
+
+```bash
+npx playwright install --with-deps
+```
+
+### Run tests
+
+```bash
+npm run test:e2e          # headless
+npm run test:e2e:headed   # visible browser
+```
+
+By default, tests will start the Vite dev server on http://localhost:5173 and reuse it if already running.
 # Build for production
 npm run build
 

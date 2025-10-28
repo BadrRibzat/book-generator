@@ -103,7 +103,7 @@ class BookSerializer(serializers.ModelSerializer):
         fields = ['id', 'user_username', 'title', 'domain', 'domain_name', 'niche', 'niche_name', 
                   'book_style', 'book_style_name', 'cover_style', 'cover_style_name',
                   'status', 'created_at', 'updated_at', 'completed_at', 'content_generated_at',
-                  'covers', 'selected_cover', 'can_download', 'download_url', 'page_length',
+                  'covers', 'selected_cover', 'can_download', 'download_url', 'page_length', 'quality_score',
                   'error_message', 'mongodb_id', 'progress_percentage', 'current_step']
         read_only_fields = ['id', 'title', 'status', 'created_at', 
                            'updated_at', 'completed_at', 'content_generated_at', 'error_message', 'mongodb_id']

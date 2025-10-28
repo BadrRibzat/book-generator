@@ -190,6 +190,140 @@ class CoverGeneratorProfessional:
         self.media_root = Path(settings.MEDIA_ROOT)
         self.covers_dir = self.media_root / 'covers'
         self.covers_dir.mkdir(parents=True, exist_ok=True)
+
+    # --- Contrast utilities ---
+    def _hex_to_rgb(self, hex_color: str):
+        h = hex_color.lstrip('#')
+        return tuple(int(h[i:i+2], 16)/255.0 for i in (0, 2, 4))
+
+    def _luminance(self, rgb):
+        def f(c):
+            return c/12.92 if c <= 0.03928 else ((c+0.055)/1.055)**2.4
+        r, g, b = rgb
+        return 0.2126*f(r) + 0.7152*f(g) + 0.0722*f(b)
+
+    def _contrast_ratio(self, c1: str, c2: str) -> float:
+        try:
+            L1 = self._luminance(self._hex_to_rgb(c1))
+            L2 = self._luminance(self._hex_to_rgb(c2))
+            L1, L2 = (L1, L2) if L1 >= L2 else (L2, L1)
+            return (L1 + 0.05) / (L2 + 0.05)
+        except Exception:
+            return 1.0
+
+    def _ensure_contrast(self, colors: dict) -> dict:
+        # Enforce minimum 4.5:1 contrast between primary text and background
+        primary = colors.get('primary', '#1a365d')
+        background = colors.get('background', '#ffffff')
+        if self._contrast_ratio(primary, background) < 4.5:
+            # If low contrast, force primary to dark or light depending on bg
+            bg_lum = self._luminance(self._hex_to_rgb(background))
+            colors['primary'] = '#0a0a0a' if bg_lum > 0.5 else '#ffffff'
+        return colors
+    
+    def _create_grid_overlay(self, image_abs_path: str):
+        """Create a rule-of-thirds grid overlay PNG next to the cover image for review.
+        Saves as <name>_grid.png in the same directory.
+        """
+        try:
+            if not os.path.exists(image_abs_path):
+                return
+            img = Image.open(image_abs_path).convert("RGBA")
+            w, h = img.size
+            overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(overlay)
+            # Rule of thirds positions
+            v1 = w // 3
+            v2 = 2 * w // 3
+            h1 = h // 3
+            h2 = 2 * h // 3
+            line_color = (255, 255, 255, 90)
+            # Vertical lines
+            draw.line([(v1, 0), (v1, h)], fill=line_color, width=3)
+            draw.line([(v2, 0), (v2, h)], fill=line_color, width=3)
+            # Horizontal lines
+            draw.line([(0, h1), (w, h1)], fill=line_color, width=3)
+            draw.line([(0, h2), (w, h2)], fill=line_color, width=3)
+            # Merge and save
+            out = Image.alpha_composite(img, overlay)
+            base, ext = os.path.splitext(image_abs_path)
+            out_path = f"{base}_grid.png"
+            out.convert("RGB").save(out_path, "PNG")
+        except Exception:
+            # Non-fatal
+            pass
+
+    def _create_golden_ratio_overlay(self, image_abs_path: str):
+        """Create a golden-ratio guide overlay PNG (0.382 / 0.618 lines).
+        Saves as <name>_golden.png.
+        """
+        try:
+            if not os.path.exists(image_abs_path):
+                return
+            img = Image.open(image_abs_path).convert("RGBA")
+            w, h = img.size
+            overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(overlay)
+            # Golden sections
+            x1 = int(w * 0.382)
+            x2 = int(w * 0.618)
+            y1 = int(h * 0.382)
+            y2 = int(h * 0.618)
+            line_color = (255, 215, 0, 90)  # golden tint
+            # Vertical golden lines
+            draw.line([(x1, 0), (x1, h)], fill=line_color, width=3)
+            draw.line([(x2, 0), (x2, h)], fill=line_color, width=3)
+            # Horizontal golden lines
+            draw.line([(0, y1), (w, y1)], fill=line_color, width=3)
+            draw.line([(0, y2), (w, y2)], fill=line_color, width=3)
+            out = Image.alpha_composite(img, overlay)
+            base, ext = os.path.splitext(image_abs_path)
+            out_path = f"{base}_golden.png"
+            out.convert("RGB").save(out_path, "PNG")
+        except Exception:
+            pass
+
+    def _save_cover_metadata(self, cover_obj, concept: dict):
+        """Persist cover generation metadata alongside the image (JSON file)."""
+        try:
+            # Resolve absolute image path
+            rel_image = cover_obj.image_path  # e.g., "covers/<file>.png"
+            image_abs = os.path.join(self.media_root, rel_image)
+            # Gather basic info
+            dims = None
+            try:
+                with Image.open(image_abs) as im:
+                    dims = {"width": im.width, "height": im.height}
+            except Exception:
+                dims = None
+            # Contrast ratio if colors present
+            colors_obj = (concept or {}).get('colors', {})
+            primary = colors_obj.get('primary')
+            background = colors_obj.get('background')
+            contrast = None
+            if primary and background:
+                contrast = round(self._contrast_ratio(primary, background), 2)
+
+            payload = {
+                "cover_id": cover_obj.id,
+                "book_id": cover_obj.book_id,
+                "template_style": cover_obj.template_style,
+                "image": rel_image,
+                "pdf": cover_obj.pdf_path,
+                "dimensions": dims,
+                "contrast_primary_vs_background": contrast,
+                "concept": concept,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+
+            # Save next to image as .metadata.json
+            base, _ = os.path.splitext(image_abs)
+            meta_path = f"{base}.metadata.json"
+            with open(meta_path, 'w', encoding='utf-8') as f:
+                json.dump(payload, f, ensure_ascii=False, indent=2)
+        except Exception:
+            # Non-fatal
+            pass
     
     def generate_three_covers(self, book):
         """
@@ -251,6 +385,12 @@ class CoverGeneratorProfessional:
                         'accessibility_notes': concept.get('accessibility_notes', ''),
                     }
                 )
+                # Store metadata and a grid overlay for review
+                try:
+                    self._save_cover_metadata(cover, concept)
+                finally:
+                    self._create_grid_overlay(str(png_path))
+                    self._create_golden_ratio_overlay(str(png_path))
                 covers.append(cover)
                 print(f"✓ Cover {i+1} created successfully")
                 
@@ -624,6 +764,12 @@ def create_coverC(c):
                     'guided_workflow': True,
                 }
             )
+            # Store metadata and a grid overlay for review
+            try:
+                self._save_cover_metadata(cover, design_concept)
+            finally:
+                self._create_grid_overlay(str(png_path))
+                self._create_golden_ratio_overlay(str(png_path))
             
             # Automatically select this cover
             cover.select()
@@ -1349,7 +1495,7 @@ def create_coverC(c):
         """Create HTML for AI-generated cover design"""
         
         trend = concept.get('trend', 'modern')
-        colors = concept.get('colors', {})
+        colors = self._ensure_contrast(concept.get('colors', {}))
         
         # Split title for better layout
         words = title.split()
@@ -1966,7 +2112,13 @@ def create_coverC(c):
                     print(f"✓ PNG preview created: {png_path}")
                     return
             except (ImportError, Exception) as e:
-                print(f"pdf2image not available or failed: {e}, trying PyMuPDF...")
+                # Common case: poppler not installed on Linux for pdf2image
+                msg = str(e)
+                if 'poppler' in msg.lower() or 'PDFInfoNotInstalledError' in msg:
+                    print("pdf2image failed: Poppler not found. On Linux, install it with: sudo apt-get install -y poppler-utils")
+                else:
+                    print(f"pdf2image not available or failed: {e}")
+                print("→ Falling back to PyMuPDF renderer (no system deps)...")
             
             # Try PyMuPDF
             try:
@@ -1978,7 +2130,7 @@ def create_coverC(c):
                 print(f"✓ PNG preview created with PyMuPDF: {png_path}")
                 return
             except (ImportError, Exception) as e:
-                print(f"PyMuPDF not available or failed: {e}, using fallback...")
+                print(f"PyMuPDF not available or failed: {e}, using placeholder fallback...")
             
         except Exception as e:
             print(f"PNG conversion error: {e}")

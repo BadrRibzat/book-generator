@@ -24,7 +24,20 @@ class CustomBookGenerator:
     def __init__(self):
         self.llm = LocalLLMEngine()
         self.cloudflare = CloudflareAIClient()
-        self.supported_domains = ['AI & Automation', 'Parenting', 'Parenting: Pre-school Speech & Learning', 'E-commerce & Digital Products', 'E-commerce']
+        self.supported_domains = [
+            'AI & Automation',
+            'Parenting',
+            'Parenting: Pre-school Speech & Learning',
+            'E-commerce & Digital Products',
+            'E-commerce',
+            # Expanded labels used by guided workflow
+            'Sustainability & Green Tech',
+            'Nutrition & Wellness',
+            'Meditation & Mindfulness',
+            'Home Workout & Fitness',
+            'Language & Kids',
+            'Technology & AI',
+        ]
     
     def is_domain_supported(self, domain: str) -> bool:
         """Check if domain is supported by trained model"""
@@ -46,8 +59,9 @@ class CustomBookGenerator:
             
             domain = book_context.get('domain', 'AI & Automation')
             
+            # No hard failure: LocalLLMEngine handles fallback when not trained
             if not self.is_domain_supported(domain):
-                raise ValueError(f"Domain '{domain}' not supported. Supported: {', '.join(self.supported_domains)}")
+                logger.warning("Domain %s not in trained set; using fallback outline generator", domain)
             
             # Generate outline using local LLM
             result = self.llm.generate_outline(
@@ -70,7 +84,8 @@ class CustomBookGenerator:
         chapter_title: str,
         chapter_outline: str,
         book_context: Dict[str, Any],
-        word_count: int = 500
+        word_count: int = 500,
+        subtopics: Optional[list] = None
     ) -> Dict[str, Any]:
         """
         Generate chapter content using local LLM
@@ -93,7 +108,8 @@ class CustomBookGenerator:
                 chapter_title=chapter_title,
                 chapter_outline=chapter_outline,
                 book_context=book_context,
-                word_count=word_count
+                word_count=word_count,
+                subtopics=subtopics
             )
             
             logger.info(f"✅ Chapter generated: {result.get('word_count', 0)} words")

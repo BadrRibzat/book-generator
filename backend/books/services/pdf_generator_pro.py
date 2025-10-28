@@ -4,9 +4,10 @@ from reportlab.lib.units import inch, cm
 from reportlab.lib.colors import HexColor, black, white
 from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, PageBreak,
-    Table, TableStyle, Image, KeepTogether
+    BaseDocTemplate, SimpleDocTemplate, Paragraph, Spacer, PageBreak,
+    Table, TableStyle, Image, KeepTogether, Frame, PageTemplate
 )
+from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
@@ -285,15 +286,83 @@ class ProfessionalPDFGenerator:
         """
         Create professionally formatted book PDF
         """
-        # Create document with margins
-        doc = SimpleDocTemplate(
+        # KDP-ready 6x9 inches with professional margins and headers
+        SIX_BY_NINE = (6*inch, 9*inch)
+        # Mirrored margins with gutter: inner margin a bit larger than outer
+        inner_margin = 0.875*inch
+        outer_margin = 0.625*inch
+        top_margin = 0.75*inch
+        bottom_margin = 0.75*inch
+
+        # Custom DocTemplate to collect TOC entries
+        class ProfessionalDocTemplate(BaseDocTemplate):
+            def afterFlowable(self, flowable):
+                try:
+                    # Register headings for TOC
+                    if isinstance(flowable, Paragraph):
+                        style_name = flowable.style.name
+                        # Only include chapters in TOC (not subsections) for a cleaner TOC
+                        if style_name == 'ChapterTitle':
+                            level = 0
+                            text = flowable.getPlainText()
+                            # Notify for TOC collection
+                            self.notify('TOCEntry', (level, text, self.page))
+                except Exception:
+                    pass
+
+        # Use DocTemplate with mirrored frames
+        doc = ProfessionalDocTemplate(
             output_path,
-            pagesize=letter,
-            rightMargin=1*inch,
-            leftMargin=1*inch,
-            topMargin=1*inch,
-            bottomMargin=1*inch
+            pagesize=SIX_BY_NINE,
+            topMargin=top_margin,
+            bottomMargin=bottom_margin,
         )
+
+        page_width, page_height = SIX_BY_NINE
+
+        # Right-hand (odd) pages: inner margin on the left
+        right_frame = Frame(
+            x1=inner_margin,
+            y1=bottom_margin,
+            width=page_width - inner_margin - outer_margin,
+            height=page_height - top_margin - bottom_margin,
+            id='right_frame'
+        )
+
+        # Left-hand (even) pages: inner margin on the right
+        left_frame = Frame(
+            x1=outer_margin,
+            y1=bottom_margin,
+            width=page_width - inner_margin - outer_margin,
+            height=page_height - top_margin - bottom_margin,
+            id='left_frame'
+        )
+
+        def _header_footer(canvas, doc_obj):
+            canvas.saveState()
+            width, height = SIX_BY_NINE
+            # Running header
+            canvas.setFont(self.body_font, 9)
+            canvas.setFillColor(HexColor('#718096'))
+            header_text = book.title[:60]
+            # Draw header aligned to outer edge per page side
+            on_left_page = (doc_obj.page % 2 == 0)
+            if on_left_page:
+                canvas.drawRightString(width - outer_margin, height - top_margin + 12, header_text)
+            else:
+                canvas.drawString(outer_margin, height - top_margin + 12, header_text)
+            # Page number on outer edge bottom
+            page_num_text = f"{doc_obj.page}"
+            if on_left_page:
+                canvas.drawString(outer_margin, bottom_margin - 12, page_num_text)
+            else:
+                canvas.drawRightString(width - outer_margin, bottom_margin - 12, page_num_text)
+            canvas.restoreState()
+
+        # Two page templates to mirror margins
+        right_template = PageTemplate(id='Right', frames=[right_frame], onPage=_header_footer)
+        left_template = PageTemplate(id='Left', frames=[left_frame], onPage=_header_footer)
+        doc.addPageTemplates([right_template, left_template])
 
         story = []
 
@@ -301,8 +370,21 @@ class ProfessionalPDFGenerator:
         story.extend(self._create_title_page(book, content_data))
         story.append(PageBreak())
 
-        # Table of Contents
-        story.extend(self._create_toc(content_data))
+        # Table of Contents (auto-generated with page numbers)
+        toc_title = Paragraph('Table of Contents', self.styles['ChapterTitle'])
+        story.append(toc_title)
+        story.append(Spacer(1, 0.3*inch))
+        toc = TableOfContents()
+        # TOC level styles
+        toc.levelStyles = [
+            ParagraphStyle(
+                name='TOCLevel0', parent=self.styles['BookBody'], fontSize=12, leftIndent=10, firstLineIndent=-10, spaceAfter=6
+            ),
+            ParagraphStyle(
+                name='TOCLevel1', parent=self.styles['BookBody'], fontSize=11, leftIndent=30, firstLineIndent=-10, spaceAfter=4
+            ),
+        ]
+        story.append(toc)
         story.append(PageBreak())
 
         # Introduction
@@ -324,8 +406,8 @@ class ProfessionalPDFGenerator:
         if 'takeaways' in content_data:
             story.extend(self._format_chapter('Actionable Takeaways', content_data['takeaways']))
 
-        # Build PDF
-        doc.build(story)
+        # Build PDF with TOC resolution (multi-pass)
+        doc.multiBuild(story)
 
         return output_path
 
@@ -372,6 +454,19 @@ class ProfessionalPDFGenerator:
 
         # Chapter Title
         elements.append(Paragraph(title, self.styles['ChapterTitle']))
+        # Decorative divider under chapter title
+        from reportlab.platypus import Flowable
+        class HR(Flowable):
+            def __init__(self, width=1, color=HexColor('#CBD5E0')):
+                Flowable.__init__(self)
+                self.width = width
+                self.color = color
+            def draw(self):
+                self.canv.setStrokeColor(self.color)
+                self.canv.setLineWidth(self.width)
+                self.canv.line(0, 0, self.canv._pagesize[0] - 2*0.75*inch, 0)
+        elements.append(Spacer(1, 0.1*inch))
+        elements.append(HR(width=1))
         elements.append(Spacer(1, 0.3*inch))
 
         # Split content into sections and paragraphs

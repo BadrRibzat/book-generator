@@ -431,6 +431,12 @@ class Book(models.Model):
     # Error tracking
     error_message = models.TextField(blank=True, null=True)
     
+    # Quality tracking
+    quality_score = models.IntegerField(
+        default=0,
+        help_text="Automated content quality score (0-100)"
+    )
+    
     class Meta:
         ordering = ['-created_at']
         indexes = [

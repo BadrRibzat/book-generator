@@ -64,22 +64,13 @@ def create_guided_book(request):
 class DomainViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for reading domains
-    Only returns the 3 trained domains for custom LLM
+    Returns all active domains ordered for dynamic frontend wizard
     """
     serializer_class = DomainSerializer
     permission_classes = [AllowAny]
     
     def get_queryset(self):
-        # Only return the 3 trained domains (using books app slugs)
-        trained_domain_slugs = [
-            'ai_automation',
-            'parenting_preschool_learning', 
-            'ecommerce_digital_products'
-        ]
-        return Domain.objects.filter(
-            is_active=True,
-            slug__in=trained_domain_slugs
-        ).order_by('order')
+        return Domain.objects.filter(is_active=True).order_by('order')
 
 
 class NicheViewSet(viewsets.ReadOnlyModelViewSet):
@@ -91,9 +82,13 @@ class NicheViewSet(viewsets.ReadOnlyModelViewSet):
     
     def get_queryset(self):
         queryset = Niche.objects.filter(is_active=True)
-        domain_slug = self.request.query_params.get('domain', None)
-        if domain_slug is not None:
-            queryset = queryset.filter(domain__slug=domain_slug)
+        domain_param = self.request.query_params.get('domain', None)
+        if domain_param is not None:
+            # Support filtering by either domain ID or slug for flexibility
+            if domain_param.isdigit():
+                queryset = queryset.filter(domain__id=int(domain_param))
+            else:
+                queryset = queryset.filter(domain__slug=domain_param)
         return queryset
 
 

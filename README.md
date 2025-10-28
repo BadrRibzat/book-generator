@@ -58,10 +58,22 @@ BookAI is a **revolutionary SaaS platform** that generates **professional, publi
 - **Digital Marketing**: SEO, social media, conversion optimization
 - **Online Business**: Store setup, scaling strategies, automation
 
+### 📄 KDP-Ready PDF Interior
+- **6×9 in (KDP) Page Size** with professional typography
+- **Mirrored Margins with Gutter**: Inner > outer, correct for binding
+- **Running Headers and Outer Page Numbers**
+- **Real Table of Contents with Page Numbers** (chapters only)
+- **Section Styling**: Chapter divider, subsections, bullets, quotes
+- **Google Fonts Integration** with fallbacks by category
+
 ### 🎨 Cover Generation
 - **Smart Text Wrapping**: Intelligent line-breaking for long titles
 - **Dynamic Font Sizing**: Automatic adjustment based on title length (36pt-48pt)
 - **Professional Layouts**: Domain-optimized designs with proper spacing
+- **Contrast Safety Check**: Enforces ≥ 4.5:1 primary vs background
+- **Rule-of-Thirds Grid Overlay**: Sidecar “_grid.png” for quick composition QA
+- **Golden-Ratio Overlay**: Sidecar “_golden.png” for golden section alignment
+- **Metadata Sidecar**: JSON saved next to image (dimensions, colors, contrast)
 - **Fallback System**: Cloudflare AI with ReportLab fallbacks
 - **Punctuation-Aware**: Breaks at colons, dashes, and natural pause points
 
@@ -184,6 +196,9 @@ python manage.py train_custom_llm
 
 # Start all services (Redis, Celery, Django)
 ./start_dev.sh
+
+# Run backend tests (quality gating, pipeline, and PDF generation)
+python manage.py test books -v 2
 ```
 
 **Backend runs on:** http://127.0.0.1:8000/
@@ -260,7 +275,7 @@ python manage.py test_custom_model
 - **Custom LLM generates outline** → Domain-specific structure
 - **Generates chapters** → High-quality, professional content
 - **Creates cover** → Smart text wrapping, optimized layout
-- **Assembles PDF** → ReportLab with Google Fonts integration
+- **Assembles PDF** → ReportLab with Google Fonts, mirrored margins, and real TOC
 - **Ready for download** → Complete book with proper title
 
 ### 🎯 Available Domains & Niches
@@ -351,6 +366,7 @@ python manage.py test
 python test_complete_workflow.py    # Full workflow test
 python test_guided_workflow.py      # Guided workflow test
 python test_book_creation.py        # Book creation test
+python manage.py test books.tests_pipeline_generation -v 2  # Pipeline quality test
 ```
 
 ### Manual Testing
@@ -420,7 +436,7 @@ REDIS_URL=redis://localhost:6379/0
 | **Custom LLM Outline** | 3-5s | ✅ Instant | No external API calls |
 | **Chapter Generation** | 5-10s each | ✅ Fast | Parallel processing |
 | **Cover Generation** | 3-5s | ✅ Quick | Cloudflare + fallback |
-| **PDF Assembly** | <2s | ✅ Instant | ReportLab optimization |
+| **PDF Assembly** | <2s | ✅ Instant | ReportLab + TOC, mirrored margins |
 | **Total Book Creation** | 30-90s | ✅ Lightning Fast | 5-10x faster than OpenRouter |
 
 ### Comparison with External APIs

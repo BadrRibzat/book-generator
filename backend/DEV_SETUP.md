@@ -290,6 +290,30 @@ pip install celery redis django-celery-results django-celery-beat
 
 Already in `requirements.txt` ✅
 
+### PDF → PNG Previews
+
+The backend converts generated cover PDFs to PNG previews. Two backends are supported:
+
+- pdf2image (requires system Poppler)
+- PyMuPDF (pure Python; no system deps)
+
+Out of the box we use PyMuPDF as a fallback so previews work even if Poppler isn't installed.
+
+Optional (Linux): Install Poppler for faster pdf2image rendering
+
+```bash
+sudo apt-get update
+sudo apt-get install -y poppler-utils
+```
+
+Python packages used:
+
+- pdf2image (already included)
+- PyMuPDF (already included)
+- Pillow (already included)
+
+If pdf2image fails due to missing Poppler, the logs will suggest installing `poppler-utils` and will automatically fall back to PyMuPDF.
+
 ---
 
 ## 🎯 Best Practices

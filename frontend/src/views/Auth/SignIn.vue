@@ -22,73 +22,19 @@
 
       <!-- Form Card -->
       <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6 backdrop-blur-sm bg-opacity-90 dark:bg-opacity-90 border border-gray-200 dark:border-gray-700 animate-slide-up">
-        <!-- Error Message -->
-        <div v-if="authStore.error" class="rounded-lg bg-red-50 dark:bg-red-900/30 p-4 animate-scale-in">
-          <div class="flex">
-            <font-awesome-icon :icon="['fas', 'exclamation-circle']" class="h-5 w-5 text-red-400" />
-            <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800 dark:text-red-300">{{ authStore.error }}</h3>
-            </div>
-          </div>
-        </div>
+        <FormAlert :message="authStore.error" variant="error" />
 
         <form class="space-y-5" @submit.prevent="handleSubmit">
           <!-- Username Field -->
-          <div class="group">
-            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Username
-            </label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <font-awesome-icon :icon="['fas', 'user']" class="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-primary-500 transition-colors" />
-              </div>
-              <input
-                id="username"
-                v-model="form.username"
-                name="username"
-                type="text"
-                required
-                autofocus
-                class="appearance-none block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                placeholder="Enter your username"
-              />
-            </div>
-          </div>
+          <TextField id="username" label="Username" icon="user" placeholder="Enter your username" v-model="form.username" autocomplete="username" />
 
           <!-- Password Field -->
-          <div class="group">
+          <div>
             <div class="flex items-center justify-between mb-2">
-              <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
-              </label>
-              <a href="#" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors">
-                Forgot password?
-              </a>
+              <label for="password" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300">Password</label>
+              <a href="#" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors">Forgot password?</a>
             </div>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <font-awesome-icon :icon="['fas', 'lock']" class="h-5 w-5 text-gray-400 dark:text-gray-500 group-focus-within:text-primary-500 transition-colors" />
-              </div>
-              <input
-                id="password"
-                v-model="form.password"
-                name="password"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                class="appearance-none block w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                placeholder="Enter your password"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                <font-awesome-icon 
-                  :icon="['fas', showPassword ? 'eye-slash' : 'eye']" 
-                  class="h-5 w-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors cursor-pointer" 
-                />
-              </button>
-            </div>
+            <PasswordField id="password" placeholder="Enter your password" v-model="form.password" autocomplete="current-password" />
           </div>
 
           <!-- Remember Me -->
@@ -167,17 +113,19 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { reactive } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../../stores/auth';
 import type { UserLogin } from '../../types';
 import Layout from '../../components/Layout.vue';
+// Import UI components used in the template
+import FormAlert from '../../components/ui/FormAlert.vue';
+import TextField from '../../components/ui/TextField.vue';
+import PasswordField from '../../components/ui/PasswordField.vue';
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
-
-const showPassword = ref(false);
 
 const form = reactive<UserLogin>({
   username: '',

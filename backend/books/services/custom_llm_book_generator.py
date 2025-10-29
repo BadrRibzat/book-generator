@@ -5,7 +5,7 @@ Unlimited generation for AI & Automation, Parenting, E-commerce domains
 """
 
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional, Set
 from django.utils import timezone
 from pathlib import Path
 
@@ -43,18 +43,51 @@ class CustomLLMBookGenerator:
         try:
             logger.info(f"📚 Generating book with Custom LLM: {book.title}")
             
-            # Prepare book context
-            book_length = book.book_style.length if book.book_style else 'medium'
-            target_audience = book.book_style.target_audience if book.book_style else 'professionals'
+            # Retrieve workflow parameters from MongoDB if they exist
+            workflow_params = self._get_workflow_params(book.id)
             
+            if not workflow_params:
+                logger.warning("⚠️ No workflow parameters found for book %s", book.id)
+                workflow_params = {}
+
+            # Derive generation settings using workflow params first, then model fallbacks
+            book_length = workflow_params.get('book_length') or getattr(book, 'book_length', None) or 'standard'
+            target_audience = workflow_params.get('target_audience') or 'professionals'
+            style_tone = workflow_params.get('tone')
+            if not style_tone and hasattr(book, 'cover_style') and book.cover_style:
+                style_tone = book.cover_style.style
+            logger.info(
+                "📋 Generation context resolved: length=%s audience=%s tone=%s",
+                book_length,
+                target_audience,
+                style_tone or 'default'
+            )
+            
+            page_range_tuple = getattr(book, 'get_page_count_range', lambda: (25, 45))()
+            if not isinstance(page_range_tuple, (list, tuple)) or len(page_range_tuple) != 2:
+                page_range_tuple = (25, 45)
+            page_count_target = self._calculate_page_count(book_length, book)
+
             book_context = {
                 'domain': book.domain.name if book.domain else 'AI & Automation',
                 'niche': book.niche.name if book.niche else 'General',
                 'audience': target_audience,
-                'page_count': self._calculate_page_count(book_length),
+                'page_count': page_count_target,
+                'page_range': list(page_range_tuple),
                 'title': book.title or 'Complete Guide',
-                'style': book.book_style.tone if book.book_style else 'professional'
+                'style': style_tone or 'professional',
+                'key_topics': workflow_params.get('key_topics', []),
+                'writing_preferences': workflow_params.get('writing_preferences'),
+                'niche_prompt_template': workflow_params.get('niche_prompt_template') or workflow_params.get('prompt_template'),
+                'niche_content_skeleton': workflow_params.get('niche_content_skeleton') or workflow_params.get('content_skeleton'),
+                'custom_outline_instructions': workflow_params.get('custom_outline_instructions'),
             }
+
+            # Ensure domain/niche metadata captured even if Mongo params missing structure
+            if not book_context['niche_prompt_template'] and book.niche and book.niche.prompt_template:
+                book_context['niche_prompt_template'] = book.niche.prompt_template
+            if not book_context['niche_content_skeleton'] and book.niche and book.niche.content_skeleton:
+                book_context['niche_content_skeleton'] = book.niche.content_skeleton
             
             # Proceed regardless of trained support — LocalLLMEngine will fall back gracefully
             if not self.custom_llm.is_domain_supported(book_context['domain']):
@@ -72,6 +105,13 @@ class CustomLLMBookGenerator:
             outline_result = self.custom_llm.generate_book_outline(book_context)
             outline = outline_result['outline']
             chapters_list = outline.get('chapters', [])
+
+            # If the niche provides an explicit content skeleton, ensure outline respects ordering
+            chapters_list = self._align_chapters_with_skeleton(
+                chapters_list,
+                book_context.get('niche_content_skeleton') or []
+            )
+            outline['chapters'] = chapters_list
             
             logger.info(f"✅ Outline generated: {len(chapters_list)} chapters")
             
@@ -119,11 +159,13 @@ class CustomLLMBookGenerator:
                     target_words = int(target_words * 1.15)
 
                 final_text = best['diag']['clean_text']
+
                 chapters_content.append({
                     'number': i,
                     'title': chapter_info['title'],
                     'content': final_text,
-                    'word_count': best['result']['word_count']
+                    'word_count': best['result']['word_count'],
+                    'niche_stage': chapter_info.get('niche_stage'),
                 })
             
             logger.info(f"✅ All {len(chapters_content)} chapters generated")
@@ -146,6 +188,8 @@ class CustomLLMBookGenerator:
             except Exception:
                 pass
 
+            page_range = list(page_range_tuple)
+
             content_data = {
                 'title': outline.get('title', book.title),
                 'outline': outline,
@@ -154,6 +198,11 @@ class CustomLLMBookGenerator:
                     'domain': book_context['domain'],
                     'niche': book_context['niche'],
                     'audience': book_context['audience'],
+                    'book_length': book_length,
+                    'page_range': page_range,
+                    'niche_prompt_template': book_context.get('niche_prompt_template'),
+                    'niche_content_skeleton': book_context.get('niche_content_skeleton'),
+                    'custom_outline_instructions': book_context.get('custom_outline_instructions'),
                     'total_chapters': len(chapters_content),
                     'total_words': sum(ch['word_count'] for ch in chapters_content),
                     'generated_with': 'custom_local_llm',
@@ -170,6 +219,88 @@ class CustomLLMBookGenerator:
         except Exception as e:
             logger.error(f"❌ Book generation failed: {str(e)}")
             raise
+
+    def _align_chapters_with_skeleton(
+        self,
+        outline_chapters: List[Dict[str, Any]],
+        skeleton: List[Any]
+    ) -> List[Dict[str, Any]]:
+        """Reorder outline chapters to follow the niche skeleton when provided."""
+        if not skeleton:
+            return outline_chapters
+
+        ordered: List[Dict[str, Any]] = []
+        used_indices: Set[int] = set()
+
+        for position, stage in enumerate(skeleton, 1):
+            stage_info = self._normalize_skeleton_stage(stage, position)
+            chapter_idx = self._match_chapter_by_title(outline_chapters, stage_info['title'], used_indices)
+
+            if chapter_idx is not None:
+                chapter_data = dict(outline_chapters[chapter_idx])
+                used_indices.add(chapter_idx)
+            else:
+                # Create a fallback chapter structure so generation can proceed
+                chapter_data = {
+                    'title': stage_info['title'],
+                    'summary': stage_info.get('summary', ''),
+                    'niche_stage': stage_info['raw'],
+                }
+
+            chapter_data.setdefault('summary', stage_info.get('summary') or '')
+            if stage_info.get('slug'):
+                chapter_data.setdefault('slug', stage_info['slug'])
+            chapter_data['niche_stage'] = stage_info['raw']
+            ordered.append(chapter_data)
+
+        # Append any chapters the outline produced that were not mapped to skeleton
+        for idx, chapter in enumerate(outline_chapters):
+            if idx in used_indices:
+                continue
+            leftover = dict(chapter)
+            leftover.setdefault('niche_stage', None)
+            ordered.append(leftover)
+
+        return ordered
+
+    def _normalize_skeleton_stage(self, stage: Any, position: int) -> Dict[str, Any]:
+        """Normalize skeleton entry to a dict containing title/summary/slug."""
+        if isinstance(stage, dict):
+            title = stage.get('title') or stage.get('name') or stage.get('label') or stage.get('stage')
+            summary = stage.get('summary') or stage.get('description')
+            slug = stage.get('slug')
+        else:
+            title = str(stage) if stage else None
+            summary = None
+            slug = None
+
+        if not title:
+            title = f"Section {position}"
+
+        return {
+            'title': title,
+            'summary': summary,
+            'slug': slug,
+            'raw': stage,
+        }
+
+    def _match_chapter_by_title(
+        self,
+        outline_chapters: List[Dict[str, Any]],
+        title: Optional[str],
+        used_indices: Set[int]
+    ) -> Optional[int]:
+        if not title:
+            return None
+
+        target = title.strip().lower()
+        for idx, chapter in enumerate(outline_chapters):
+            if idx in used_indices:
+                continue
+            chapter_title = chapter.get('title')
+            if chapter_title and chapter_title.strip().lower() == target:
+                return idx
+        return None
 
     def _final_rewrite(self, chapters_content: list) -> list:
         """Apply a deterministic final coherence pass:
@@ -250,32 +381,37 @@ class CustomLLMBookGenerator:
             logger.error(f"❌ PDF creation failed: {str(e)}")
             raise
     
-    def save_to_mongodb(self, book_id: int, content_data: Dict[str, Any], interior_pdf_path: str) -> str:
+    def save_to_mongodb(self, book_id: int, content_data: Dict[str, Any], pdf_path: str) -> str:
         """
         Save book content to MongoDB
         
         Args:
             book_id: Book ID
-            content_data: Content data
-            interior_pdf_path: Path to PDF
+            content_data: Generated content
+            pdf_path: Path to PDF file
         
         Returns:
             MongoDB document ID
         """
         try:
+            logger.info("💾 Saving content to MongoDB...")
+            
             db = get_mongodb_db()
             collection = db['book_contents']
             
             document = {
                 'book_id': book_id,
-                'content': content_data,
-                'interior_pdf_path': interior_pdf_path,
-                'generated_with': 'custom_local_llm',
-                'external_api_calls': 0,  # Zero API calls for text generation!
+                'title': content_data['title'],
+                'outline': content_data['outline'],
+                'chapters': content_data['chapters'],
+                'metadata': content_data['metadata'],
+                'interior_pdf_path': pdf_path,  # Changed from 'pdf_path' to 'interior_pdf_path'
+                'content': content_data,  # Also save full content for regeneration
                 'created_at': timezone.now().isoformat()
             }
             
             result = collection.insert_one(document)
+            
             logger.info(f"✅ Content saved to MongoDB: {result.inserted_id}")
             
             return str(result.inserted_id)
@@ -284,25 +420,54 @@ class CustomLLMBookGenerator:
             logger.error(f"❌ MongoDB save failed: {str(e)}")
             raise
     
-    def _calculate_page_count(self, book_length: str) -> int:
-        """Calculate target page count based on book length"""
+    def _get_workflow_params(self, book_id: int) -> Dict[str, Any]:
+        """
+        Retrieve workflow parameters from MongoDB
+        
+        Args:
+            book_id: Book ID
+        
+        Returns:
+            Dict with workflow parameters or None if not found
+        """
+        try:
+            db = get_mongodb_db()
+            params_collection = db['book_generation_params']
+            
+            params = params_collection.find_one({'book_id': book_id})
+            
+            if params:
+                logger.info(f"✅ Retrieved workflow parameters for book {book_id}")
+                return params
+            else:
+                logger.warning(f"⚠️ No workflow parameters found for book {book_id}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to retrieve workflow parameters: {str(e)}")
+            return None
+    
+    def _calculate_page_count(self, book_length: str, book=None) -> int:
+        """Calculate target page count based on book length and book settings."""
+        if book is not None and hasattr(book, 'get_page_count_range'):
+            min_pages, max_pages = book.get_page_count_range()
+            return int(round((min_pages + max_pages) / 2))
+
         length_mapping = {
-            'short': 15,
-            'medium': 25,
-            'long': 35,
-            'full': 45
+            'short': 25,
+            'standard': 45,
+            'long': 70,
         }
-        return length_mapping.get(book_length, 25)
+        return length_mapping.get(book_length, 45)
     
     def _calculate_chapter_word_count(self, book_length: str) -> int:
         """Calculate target word count per chapter"""
         length_mapping = {
-            'short': 400,
-            'medium': 600,
-            'long': 800,
-            'full': 1000
+            'short': 350,
+            'standard': 520,
+            'long': 780,
         }
-        return length_mapping.get(book_length, 600)
+        return length_mapping.get(book_length, 520)
     
     def get_generation_stats(self) -> Dict[str, Any]:
         """Get generation statistics"""

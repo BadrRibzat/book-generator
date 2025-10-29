@@ -2210,6 +2210,51 @@ def create_coverC(c):
             print(f"✗ Cover creation failed: {str(e)}")
             raise
     
+    def _get_style_color_schemes(self, cover_style: str) -> dict:
+        """
+        Return predefined color schemes for each cover style to ensure visual distinction
+        """
+        color_schemes = {
+            'minimalist': {
+                'primary': '#1a365d',  # Deep Navy
+                'secondary': '#4a5568',  # Gray
+                'accent': '#3b82f6',  # Blue
+                'background': '#ffffff'  # White
+            },
+            'futuristic': {
+                'primary': '#ec4899',  # Hot Pink
+                'secondary': '#8b5cf6',  # Purple
+                'accent': '#06b6d4',  # Cyan
+                'background': '#000000'  # Black
+            },
+            'playful': {
+                'primary': '#f59e0b',  # Amber
+                'secondary': '#10b981',  # Emerald
+                'accent': '#f97316',  # Orange
+                'background': '#fef3c7'  # Light Yellow
+            },
+            'elegant': {
+                'primary': '#92400e',  # Brown
+                'secondary': '#d97706',  # Gold
+                'accent': '#fbbf24',  # Yellow Gold
+                'background': '#fefce8'  # Cream
+            },
+            'corporate': {
+                'primary': '#1e293b',  # Dark Slate
+                'secondary': '#475569',  # Slate
+                'accent': '#0ea5e9',  # Sky Blue
+                'background': '#f8fafc'  # Light Gray
+            },
+            'artistic': {
+                'primary': '#7c2d12',  # Deep Red-Brown
+                'secondary': '#dc2626',  # Red
+                'accent': '#fbbf24',  # Gold
+                'background': '#fef2f2'  # Light Pink
+            }
+        }
+        
+        return color_schemes.get(cover_style, color_schemes['minimalist'])
+    
     def _generate_ai_cover_concept_for_style(self, book) -> dict:
         """Generate AI design concept specifically for the selected cover style"""
         
@@ -2229,6 +2274,9 @@ def create_coverC(c):
         
         target_trend = style_to_trend.get(book.cover_style.style, 'minimalist_abstract')
         
+        # Get predefined colors for this style
+        predefined_colors = self._get_style_color_schemes(book.cover_style.style)
+        
         prompt = f"""
 You are a senior book cover art director specializing in {target_trend} design aesthetics. Generate a single, professional cover design specifically for the {book.cover_style.name} style.
 
@@ -2239,9 +2287,16 @@ Niche: "{book.niche.name}"
 Cover Style: {book.cover_style.name} - {book.cover_style.description}
 Trending Context: {trending_summary}
 
+IMPORTANT - Use these EXACT predefined colors for visual distinction:
+Primary: {predefined_colors['primary']}
+Secondary: {predefined_colors['secondary']}
+Accent: {predefined_colors['accent']}
+Background: {predefined_colors['background']}
+
 Requirements:
 - Design must perfectly match the {book.cover_style.name} style
 - Use the ACTUAL BOOK TITLE "{book.title}" prominently
+- Use the EXACT color scheme provided above (do not modify these colors)
 - Create a marketable, professional design for digital publishing
 - Follow {target_trend} design principles
 
@@ -2249,7 +2304,7 @@ Provide a complete design specification:
 1. **trend**: "{target_trend}"
 2. **concept_name**: Short catchy name for this design
 3. **description**: 2-3 sentences describing the visual approach
-4. **colors**: Object with primary, secondary, accent, background (hex codes)
+4. **colors**: Use EXACTLY the colors provided above
 5. **typography**: Font family suggestions and hierarchy
 6. **visual_elements**: Specific shapes, patterns, or motifs for {target_trend} style
 7. **mood**: Emotional tone that fits the style
@@ -2262,10 +2317,10 @@ FORMAT your response as VALID JSON only (no other text):
   "concept_name": "Professional {book.cover_style.name} Design",
   "description": "A sophisticated design that captures the essence of {book.cover_style.name} style...",
   "colors": {{
-    "primary": "#1a365d",
-    "secondary": "#4a5568", 
-    "accent": "#3b82f6",
-    "background": "#ffffff"
+    "primary": "{predefined_colors['primary']}",
+    "secondary": "{predefined_colors['secondary']}", 
+    "accent": "{predefined_colors['accent']}",
+    "background": "{predefined_colors['background']}"
   }},
   "typography": "Clean sans-serif fonts with strong hierarchy",
   "visual_elements": "Geometric shapes and subtle patterns",
@@ -2277,6 +2332,7 @@ FORMAT your response as VALID JSON only (no other text):
 Remember:
 - Use the REAL book title "{book.title}" in your description
 - Make the design perfectly match {book.cover_style.name} style
+- Use EXACTLY the colors provided (do not change them)
 - Return ONLY valid JSON, no markdown code blocks or extra text
 """
         
@@ -2314,7 +2370,12 @@ Remember:
             # Parse JSON response
             try:
                 result = json.loads(content_clean)
+                
+                # FORCE the predefined colors to ensure visual distinction
+                result['colors'] = predefined_colors
+                
                 print(f"Successfully parsed cover design for {book.cover_style.name} style")
+                print(f"Applied colors: {predefined_colors}")
                 return result
             
             except json.JSONDecodeError as je:
@@ -2329,16 +2390,16 @@ Remember:
     
     def _get_fallback_cover_concept(self, book) -> dict:
         """Return a simple fallback cover concept when AI is not available"""
+        
+        # Use predefined colors for the cover style
+        style = book.cover_style.style if book.cover_style else 'minimalist'
+        predefined_colors = self._get_style_color_schemes(style)
+        
         return {
             'trend': 'minimalist_professional',
-            'concept_name': 'Professional Clean Design',
+            'concept_name': f'Professional {book.cover_style.name if book.cover_style else "Clean"} Design',
             'description': f'A clean, professional cover for "{book.title}"',
-            'colors': {
-                'primary': '#1a365d',
-                'secondary': '#4a5568',
-                'accent': '#3b82f6',
-                'background': '#ffffff'
-            },
+            'colors': predefined_colors,
             'typography': 'Bold sans-serif title, clean subtitle',
             'visual_elements': 'Simple geometric shapes',
             'mood': 'Professional and trustworthy',

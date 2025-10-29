@@ -130,8 +130,8 @@ def generate_book_covers(self, book_id):
 
         logger.info(f"Starting cover generation for book {book_id}: {book.title}")
 
-        # Check if this is a guided workflow book
-        is_guided = hasattr(book, 'book_style') and book.book_style is not None
+        # Guided workflow requires domain + niche selection
+        is_guided = book.domain_id is not None and book.niche_id is not None
 
         if is_guided:
             # Update progress

@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
 from books.models import Domain, Niche
+from books.data.guided_catalog import GUIDED_CATALOG
 
 
 class Command(BaseCommand):
@@ -16,63 +17,53 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Seeding additional niches (target ~{per_domain} per domain)...")
 
-        # Domain-specific topic seeds
-        seeds = {
-            'ai_digital_transformation': [
-                'AI Strategy', 'Automation Playbooks', 'Prompt Engineering', 'Data Governance', 'Responsible AI',
-                'AI in Marketing', 'AI in HR', 'AI in Finance', 'AI in Operations', 'Citizen Development',
-                'GenAI Adoption', 'AI Project Management', 'RAG Systems', 'LLM Safety', 'Edge AI',
+        catalog_map = {domain['slug']: domain for domain in GUIDED_CATALOG}
+
+        seed_overrides = {
+            'artificial_intelligence_machine_learning': [
+                'AI Operating Models', 'Responsible AI Governance', 'Retrieval-Augmented Generation', 'Edge AI Systems', 'AI Product Management',
             ],
-            'ai_automation': [
-                'No-Code Automation', 'Workflow Design', 'Zapier Blueprints', 'Make.com Systems', 'SaaS Automation',
-                'CRM Automation', 'Email Automation', 'Sales Playbooks', 'Support Automation', 'Back-office RPA',
-                'Automation Metrics', 'Team Onboarding', 'Quality Gates', 'Scaling Automation', 'AI Agents',
+            'health_wellness_technology': [
+                'Digital Care Pathways', 'Behavioral Health Journeys', 'Virtual Coaching Models', 'Clinical Data Interoperability', 'Remote Patient Monitoring',
             ],
-            'ecommerce_digital_products': [
-                'Shopify Growth', 'Amazon Listings', 'POD Niches', 'Email Funnels', 'SEO for Stores',
-                'Facebook Ads', 'TikTok Ads', 'UGC for Ecommerce', 'Conversion Rate Optimization', 'A/B Testing',
-                'Bundles & Upsells', 'Customer Retention', 'Subscriptions', 'Influencer Collabs', 'Logistics Basics',
+            'sustainable_tech_green_energy': [
+                'Net-Zero Roadmaps', 'ESG Reporting Playbooks', 'Carbon Market Strategies', 'Sustainable Supply Chains', 'Green Financing Programs',
             ],
-            'parenting_preschool_learning': [
-                'Speech Sounds', 'Phonological Awareness', 'Play-Based Learning', 'Fine Motor Skills', 'Sensory Play',
-                'Story Time Routines', 'Vocabulary Games', 'Bilingual Basics', 'Social Skills', 'Daily Routines',
-                'Screen Time Balance', 'Calm Down Tools', 'Positive Reinforcement', 'Outdoor Learning', 'Numbers & Counting',
+            'remote_work_digital_collaboration': [
+                'Async Decision Frameworks', 'Distributed Leadership', 'Virtual Onboarding Systems', 'Team Ritual Design', 'Collaboration Analytics',
             ],
-            'sustainability_green_tech': [
-                'Home Solar', 'Heat Pumps', 'EV Ownership', 'Zero Waste', 'Composting',
-                'Water Conservation', 'Green Investing', 'Eco-Friendly Products', 'Circular Design', 'Carbon Tracking',
-                'Sustainable Fashion', 'Green Supply Chains', 'Community Gardens', 'Urban Farming', 'Eco Habits',
+            'cybersecurity': [
+                'Security Automation', 'Threat Hunting Guides', 'Incident Response Sprints', 'Governance Risk & Compliance', 'Security Metrics Dashboards',
             ],
-            'mental_health_tech': [
-                'Mindfulness Apps', 'CBT Tools', 'Teletherapy Tips', 'Sleep Hygiene', 'Stress Tracking',
-                'Digital Detox', 'Wearables', 'Anxiety Supports', 'ADHD Routines', 'Journaling Systems',
-                'Habit Building', 'Resilience Skills', 'Breathing Exercises', 'Caregiver Guides', 'Youth Wellbeing',
+            'creator_economy_digital_content': [
+                'Community Monetization', 'Cross-Platform Distribution', 'Creator Analytics', 'Collaborative Studios', 'Brand Partnership Playbooks',
             ],
-            'technology': [
-                'Web Dev Foundations', 'APIs & Integrations', 'Cloud Basics', 'Data Analysis', 'Python for Everyone',
-                'Frontend Skills', 'Backend Patterns', 'DevOps Intro', 'Testing & QA', 'Security Essentials',
-                'Open Source', 'Design Systems', 'UX Writing', 'Accessibility', 'AI for Developers',
+            'web3_blockchain': [
+                'Tokenomics Design', 'Compliance in Web3', 'Onboarding Web2 Users', 'DAO Operations', 'Cross-Chain Strategies',
             ],
-            'business': [
-                'Lean Startup', 'Personal Branding', 'Solopreneur Systems', 'Pricing Strategy', 'Go-To-Market',
-                'Sales Playbooks', 'Negotiation', 'Business Models', 'OKRs & KPIs', 'Storytelling',
-                'Team Culture', 'Remote Work', 'Finance 101', 'Fundraising', 'Customer Discovery',
+            'edtech_online_learning': [
+                'Learning Experience Design', 'Instructor Enablement', 'Assessment Innovation', 'Learning Analytics', 'Community-Driven Cohorts',
             ],
-            'education': [
-                'Study Habits', 'Note-Taking', 'Memory Techniques', 'Active Recall', 'Spaced Repetition',
-                'Online Learning', 'Project-Based Learning', 'Peer Teaching', 'Assessment Design', 'EdTech Tools',
-                'Critical Thinking', 'Reading Strategies', 'Essay Writing', 'STEM Activities', 'Language Learning',
+            'ecommerce_retail_tech': [
+                'Marketplace Expansion', 'Retail Media Networks', 'Post-Purchase Journeys', 'Customer Lifetime Value Playbooks', 'Logistics Automation',
             ],
-            'creative-arts': [
-                'Creative Writing', 'Story Structure', 'Graphic Design', 'Typography Basics', 'Color Theory',
-                'Photography Basics', 'Composition', 'Music Production', 'Songwriting', 'Illustration',
-                'Brand Design', 'Portfolio Craft', 'Digital Painting', 'Animation Intro', 'Content Strategy',
+            'fintech': [
+                'Risk & Compliance Automation', 'Financial Data Platforms', 'Capital Formation Tools', 'Treasury Automation', 'Fraud Prevention Systems',
+            ],
+            'data_analytics_business_intelligence': [
+                'Analytics Centers of Excellence', 'Self-Service BI Enablement', 'Data Product Management', 'Decision Intelligence', 'Data Governance Frameworks',
+            ],
+            'gaming_interactive_entertainment': [
+                'Creator UGC Systems', 'Live Ops Playbooks', 'Player Retention Science', 'Monetization Analytics', 'Community Expansion',
+            ],
+            'automation': [
+                'Automation Program Management', 'Process Discovery Workshops', 'Citizen Developer Enablement', 'Automation Center of Excellence', 'AI Agent Handoffs',
             ],
         }
 
         modifiers = [
-            'Fundamentals', 'Beginner Guide', 'Advanced Techniques', '2025 Strategies', 'Playbook',
-            'Templates & Checklists', 'Case Studies', 'Step-by-Step', 'Frameworks', 'Action Plan'
+            'Playbook', 'Blueprint', 'Field Manual', 'Sprint Plan', 'Toolkit',
+            'Workshop Series', 'Action Plan', 'Case Studies', 'Frameworks', 'Quickstart'
         ]
 
         total_created = 0
@@ -84,10 +75,12 @@ class Command(BaseCommand):
                 continue
 
             to_create = max(0, desired - existing)
-            base_topics = seeds.get(domain.slug, seeds.get(domain.slug.replace('-', '_'), []))
-            if not base_topics:
-                # Fallback generic topics
-                base_topics = [f"Essentials {i}" for i in range(1, 16)]
+            domain_payload = catalog_map.get(domain.slug)
+            base_topics = []
+            if domain_payload:
+                base_topics.extend(n['name'] for n in domain_payload['niches'])
+            base_topics.extend(seed_overrides.get(domain.slug, []))
+            base_topics = base_topics or [f"Essentials {i}" for i in range(1, 16)]
 
             created_here = 0
             i = 0
@@ -106,8 +99,18 @@ class Command(BaseCommand):
                         name=name,
                         slug=slug,
                         description=f"{name} for {domain.name.lower()}.",
-                        audience="Professionals and learners",
-                        market_size="Growing",
+                        prompt_template=(
+                            f"You are creating a concise guide on {name.lower()} for the {domain.name} domain."
+                            " Provide practical steps, curated tools, and measurable checkpoints."
+                        ),
+                        content_skeleton=[
+                            {'title': 'Goals & Success Metrics', 'summary': 'Define what success looks like and how to measure it.'},
+                            {'title': 'Core Framework', 'summary': 'Lay out the key pillars or steps for the topic.'},
+                            {'title': 'Execution Roadmap', 'summary': 'Walk through actionable weekly sprints.'},
+                            {'title': 'Tools & Templates', 'summary': 'Recommend essential resources and templates.'},
+                            {'title': 'Case Spotlight', 'summary': 'Share an illustrative example or case study.'},
+                            {'title': 'Next Steps', 'summary': 'Outline follow-up actions and learning paths.'},
+                        ],
                         order=existing + created_here + 1,
                         is_active=True,
                     )

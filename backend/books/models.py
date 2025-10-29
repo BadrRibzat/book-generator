@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from users.models import UserProfile, SubscriptionPlan
 
 
 class Domain(models.Model):
@@ -23,87 +22,30 @@ class Domain(models.Model):
 
 
 class Niche(models.Model):
-    """
-    Book sub-niche model - filtered by domain
-    """
+    """Book niche linked to a domain with generation metadata."""
+
     domain = models.ForeignKey(Domain, on_delete=models.CASCADE, related_name='niches')
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True)
-    audience = models.CharField(max_length=200, blank=True, help_text="Target audience description")
-    market_size = models.CharField(max_length=100, blank=True, help_text="Market size info")
+    prompt_template = models.TextField(
+        blank=True,
+        default="",
+        help_text="Prompt template injected into the LLM for this niche"
+    )
+    content_skeleton = models.JSONField(
+        default=list,
+        help_text="Ordered outline the generator must follow for this niche"
+    )
     is_active = models.BooleanField(default=True)
     order = models.PositiveIntegerField(default=0)
-    
+
     class Meta:
         ordering = ['domain', 'order', 'name']
         unique_together = ['domain', 'slug']
-    
+
     def __str__(self):
         return f"{self.name} ({self.domain.name})"
-
-
-class BookStyle(models.Model):
-    """
-    Book style configuration - tone, audience, language combinations
-    """
-    TONE_CHOICES = [
-        ('educational', 'Educational'),
-        ('inspirational', 'Inspirational'),
-        ('technical', 'Technical'),
-        ('playful', 'Playful'),
-        ('professional', 'Professional'),
-        ('conversational', 'Conversational'),
-    ]
-    
-    AUDIENCE_CHOICES = [
-        ('kids', 'Kids (5-12 years)'),
-        ('parents', 'Parents'),
-        ('students', 'Students'),
-        ('professionals', 'Professionals'),
-        ('entrepreneurs', 'Entrepreneurs'),
-        ('general', 'General Public'),
-    ]
-    
-    LANGUAGE_CHOICES = [
-        ('en', 'English'),
-        ('fr', 'French'),
-        ('es', 'Spanish'),
-        ('de', 'German'),
-        ('it', 'Italian'),
-        ('pt', 'Portuguese'),
-    ]
-    
-    LENGTH_CHOICES = [
-        ('short', 'Short (15-20 pages)'),
-        ('medium', 'Medium (20-25 pages)'),
-        ('full', 'Full (25-30 pages)'),
-    ]
-    
-    name = models.CharField(max_length=100, unique=True)
-    tone = models.CharField(max_length=20, choices=TONE_CHOICES)
-    target_audience = models.CharField(max_length=20, choices=AUDIENCE_CHOICES)
-    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
-    length = models.CharField(max_length=10, choices=LENGTH_CHOICES, default='medium')
-    description = models.TextField(blank=True)
-    is_active = models.BooleanField(default=True)
-    order = models.PositiveIntegerField(default=0)
-    
-    class Meta:
-        ordering = ['order', 'name']
-    
-    def __str__(self):
-        return f"{self.name} ({self.tone}, {self.target_audience}, {self.language})"
-    
-    @property
-    def page_count_range(self):
-        """Return tuple of (min_pages, max_pages)"""
-        ranges = {
-            'short': (15, 20),
-            'medium': (20, 25),
-            'full': (25, 30),
-        }
-        return ranges.get(self.length, (20, 25))
 
 
 class CoverStyle(models.Model):
@@ -302,61 +244,11 @@ class Book(models.Model):
         ('ready', 'Ready for Download'),
         ('error', 'Generation Error'),
     ]
-    
-    DOMAIN_CHOICES = [
-        ('ai_digital_transformation', 'AI & Digital Transformation'),
-        ('sustainability_green_tech', 'Sustainability & Green Tech'),
-        ('mental_health_tech', 'Mental Health Technology'),
-        ('future_skills', 'Future Skills & Digital Economy'),
-    ]
-    
-    SUB_NICHE_CHOICES = [
-        # AI & Digital Transformation
-        ('ai_business_automation', 'AI-Powered Business Automation'),
-        ('machine_learning_basics', 'Machine Learning for Non-Technical Professionals'),
-        ('digital_transformation_strategy', 'Digital Transformation Strategy'),
-        ('ai_ethics_governance', 'AI Ethics and Responsible AI Governance'),
-        ('chatgpt_productivity', 'ChatGPT and AI Tools for Productivity'),
-        ('data_driven_decisions', 'Data-Driven Decision Making'),
-        ('ai_content_creation', 'AI-Powered Content Creation'),
-        ('automation_workflows', 'Building Automation Workflows'),
-        
-        # Sustainability & Green Tech
-        ('renewable_energy_solutions', 'Renewable Energy Solutions for Homes'),
-        ('circular_economy_principles', 'Circular Economy and Sustainable Business'),
-        ('green_technology_innovations', 'Green Technology Innovations'),
-        ('carbon_neutral_living', 'Carbon Neutral Living Guide'),
-        ('sustainable_supply_chain', 'Building Sustainable Supply Chains'),
-        ('eco_friendly_investing', 'Eco-Friendly Investing Strategies'),
-        ('green_building_design', 'Green Building and Architecture'),
-        ('climate_tech_startups', 'Climate Tech Startups and Innovation'),
-        
-        # Mental Health Technology
-        ('ai_mental_health_apps', 'AI-Powered Mental Health Applications'),
-        ('digital_wellness_tools', 'Digital Wellness and Mindfulness Tech'),
-        ('teletherapy_platforms', 'Teletherapy and Online Counseling'),
-        ('mental_health_ai_diagnostics', 'AI Diagnostics for Mental Health'),
-        ('stress_management_apps', 'Stress Management Mobile Applications'),
-        ('cognitive_behavioral_tech', 'Technology in Cognitive Behavioral Therapy'),
-        ('mental_health_wearables', 'Mental Health Wearables and Biofeedback'),
-        ('workplace_mental_health_tech', 'Workplace Mental Health Technology Solutions'),
-        
-        # Future Skills & Digital Economy
-        ('remote_work_mastery', 'Remote Work Mastery and Digital Nomad Skills'),
-        ('blockchain_cryptocurrency', 'Blockchain and Cryptocurrency Fundamentals'),
-        ('metaverse_virtual_reality', 'Metaverse and Virtual Reality Skills'),
-        ('cybersecurity_essentials', 'Cybersecurity Essentials for Everyone'),
-        ('digital_entrepreneurship', 'Digital Entrepreneurship in the 2020s'),
-        ('quantum_computing_basics', 'Quantum Computing for Business Leaders'),
-        ('iot_smart_homes', 'IoT and Smart Home Technology'),
-        ('nft_digital_assets', 'NFTs and Digital Asset Management'),
-    ]
-    
-    PAGE_LENGTH_CHOICES = [
-        (15, '15 Pages'),
-        (20, '20 Pages'),
-        (25, '25 Pages'),
-        (30, '30 Pages'),
+
+    BOOK_LENGTH_CHOICES = [
+        ('short', 'Short (~20-25 pages)'),
+        ('standard', 'Standard (~35-45 pages)'),
+        ('long', 'Long (~50-70 pages)'),
     ]
     
     # Core fields
@@ -364,10 +256,15 @@ class Book(models.Model):
     title = models.CharField(max_length=200)  # Auto-generated
     
     # New relationships
-    domain = models.ForeignKey(Domain, on_delete=models.PROTECT, related_name='books', default=1)
-    niche = models.ForeignKey(Niche, on_delete=models.PROTECT, related_name='books', default=1)
-    book_style = models.ForeignKey(BookStyle, on_delete=models.PROTECT, related_name='books', default=1)
+    domain = models.ForeignKey(Domain, on_delete=models.PROTECT, related_name='books')
+    niche = models.ForeignKey(Niche, on_delete=models.PROTECT, related_name='books')
     cover_style = models.ForeignKey(CoverStyle, on_delete=models.PROTECT, related_name='books', blank=True, null=True)
+    book_length = models.CharField(
+        max_length=15,
+        choices=BOOK_LENGTH_CHOICES,
+        default='standard',
+        help_text="Driving page count and chapter depth"
+    )
     
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     
@@ -380,9 +277,9 @@ class Book(models.Model):
     
     # SaaS Features
     subscription_plan = models.ForeignKey(
-        SubscriptionPlan, 
-        on_delete=models.SET_NULL, 
-        blank=True, 
+        'users.SubscriptionPlan',
+        on_delete=models.SET_NULL,
+        blank=True,
         null=True,
         related_name='books'
     )
@@ -496,21 +393,27 @@ class Book(models.Model):
         """Calculate cost based on page length and subscription tier"""
         if hasattr(self.user, 'profile'):
             profile = self.user.profile
-            base_cost_per_page = 0.50  # Base cost per page
-            
-            # Apply subscription discounts - free tier has no discount, paid tiers get discounts
+            base_cost_per_page = 0.50
+
             if profile.subscription_tier == 'parents':
-                discount = 0.1  # 10% discount for parents tier
+                discount = 0.1
             elif profile.subscription_tier == 'creators':
-                discount = 0.2  # 20% discount for creators tier
+                discount = 0.2
             else:
-                discount = 0  # No discount for free tier
-            
-            # Use page count from book_style
-            page_count = self.book_style.page_count_range[1] if self.book_style else 20
-            cost = (page_count * base_cost_per_page) * (1 - discount)
+                discount = 0
+
+            min_pages, max_pages = self.get_page_count_range()
+            cost = (max_pages * base_cost_per_page) * (1 - discount)
             self.cost_to_generate = round(cost, 2)
             self.save()
+
+    def get_page_count_range(self):
+        """Return (min_pages, max_pages) for the selected book length."""
+        return {
+            'short': (20, 25),
+            'standard': (35, 45),
+            'long': (50, 70),
+        }.get(self.book_length, (35, 45))
     
     def record_download(self, request):
         """Record a download with analytics"""

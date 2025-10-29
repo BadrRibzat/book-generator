@@ -17,11 +17,11 @@
 
 ## ✨ What is BookAI?
 
-BookAI is a **revolutionary SaaS platform** that generates **professional, publish-ready digital books** using a **custom-trained local LLM**. Unlike generic AI platforms, our system is specifically trained on **3 expert domains** with **63 curated training samples**, producing **higher quality, more professional content** than OpenRouter or other generic LLM services.
+BookAI is a **revolutionary SaaS platform** that generates **professional, publish-ready digital books** using a **custom-trained local LLM**. Unlike generic AI platforms, our system is now trained on **13 expert domains** with **86 guided niches** and an auto-generated library of **688 structured training samples**, producing **higher quality, more professional content** than OpenRouter or other generic LLM services.
 
 ### 🎯 Why BookAI is Different
 
-- **� Custom Trained LLM**: Domain-specific training (AI & Automation, Parenting, E-commerce)
+- **� Custom Trained LLM**: Domain-specific training across 13 domains and 86 guided niches
 - **🚀 Lightning Fast**: 30-90 second generation (vs 5-10 minutes with external APIs)
 - **� 100% Private**: No data sent to external LLM providers - your content stays yours
 - **💰 Zero API Costs**: No OpenRouter/OpenAI fees - completely self-hosted
@@ -34,7 +34,7 @@ BookAI is a **revolutionary SaaS platform** that generates **professional, publi
 ## 🚀 Features
 
 ### 🧠 Custom LLM Engine
-- **Domain-Specific Training**: 63 professionally curated samples across 3 expert domains
+- **Domain-Specific Training**: 688 structured samples across 13 expert domains
 - **Specialized Knowledge**: AI & Automation, Parenting & Education, E-commerce strategies
 - **Zero External Dependencies**: No OpenRouter, OpenAI, or third-party LLM APIs
 - **Private & Secure**: All content generation happens locally - no data leakage
@@ -43,20 +43,21 @@ BookAI is a **revolutionary SaaS platform** that generates **professional, publi
 
 ### 📚 Supported Domains & Niches
 
-#### 🤖 AI & Automation
-- **Workflow Automation**: RPA, business process optimization
-- **AI Content Creation**: GPT applications, automated writing
-- **AI-Powered Tools**: Productivity enhancement, automation strategies
+The guided catalog now includes **13 domains** and **86 curated niches**, each with structured prompts, outlines, and content skeletons generated during training:
 
-#### 👨‍👩‍👧 Parenting: Pre-school Speech & Learning  
-- **Speech Development**: Communication skills for ages 3-6
-- **Early Learning**: Educational activities, cognitive development
-- **Parent Guides**: Practical strategies, milestone tracking
-
-#### 💼 E-commerce & Digital Products
-- **Dropshipping Mastery**: Product selection, supplier management
-- **Digital Marketing**: SEO, social media, conversion optimization
-- **Online Business**: Store setup, scaling strategies, automation
+- **Artificial Intelligence & Machine Learning** — automation frameworks, AI strategy roadmaps, prompt operations
+- **Automation** — low-code workflows, process orchestration, system integrations
+- **Health & Wellness Technology** — remote diagnostics, digital therapeutics, patient engagement
+- **Sustainable Technology & Green Energy** — climate tech adoption, ESG analytics, clean infrastructure playbooks
+- **Remote Work & Digital Collaboration** — async operations, collaboration tooling, distributed team leadership
+- **Cybersecurity** — zero trust rollouts, incident readiness, compliance operations
+- **Creator Economy & Digital Content** — monetization systems, community growth, content production flywheels
+- **Web3 & Blockchain** — supply chain traceability, tokenized ecosystems, decentralized governance
+- **EdTech & Online Learning** — curriculum design, cohort learning, learning analytics
+- **E-commerce & Retail Tech** — omnichannel operations, customer retention, marketplace acceleration
+- **FinTech** — embedded finance, risk management, compliance automation
+- **Data Analytics & Business Intelligence** — decision intelligence, data product operations, KPI governance
+- **Gaming & Interactive Entertainment** — live ops, community engagement, platform monetization
 
 ### 📄 KDP-Ready PDF Interior
 - **6×9 in (KDP) Page Size** with professional typography
@@ -102,7 +103,7 @@ graph TB
     H --> I[Download]
 
     subgraph "Custom LLM System"
-        J[LocalLLMEngine<br/>63 Training Samples]
+    J[LocalLLMEngine<br/>688 Training Samples]
         K[CustomBookGenerator<br/>Domain-Specific Logic]
         L[Prompt Templates<br/>Optimized for Quality]
     end
@@ -126,7 +127,7 @@ graph TB
 | **Backend** | Django 4.2 + DRF | REST API & Business Logic |
 | **Frontend** | Vue 3 + TypeScript | Modern SPA Interface |
 | **Database** | SQLite + MongoDB | Metadata & Content Storage |
-| **Custom LLM** | LocalLLMEngine | Domain-Specific Training (63 samples) |
+| **Custom LLM** | LocalLLMEngine | Domain-Specific Training (688 samples) |
 | **Task Queue** | Celery + Redis | Async Processing |
 | **PDF Generation** | ReportLab + Google Fonts | Professional Document Assembly |
 | **Cover AI** | Cloudflare AI (optional) | Design Concepts with Fallbacks |
@@ -137,7 +138,7 @@ graph TB
 
 | Feature | Custom LLM (BookAI) | OpenRouter/Generic APIs |
 |---------|---------------------|-------------------------|
-| **Training** | 63 domain-specific samples | Generic training on internet data |
+| **Training** | 688 domain-specific samples | Generic training on internet data |
 | **Quality** | ⭐⭐⭐⭐⭐ Professional, accurate | ⭐⭐⭐ Generic, inconsistent |
 | **Speed** | 30-90 seconds | 5-10 minutes |
 | **Privacy** | 🔒 100% local, no data sent out | ⚠️ Data sent to external providers |
@@ -236,7 +237,7 @@ python setup_testuser_unlimited.py  # Creates user with unlimited book generatio
 
 ### 🎓 Custom LLM Training
 
-The system comes pre-trained with 63 high-quality samples across 3 domains. To retrain or add samples:
+The system comes pre-trained with 688 high-quality samples across 13 domains. To retrain or add samples:
 
 ```bash
 cd backend
@@ -260,8 +261,8 @@ python manage.py test_custom_model
 ### 📚 Book Creation Workflow
 
 #### Guided Workflow (10-Step Process)
-1. **Select Domain** → AI & Automation / Parenting / E-commerce
-2. **Choose Niche** → 3 specialized niches per domain (9 total)
+1. **Select Domain** → Choose from 13 expert domains (AI, Automation, FinTech, Web3, and more)
+2. **Choose Niche** → Filtered list of 86 curated niches per domain
 3. **Select Book Style** → Tone, audience, language preferences
 4. **Choose Cover Style** → Minimalist, futuristic, elegant, etc.
 5. **Set Book Length** → Short (15 pages) / Medium (25) / Long (35)
@@ -280,13 +281,23 @@ python manage.py test_custom_model
 
 ### 🎯 Available Domains & Niches
 
-| Domain | Niches | Training Samples |
-|--------|--------|------------------|
-| **AI & Automation** | Workflow Automation, AI Content Creation, AI-Powered Tools | 21 samples |
-| **Parenting: Pre-school** | Speech Development 3-6 Years, Early Learning Activities, Parent Communication Guides | 21 samples |
-| **E-commerce** | Dropshipping Mastery, Digital Marketing, Online Store Scaling | 21 samples |
+| Domain | Sample Niches |
+|--------|----------------|
+| Artificial Intelligence & Machine Learning | Automation playbooks, AI operations, prompt engineering systems |
+| Automation | Low-code orchestration, process optimization, integration roadmaps |
+| Health & Wellness Technology | Remote diagnostics, care coordination, digital therapeutics |
+| Sustainable Technology & Green Energy | ESG analytics, carbon intelligence, renewable deployment |
+| Remote Work & Digital Collaboration | Distributed team operations, collaboration tooling, async leadership |
+| Cybersecurity | Zero trust programs, incident readiness, compliance automation |
+| Creator Economy & Digital Content | Monetization engines, community growth, content flywheels |
+| Web3 & Blockchain | Supply chain traceability, token ecosystems, decentralized governance |
+| EdTech & Online Learning | Cohort learning, curriculum design, learning analytics |
+| E-commerce & Retail Tech | Omnichannel operations, retention frameworks, marketplace acceleration |
+| FinTech | Embedded finance, risk automation, regulatory compliance |
+| Data Analytics & Business Intelligence | Decision intelligence, data product operations, KPI governance |
+| Gaming & Interactive Entertainment | Live-ops strategy, community engagement, platform monetization |
 
-**Total**: 3 Domains × 3 Niches × 7 Samples = **63 Training Samples**
+**Total**: 13 Domains • 86 Niches • 688 training samples seeded by `python manage.py train_custom_llm`
 
 ---
 
@@ -336,9 +347,9 @@ cookies = response.cookies
 
 # Create book
 book_data = {
-    'domain': 'technology',
-    'niche': 'ai_content_creation',
-    'book_style': 'medium'
+    'domain': 'web3_blockchain',
+    'niche': 'blockchain-supply-chain-solutions',
+    'book_length': 'short'
 }
 response = requests.post('http://127.0.0.1:8000/api/books/create-guided/',
     json=book_data, cookies=cookies)
@@ -378,7 +389,16 @@ curl -X GET http://127.0.0.1:8000/api/books/domains/
 # Test book creation
 curl -X POST http://127.0.0.1:8000/api/books/create-guided/ \
   -H "Content-Type: application/json" \
-  -d '{"domain":"technology","niche":"ai_content_creation","book_style":"medium"}'
+    -d '{"domain":"web3_blockchain","niche":"blockchain-supply-chain-solutions","book_length":"short"}'
+```
+
+### ✅ Latest Validation Snapshot (October 29, 2025)
+
+- `./start_dev.sh` confirmed Redis, Celery worker, and Django server were healthy in the local stack.
+- Authenticated login as `testuser` returned 200 responses for `/api/users/profile/` and `/api/users/profiles/` after the initial unauthenticated 403 preflight.
+- Guided catalog endpoints verified: `/api/domains/` (13 domains), `/api/niches/?domain=web3_blockchain`, `/api/cover-styles/`, and `/api/books/` all served 200 responses.
+- Created guided book **#59** in the `web3_blockchain` domain using the `blockchain-supply-chain-solutions` niche; generation parameters were stored in MongoDB and asynchronous jobs executed successfully.
+- Selected cover ID 39, triggered final PDF creation, and downloaded the completed assets via `/api/books/59/download/` with a 200 response.
 ```
 
 ---
@@ -486,7 +506,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 A: No! The custom LLM runs completely locally. Cloudflare API is optional for cover AI (has fallback).
 
 **Q: How is this better than OpenRouter/ChatGPT?**  
-A: Our custom LLM is trained specifically on book generation for 3 domains, producing higher quality, more professional content. It's also 5-10x faster and completely free with no rate limits.
+A: Our custom LLM is trained specifically on book generation for 13 domains and 86 niches, producing higher quality, more professional content. It's also 5-10x faster and completely free with no rate limits.
 
 **Q: Is my content private?**  
 A: Yes! Unlike OpenRouter or OpenAI, all content generation happens locally. Your book content never leaves your server.
@@ -495,7 +515,7 @@ A: Yes! Unlike OpenRouter or OpenAI, all content generation happens locally. You
 A: Absolutely! Add training samples in the `customllm` app and retrain the model using `python manage.py train_custom_llm`.
 
 **Q: What's the quality of generated content?**  
-A: Professional quality with domain-specific training. Our 63 curated samples ensure accurate, well-structured content that outperforms generic LLMs.
+A: Professional quality with domain-specific training. Our 688 curated samples ensure accurate, well-structured content that outperforms generic LLMs.
 
 **Q: Can I use this commercially?**  
 A: Yes! Generate books for sale, lead magnets, courses, or any commercial purpose. Zero API costs means unlimited commercial use.
@@ -528,7 +548,7 @@ A: Only hosting costs (compute + storage). No per-book API fees like OpenRouter 
 ## 📈 Roadmap
 
 ### Phase 1 ✅ (Completed)
-- [x] Custom LLM training system with 63 samples
+- [x] Custom LLM training system with 688 samples
 - [x] Domain-specific book generation (AI, Parenting, E-commerce)
 - [x] Smart cover text wrapping and layout
 - [x] Professional PDF assembly with Google Fonts
@@ -565,6 +585,6 @@ A: Only hosting costs (compute + storage). No per-book API fees like OpenRouter 
 
 ⭐ **Star this repo if you found it helpful!**
 
-[⬆️ Back to Top](#-smartbookforge---ai-powered-book-generator-saas)
+[⬆️ Back to Top](#-bookai---custom-llm-book-generator-saas)
 
 </div>

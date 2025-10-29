@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Book, BookTemplate, Domain, Niche, BookStyle, CoverStyle
+from .models import Book, BookTemplate, Domain, Niche, CoverStyle
 
 
 @admin.register(Domain)
@@ -19,14 +19,6 @@ class NicheAdmin(admin.ModelAdmin):
     ordering = ['domain', 'order', 'name']
 
 
-@admin.register(BookStyle)
-class BookStyleAdmin(admin.ModelAdmin):
-    list_display = ['name', 'tone', 'target_audience', 'language', 'length', 'is_active']
-    list_filter = ['tone', 'target_audience', 'language', 'length', 'is_active']
-    search_fields = ['name', 'description']
-    ordering = ['order', 'name']
-
-
 @admin.register(CoverStyle)
 class CoverStyleAdmin(admin.ModelAdmin):
     list_display = ['name', 'style', 'is_active', 'order']
@@ -37,8 +29,8 @@ class CoverStyleAdmin(admin.ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'domain', 'niche', 'book_style', 'status', 'quality_score', 'created_at']
-    list_filter = ['status', 'domain', 'niche', 'book_style', 'created_at']
+    list_display = ['title', 'user', 'domain', 'niche', 'book_length', 'status', 'quality_score', 'created_at']
+    list_filter = ['status', 'domain', 'niche', 'book_length', 'created_at']
     search_fields = ['title', 'user__username', 'user__email']
     readonly_fields = ['created_at', 'updated_at', 'generation_started_at', 'generation_completed_at']
     ordering = ['-created_at']

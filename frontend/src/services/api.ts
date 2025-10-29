@@ -66,5 +66,65 @@ apiClient.interceptors.response.use(
   }
 );
 
+// API Helper Methods
+export const api = {
+  // Domain & Niche endpoints
+  getDomains() {
+    return apiClient.get('/domains/');
+  },
+  
+  getNiches(domainId?: string | number) {
+    const params = domainId ? { domain: domainId } : {};
+    return apiClient.get('/niches/', { params });
+  },
+  
+  getCoverStyles() {
+    return apiClient.get('/cover-styles/');
+  },
+  
+  // Book creation
+  createGuidedBook(bookData: any) {
+    return apiClient.post('/books/create-guided/', bookData);
+  },
+  
+  // Books endpoints
+  getBooks() {
+    return apiClient.get('/books/');
+  },
+  
+  getBook(bookId: string | number) {
+    return apiClient.get(`/books/${bookId}/`);
+  },
+  
+  getBookStatus(bookId: string | number) {
+    return apiClient.get(`/books/${bookId}/status/`);
+  },
+  
+  selectCover(bookId: string | number, coverId: string | number) {
+    return apiClient.post(`/books/${bookId}/select-cover/`, { cover_id: coverId });
+  },
+  
+  downloadBook(bookId: string | number) {
+    return apiClient.get(`/books/${bookId}/download/`, { responseType: 'blob' });
+  },
+  
+  // Auth endpoints
+  register(userData: any) {
+    return apiClient.post('/auth/register/', userData);
+  },
+  
+  login(credentials: any) {
+    return apiClient.post('/auth/login/', credentials);
+  },
+  
+  logout() {
+    return apiClient.post('/auth/logout/');
+  },
+  
+  getCurrentUser() {
+    return apiClient.get('/auth/user/');
+  }
+};
+
 export default apiClient;
 export { API_BASE_URL };

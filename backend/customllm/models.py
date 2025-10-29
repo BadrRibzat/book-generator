@@ -11,16 +11,11 @@ User = get_user_model()
 
 class TrainingDomain(models.Model):
     """
-    Predefined domains for custom LLM training
-    Only 3 domains: AI & Automation, Parenting, E-commerce
+    Predefined domains for custom LLM training.
+    Domains now sync with the guided catalog and can grow beyond the original trio.
     """
-    DOMAIN_CHOICES = [
-        ('ai_automation', 'AI & Automation'),
-        ('parenting', 'Parenting: Pre-school Speech & Learning'),
-        ('ecommerce', 'E-commerce & Digital Products'),
-    ]
-    
-    slug = models.CharField(max_length=50, unique=True, choices=DOMAIN_CHOICES)
+
+    slug = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=200)
     description = models.TextField()
     

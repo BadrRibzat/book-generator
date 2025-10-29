@@ -14,7 +14,7 @@ import os
 import json
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse, OpenApiExample
 
-from .models import Book, BookTemplate, Domain, Niche, BookStyle, CoverStyle
+from .models import Book, BookTemplate, Domain, Niche, CoverStyle
 from .serializers import (
     BookSerializer, 
     BookCreateSerializer, 
@@ -23,10 +23,8 @@ from .serializers import (
     UserRegistrationSerializer,
     DomainSerializer,
     NicheSerializer,
-    BookStyleSerializer,
     CoverStyleSerializer
 )
-from .services.book_generator import BookGeneratorProfessional
 from .tasks import generate_book_content, generate_book_covers, create_final_book_pdf
 from .services.pdf_merger import PDFMerger
 from covers.services import CoverGeneratorProfessional
@@ -74,31 +72,25 @@ class DomainViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class NicheViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for reading niches, filtered by domain
-    """
+    """ViewSet for reading niches filtered by domain parameter."""
+
     serializer_class = NicheSerializer
     permission_classes = [AllowAny]
-    
+
     def get_queryset(self):
         queryset = Niche.objects.filter(is_active=True)
-        domain_param = self.request.query_params.get('domain', None)
-        if domain_param is not None:
-            # Support filtering by either domain ID or slug for flexibility
-            if domain_param.isdigit():
-                queryset = queryset.filter(domain__id=int(domain_param))
-            else:
-                queryset = queryset.filter(domain__slug=domain_param)
-        return queryset
+        domain_param = self.request.query_params.get('domain_id') or self.request.query_params.get('domain')
 
+        if domain_param:
+            try:
+                if str(domain_param).isdigit():
+                    queryset = queryset.filter(domain__id=int(domain_param))
+                else:
+                    queryset = queryset.filter(domain__slug=domain_param)
+            except Exception as exc:  # noqa: F841
+                queryset = queryset.none()
 
-class BookStyleViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    ViewSet for reading book styles
-    """
-    queryset = BookStyle.objects.filter(is_active=True)
-    serializer_class = BookStyleSerializer
-    permission_classes = [AllowAny]
+        return queryset.order_by('order', 'name')
 
 
 class CoverStyleViewSet(viewsets.ReadOnlyModelViewSet):
@@ -360,12 +352,12 @@ class BookViewSet(viewsets.ModelViewSet):
             from pathlib import Path
             if not Path(interior_pdf_path).exists():
                 print(f"Interior PDF file not found at: {interior_pdf_path}")
-                # Try to regenerate the PDF
-                generator = BookGeneratorProfessional()
+                from books.services.custom_llm_book_generator import CustomLLMBookGenerator
+
+                generator = CustomLLMBookGenerator()
                 content_data = content_doc.get('content', {})
                 if content_data:
                     interior_pdf_path = generator.create_pdf(book, content_data)
-                    # Update MongoDB with new path
                     db.book_contents.update_one(
                         {'book_id': book.id},
                         {'$set': {'interior_pdf_path': interior_pdf_path}}

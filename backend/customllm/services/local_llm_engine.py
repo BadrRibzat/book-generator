@@ -89,22 +89,33 @@ class LocalLLMEngine:
             return {}
     
     def _get_domain_slug(self, domain_name: str) -> str:
-        """Convert domain name to slug"""
+        """Convert domain name to slug - use unique slugs for domain-specific content"""
         mapping = {
             'AI & Automation': 'ai_automation',
             'Parenting': 'parenting',
             'Parenting: Pre-school Speech & Learning': 'parenting',
             'E-commerce & Digital Products': 'ecommerce',
             'E-commerce': 'ecommerce',
-            # Map expanded guided workflow domains to closest trained templates
-            'Sustainability & Green Tech': 'ai_automation',
-            'Nutrition & Wellness': 'parenting',
-            'Meditation & Mindfulness': 'parenting',
-            'Home Workout & Fitness': 'parenting',
-            'Language & Kids': 'parenting',
-            'Technology & AI': 'ai_automation',
+            # Unique slugs for each domain so fallback can generate domain-specific content
+            'Health & Wellness': 'health_wellness',
+            'Personal Development': 'personal_development',
+            'Business & Entrepreneurship': 'business',
+            'Creative Arts': 'creative_arts',
+            'Technology': 'technology',
+            'Sustainability & Green Tech': 'sustainability',
+            'Nutrition & Wellness': 'nutrition',
+            'Meditation & Mindfulness': 'meditation',
+            'Home Workout & Fitness': 'fitness',
+            'Language & Kids': 'language_kids',
+            'Technology & AI': 'technology_ai',
+            'Finance & Investment': 'finance',
+            'Future Skills': 'future_skills',
         }
-        return mapping.get(domain_name, 'ai_automation')
+        slug = mapping.get(domain_name)
+        if slug:
+            return slug
+        # Create slug from domain name if not in mapping
+        return domain_name.lower().replace(' & ', '_').replace(' ', '_').replace(':', '').replace('-', '_')
     
     def generate_outline(
         self,
@@ -195,13 +206,20 @@ class LocalLLMEngine:
         """
         domain = book_context.get('domain', 'AI & Automation')
         domain_slug = self._get_domain_slug(domain)
+        niche = book_context.get('niche', 'General')
         
         # Get training samples
         samples = self.training_data.get(domain_slug, {}).get('chapter', [])
         
         if not samples:
-            logger.warning(f"No chapter training data for domain: {domain_slug}")
-            return self._generate_fallback_chapter(chapter_title, chapter_outline, word_count)
+            logger.warning(f"No chapter training data for domain: {domain_slug}, using contextual fallback")
+            return self._generate_fallback_chapter(
+                chapter_title, 
+                chapter_outline, 
+                word_count,
+                domain_slug,
+                niche
+            )
         
         # Select best matching sample
         best_sample = self._select_best_sample(
@@ -520,66 +538,276 @@ class LocalLLMEngine:
         chapter_count: int,
         audience: str
     ) -> Dict[str, Any]:
-        """Generate fallback outline when no training data available"""
+        """Generate domain/niche-specific outline when no training data available"""
+        
+        # Generate contextual title
+        title = f"The Complete Guide to {niche}"
+        if audience and audience != 'general':
+            title += f" for {audience.title()}"
+        
+        # Get domain slug for template selection
+        domain_slug = self._get_domain_slug(domain)
+        
+        # Domain-specific chapter templates
+        domain_templates = {
+            'health_wellness': [
+                f'Understanding {niche} Fundamentals',
+                f'Key Principles of {niche}',
+                f'Getting Started with {niche}',
+                f'Daily {niche} Practices',
+                f'Advanced {niche} Techniques',
+                f'Common {niche} Challenges',
+                f'Measuring Your {niche} Progress',
+                f'Long-term {niche} Success',
+                f'Tools and Resources for {niche}',
+                f'Building Your {niche} Routine',
+            ],
+            'personal_development': [
+                f'The Foundation of {niche}',
+                f'Setting {niche} Goals',
+                f'Developing {niche} Skills',
+                f'Overcoming {niche} Obstacles',
+                f'Building {niche} Habits',
+                f'Mastering {niche} Strategies',
+                f'Advanced {niche} Techniques',
+                f'Measuring {niche} Growth',
+                f'Sustaining {niche} Progress',
+                f'Your {niche} Action Plan',
+            ],
+            'business': [
+                f'Introduction to {niche}',
+                f'{niche} Market Analysis',
+                f'Building Your {niche} Strategy',
+                f'{niche} Best Practices',
+                f'Implementing {niche} Systems',
+                f'Scaling {niche} Operations',
+                f'Measuring {niche} Success',
+                f'Common {niche} Mistakes to Avoid',
+                f'Advanced {niche} Techniques',
+                f'{niche} Action Plan',
+            ],
+            'creative_arts': [
+                f'Getting Started with {niche}',
+                f'Essential {niche} Techniques',
+                f'Developing Your {niche} Style',
+                f'{niche} Tools and Materials',
+                f'Mastering {niche} Skills',
+                f'Creative {niche} Exercises',
+                f'Professional {niche} Practices',
+                f'Showcasing Your {niche} Work',
+                f'Building a {niche} Portfolio',
+                f'Your {niche} Journey',
+            ],
+            'technology': [
+                f'Introduction to {niche}',
+                f'Understanding {niche} Technology',
+                f'{niche} Core Concepts',
+                f'Practical {niche} Applications',
+                f'Implementing {niche} Solutions',
+                f'Advanced {niche} Techniques',
+                f'Best Practices for {niche}',
+                f'Common {niche} Challenges',
+                f'Future of {niche}',
+                f'Your {niche} Roadmap',
+            ],
+            'future_skills': [
+                f'Introduction to {niche}',
+                f'Why {niche} Matters Today',
+                f'Core {niche} Competencies',
+                f'Developing {niche} Skills',
+                f'Practical {niche} Applications',
+                f'Advanced {niche} Strategies',
+                f'{niche} in the Workplace',
+                f'Mastering {niche}',
+                f'Future Trends in {niche}',
+                f'Your {niche} Development Plan',
+            ],
+        }
+        
+        # Use domain-specific template or generic
+        if domain_slug in domain_templates:
+            template = domain_templates[domain_slug]
+        else:
+            template = [
+                f'Introduction to {niche}',
+                f'Understanding {niche} Basics',
+                f'Getting Started with {niche}',
+                f'Essential {niche} Concepts',
+                f'Practical {niche} Applications',
+                f'Advanced {niche} Strategies',
+                f'Common {niche} Challenges',
+                f'Best Practices for {niche}',
+                f'Measuring {niche} Success',
+                f'Your {niche} Action Plan',
+            ]
+        
+        # Select chapters
+        selected = template[:chapter_count] if len(template) >= chapter_count else template + template[:chapter_count - len(template)]
+        
+        chapters = [
+            {
+                'title': chapter_title,
+                'summary': f'This chapter covers essential concepts and practical guidance for {chapter_title.lower()}.'
+            }
+            for chapter_title in selected[:chapter_count]
+        ]
         
         return {
-            'title': f"Complete Guide to {niche}",
-            'chapters': [
-                {'title': f'Chapter {i+1}', 'summary': f'Content for chapter {i+1}'}
-                for i in range(chapter_count)
-            ],
-            'metadata': {'domain': domain, 'niche': niche}
+            'title': title,
+            'chapters': chapters,
+            'metadata': {
+                'domain': domain,
+                'niche': niche,
+                'audience': audience,
+                'generated_by': 'contextual_fallback'
+            }
         }
     
     def _generate_fallback_chapter(
         self,
         title: str,
         outline: str,
-        word_count: int
+        word_count: int,
+        domain_slug: str = 'ai_automation',
+        niche: str = 'General'
     ) -> Dict[str, Any]:
-        """Generate fallback chapter when no training data available"""
+        """Generate domain/niche-specific fallback chapter"""
         
-        # Produce structured content with subheadings and lists to meet quality checks
         sections = []
         sections.append(f"# {title}\n\n{outline}\n\n")
 
-        # Create 4 structured subsections
-        base_topics = [
-            "Foundations and key terms",
-            "Step-by-step workflow",
-            "Common mistakes to avoid",
-            "Tools and quick wins",
-        ]
+        # Domain-specific section templates
+        section_templates = {
+            'health_wellness': [
+                "Understanding the Health Benefits",
+                "Step-by-Step Implementation Guide",
+                "Common Health Challenges and Solutions",
+                "Tools and Resources for Success",
+            ],
+            'personal_development': [
+                "Building Strong Foundations",
+                "Practical Strategies for Growth",
+                "Overcoming Common Obstacles",
+                "Creating Your Action Plan",
+            ],
+            'business': [
+                "Market Analysis and Research",
+                "Strategic Implementation Framework",
+                "Best Practices and Case Studies",
+                "Measuring ROI and Success Metrics",
+            ],
+            'creative_arts': [
+                "Essential Techniques and Skills",
+                "Creative Process and Workflow",
+                "Tools and Materials Guide",
+                "Developing Your Unique Style",
+            ],
+            'technology': [
+                "Technical Foundations",
+                "Implementation Strategies",
+                "Best Practices and Standards",
+                "Future Trends and Innovations",
+            ],
+            'future_skills': [
+                "Core Concepts and Principles",
+                "Practical Application Methods",
+                "Skill Development Strategies",
+                "Real-World Implementation",
+            ],
+        }
+        
+        # Get section headers
+        base_topics = section_templates.get(domain_slug, [
+            "Foundations and Key Concepts",
+            "Step-by-Step Implementation",
+            "Common Challenges and Solutions",
+            "Tools and Resources",
+        ])
+        
         words_per_section = max(120, word_count // 4)
+        
         for idx, heading in enumerate(base_topics, 1):
-            sections.append(f"#### {heading}\n")
-            # One explanatory paragraph
-            paragraph = (
-                "Understanding the fundamentals is crucial. "
-                "Focus on clarity, practical examples, and measurable progress."
-            )
-            paragraph += " " + self._generate_filler_content(words_per_section, 'ai_automation')
-            sections.append(paragraph.strip() + "\n")
-            # A short bullet list
-            bullets = [
-                "Define the goal and success metric",
-                "Outline 3-5 steps with owners",
-                "Test with a small pilot before scaling",
-            ]
-            sections.append("\n" + "\n".join([f"- {b}" for b in bullets]) + "\n")
-
-        # Close with a brief transition
-        sections.append(
-            "\nNext, we'll explore practical applications with simple checklists to get momentum."
-        )
-
-        content = "\n\n".join(sections)
+            sections.append(f"#### {heading}\n\n")
+            
+            # Generate contextual content
+            paragraph = self._generate_contextual_paragraph(heading, niche, domain_slug, words_per_section)
+            sections.append(paragraph + "\n\n")
+        
+        content = "".join(sections)
+        actual_words = len(content.split())
         
         return {
             'content': content,
-            'word_count': len(content.split()),
-            'metadata': {'model': 'fallback'}
+            'word_count': actual_words,
+            'metadata': {
+                'domain': domain_slug,
+                'niche': niche,
+                'generated_by': 'contextual_fallback'
+            }
         }
+    
+    def _generate_contextual_paragraph(self, heading: str, niche: str, domain_slug: str, word_count: int) -> str:
+        """Generate contextual paragraph based on domain, niche, and heading"""
+        
+        # Domain-specific content patterns
+        content_patterns = {
+            'health_wellness': [
+                f"When it comes to {niche.lower()}, {heading.lower()} plays a crucial role in achieving your health goals.",
+                f"Research shows that proper attention to {heading.lower()} can significantly improve your {niche.lower()} outcomes.",
+                f"Many people find that focusing on {heading.lower()} helps them make sustainable progress in their {niche.lower()} journey.",
+            ],
+            'personal_development': [
+                f"Success in {niche.lower()} requires understanding {heading.lower()} and applying these principles consistently.",
+                f"The most effective approach to {niche.lower()} involves mastering {heading.lower()} through deliberate practice.",
+                f"By focusing on {heading.lower()}, you can accelerate your growth in {niche.lower()} and achieve lasting results.",
+            ],
+            'business': [
+                f"In the {niche.lower()} industry, {heading.lower()} is essential for competitive advantage and sustainable growth.",
+                f"Successful businesses prioritize {heading.lower()} when developing their {niche.lower()} strategies.",
+                f"Research indicates that companies excelling in {heading.lower()} outperform competitors in {niche.lower()} markets.",
+            ],
+            'creative_arts': [
+                f"Mastering {heading.lower()} is fundamental to developing your unique voice in {niche.lower()}.",
+                f"Professional {niche.lower()} artists emphasize the importance of {heading.lower()} in their creative process.",
+                f"Understanding {heading.lower()} allows you to expand your {niche.lower()} capabilities and artistic expression.",
+            ],
+            'technology': [
+                f"Modern {niche.lower()} solutions rely heavily on {heading.lower()} for optimal performance and scalability.",
+                f"Understanding {heading.lower()} is critical when implementing {niche.lower()} technologies in your organization.",
+                f"The future of {niche.lower()} depends on advances in {heading.lower()} and continuous innovation.",
+            ],
+            'future_skills': [
+                f"Developing {heading.lower()} is essential for success in {niche.lower()} as we move into the future of work.",
+                f"Industry leaders emphasize that {heading.lower()} forms the foundation of effective {niche.lower()} mastery.",
+                f"By focusing on {heading.lower()}, you position yourself for long-term success in {niche.lower()}.",
+            ],
+        }
+        
+        # Get patterns or use generic
+        patterns = content_patterns.get(domain_slug, [
+            f"Understanding {heading.lower()} is essential for success in {niche.lower()}.",
+            f"This section covers key aspects of {heading.lower()} relevant to {niche.lower()}.",
+            f"Applying {heading.lower()} principles can significantly improve your {niche.lower()} outcomes.",
+        ])
+        
+        # Build paragraph
+        paragraph = random.choice(patterns)
+        
+        # Add sentences to meet word count
+        additional = [
+            f"Start by assessing your current situation and identifying areas for improvement in {heading.lower()}. This systematic approach ensures you make meaningful progress.",
+            f"Break down complex concepts into manageable steps. Focus on one aspect at a time to build confidence and competence.",
+            f"Combine theory with hands-on practice. Experiment with different approaches to discover what works best for your specific situation.",
+            f"Document your progress and adjust your strategy as needed for optimal results. Regular review helps maintain momentum and direction.",
+        ]
+        
+        current_words = len(paragraph.split())
+        while current_words < word_count:
+            paragraph += " " + random.choice(additional)
+            current_words = len(paragraph.split())
+        
+        return paragraph
+    
     
     def reload_training_data(self):
         """Force reload training data from database"""

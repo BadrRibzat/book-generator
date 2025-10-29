@@ -31,6 +31,12 @@ server_log.txt
 
 # API Usage Tracking
 token_usage.json
+backend/token_usage.json
+
+# Local test helpers and artifacts
+backend/test_*.py
+frontend/test-results/
+frontend/tests/e2e/
 
 # Caches and large temporary files
 *.cache

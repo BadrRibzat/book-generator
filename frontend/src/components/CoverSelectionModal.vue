@@ -33,21 +33,51 @@
       </div>
       
       <div v-else>
-        <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <div 
             v-for="cover in covers" 
             :key="cover.id"
-            class="border rounded-lg overflow-hidden cursor-pointer"
-            :class="{ 'ring-2 ring-primary-500 ring-offset-2': selectedCoverId === cover.id }"
+            class="border rounded-lg overflow-hidden cursor-pointer bg-white shadow-sm transition ring-offset-2"
+            :class="{ 'ring-2 ring-primary-500 shadow-lg': selectedCoverId === cover.id }"
             @click="selectCover(cover.id)"
           >
-            <img :src="cover.image_url" :alt="cover.template_style" class="w-full h-auto" />
-            <div class="p-2 bg-gray-50">
-              <p class="text-xs text-gray-700 capitalize">{{ cover.template_style }} Style</p>
+            <div class="aspect-[3/4] bg-gray-100 flex items-center justify-center relative">
+              <img 
+                v-if="!isPdf(cover.image_url)"
+                :src="cover.image_url" 
+                :alt="cover.template_style" 
+                class="w-full h-full object-cover"
+              />
+              <object 
+                v-else
+                :data="cover.image_url"
+                type="application/pdf"
+                class="w-full h-full"
+              >
+                <div class="flex items-center justify-center w-full h-full text-xs text-gray-600 px-4 text-center">
+                  PDF preview unavailable. Use the preview button to open this cover in a new tab.
+                </div>
+              </object>
+              <div v-if="selectedCoverId === cover.id" class="absolute inset-0 bg-primary-500/10"></div>
+            </div>
+            <div class="p-3 bg-gray-50 flex items-center justify-between">
+              <div>
+                <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide">{{ cover.template_style }} Style</p>
+                <p class="text-[11px] text-gray-500 mt-1" v-if="cover.generation_params?.features?.length">
+                  {{ formatFeatures(cover.generation_params.features) }}
+                </p>
+              </div>
+              <button 
+                type="button"
+                class="text-xs font-medium text-primary-600 hover:text-primary-700"
+                @click.stop="previewCover(cover)"
+              >
+                Preview
+              </button>
             </div>
           </div>
         </div>
-        
+
         <div class="flex justify-end mt-4 space-x-3">
           <button 
             @click="onClose" 
@@ -76,6 +106,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useBooksStore } from '../stores/books';
 import apiClient from '../services/api';
+import type { Cover } from '../types';
 
 const props = defineProps<{
   bookId: number;
@@ -154,5 +185,23 @@ const handleGenerateCovers = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const isPdf = (url: string | undefined | null) => {
+  if (!url) return false;
+  return url.toLowerCase().endsWith('.pdf');
+};
+
+const previewCover = (cover: Cover) => {
+  if (typeof window !== 'undefined') {
+    window.open(cover.image_url, '_blank', 'noopener');
+  }
+};
+
+const formatFeatures = (features: unknown) => {
+  if (!Array.isArray(features) || features.length === 0) {
+    return '';
+  }
+  return (features as string[]).slice(0, 3).join(', ');
 };
 </script>

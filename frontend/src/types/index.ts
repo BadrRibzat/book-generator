@@ -92,7 +92,7 @@ export interface BookCreate {
 }
 
 // Cover types
-export type CoverStyle = 'modern' | 'bold' | 'elegant';
+export type CoverStyle = 'minimalist' | 'futuristic' | 'professional';
 
 export interface Cover {
   id: number;

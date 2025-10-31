@@ -38,19 +38,30 @@
             <div
               v-for="cover in book.covers"
               :key="cover.id"
-              class="bg-white overflow-hidden shadow rounded-lg hover:shadow-xl transition-shadow duration-200 cursor-pointer"
+              class="bg-white overflow-hidden shadow rounded-lg hover:shadow-xl transition duration-200 cursor-pointer ring-offset-2"
               :class="{ 'ring-4 ring-primary-500': selectedCoverId === cover.id }"
               @click="selectedCoverId = cover.id"
             >
-              <div class="aspect-[3/4] relative">
+              <div class="aspect-[3/4] relative bg-gray-100 flex items-center justify-center">
                 <img
+                  v-if="!isPdf(cover.image_url)"
                   :src="cover.image_url"
                   :alt="`Cover ${cover.template_style}`"
                   class="w-full h-full object-cover"
                 />
+                <object
+                  v-else
+                  :data="cover.image_url"
+                  type="application/pdf"
+                  class="w-full h-full"
+                >
+                  <div class="flex items-center justify-center w-full h-full text-xs text-gray-600 px-4 text-center">
+                    PDF preview unavailable. Use the preview button to open this cover in a new tab.
+                  </div>
+                </object>
                 <div
                   v-if="selectedCoverId === cover.id"
-                  class="absolute inset-0 bg-primary-600 bg-opacity-20 flex items-center justify-center"
+                  class="absolute inset-0 bg-primary-600/20 flex items-center justify-center"
                 >
                   <font-awesome-icon
                     :icon="['fas', 'check-circle']"
@@ -58,13 +69,22 @@
                   />
                 </div>
               </div>
-              <div class="p-4">
-                <p class="text-sm font-medium text-gray-900 capitalize">
-                  {{ cover.template_style }} Style
-                </p>
-                <p class="text-xs text-gray-500 mt-1">
-                  Click to select this cover
-                </p>
+              <div class="p-4 bg-gray-50 flex items-center justify-between">
+                <div>
+                  <p class="text-sm font-medium text-gray-900 capitalize">
+                    {{ cover.template_style }} Style
+                  </p>
+                  <p class="text-xs text-gray-500 mt-1" v-if="cover.generation_params?.features?.length">
+                    {{ formatFeatures(cover.generation_params.features) }}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  class="text-xs font-medium text-primary-600 hover:text-primary-700"
+                  @click.stop="previewCover(cover)"
+                >
+                  Preview
+                </button>
               </div>
             </div>
           </div>
@@ -128,6 +148,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useBooksStore } from '../../stores/books';
 import Layout from '../../components/Layout.vue';
+import type { Cover } from '../../types';
 
 interface Props {
   id: string;
@@ -167,5 +188,23 @@ const handleSelectCover = async () => {
   if (result.success) {
     router.push(`/profile/books/${bookId.value}`);
   }
+};
+
+const isPdf = (url: string | undefined | null) => {
+  if (!url) return false;
+  return url.toLowerCase().endsWith('.pdf');
+};
+
+const previewCover = (cover: Cover) => {
+  if (typeof window !== 'undefined') {
+    window.open(cover.image_url, '_blank', 'noopener');
+  }
+};
+
+const formatFeatures = (features: unknown) => {
+  if (!Array.isArray(features) || features.length === 0) {
+    return '';
+  }
+  return (features as string[]).slice(0, 3).join(', ');
 };
 </script>

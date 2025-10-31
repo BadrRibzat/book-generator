@@ -13,7 +13,7 @@ import logging
 from .models import Book
 from .services.custom_llm_book_generator import CustomLLMBookGenerator  # NEW: Custom LLM
 from .services.pdf_merger import PDFMerger
-from covers.services import CoverGeneratorProfessional
+from covers.services_pro import CoverGeneratorProfessional
 from backend.utils.mongodb import get_mongodb_db
 
 logger = logging.getLogger(__name__)
@@ -26,8 +26,8 @@ def generate_book_content(self, book_id):
     Unlimited generation with no rate limits
     """
     try:
-        # Get book instance
-        book = Book.objects.get(id=book_id)
+        # Get book instance with related objects
+        book = Book.objects.select_related('domain', 'niche', 'user').get(id=book_id)
 
         # Update status and progress
         book.status = 'generating'
@@ -115,8 +115,27 @@ def generate_book_covers(self, book_id):
     Generate cover for the book - single cover for guided workflow, multiple for manual
     """
     try:
-        # Get book instance
-        book = Book.objects.get(id=book_id)
+        print(f"DEBUG: generate_book_covers task started for book_id {book_id}")
+        
+        # Get book instance with related objects
+        book = Book.objects.select_related('domain', 'niche', 'user').get(id=book_id)
+
+        print(f"DEBUG: Book object retrieved: {book}")
+        print(f"DEBUG: book.id = {book.id}")
+        print(f"DEBUG: book.title = {book.title}")
+        print(f"DEBUG: book.domain = {book.domain}")
+        print(f"DEBUG: book.domain_id = {book.domain_id}")
+        print(f"DEBUG: book.niche = {book.niche}")
+        print(f"DEBUG: book.niche_id = {book.niche_id}")
+        print(f"DEBUG: book.status = {book.status}")
+
+        # DEBUG: Check book object
+        logger.info(f"DEBUG: Book {book_id} loaded")
+        logger.info(f"DEBUG: book.domain = {book.domain}")
+        logger.info(f"DEBUG: book.domain_id = {book.domain_id}")
+        logger.info(f"DEBUG: book.niche = {book.niche}")
+        logger.info(f"DEBUG: book.niche_id = {book.niche_id}")
+        logger.info(f"DEBUG: is_guided = {book.domain_id is not None and book.niche_id is not None}")
 
         # Ensure content is generated first
         if book.status != 'content_generated':

@@ -17,7 +17,7 @@ from reportlab.lib.units import inch, cm
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.platypus import (
     SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle,
-    PageBreak, Image, KeepTogether, ListFlowable, ListItem
+    PageBreak, KeepTogether, ListFlowable, ListItem
 )
 from reportlab.lib.colors import HexColor
 from reportlab.pdfgen import canvas
@@ -31,10 +31,11 @@ from matplotlib.patches import FancyBboxPatch, Rectangle, FancyArrowPatch, Circl
 import io
 from datetime import datetime
 import textwrap
-import os
-from PIL import Image, ImageDraw
+from PIL import Image as PILImage, ImageDraw
 from books.services.usage_tracker import UsageTracker
 from books.services.trending import get_trending_context
+from covers.layout_engine import CoverLayoutEngine
+from covers.template_library import resolve_template
 
 
 # Professional Cover Prompt for ReportLab
@@ -228,9 +229,9 @@ class CoverGeneratorProfessional:
         try:
             if not os.path.exists(image_abs_path):
                 return
-            img = Image.open(image_abs_path).convert("RGBA")
+            img = PILImage.open(image_abs_path).convert("RGBA")
             w, h = img.size
-            overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            overlay = PILImage.new("RGBA", (w, h), (0, 0, 0, 0))
             draw = ImageDraw.Draw(overlay)
             # Rule of thirds positions
             v1 = w // 3
@@ -245,7 +246,7 @@ class CoverGeneratorProfessional:
             draw.line([(0, h1), (w, h1)], fill=line_color, width=3)
             draw.line([(0, h2), (w, h2)], fill=line_color, width=3)
             # Merge and save
-            out = Image.alpha_composite(img, overlay)
+            out = PILImage.alpha_composite(img, overlay)
             base, ext = os.path.splitext(image_abs_path)
             out_path = f"{base}_grid.png"
             out.convert("RGB").save(out_path, "PNG")
@@ -260,9 +261,9 @@ class CoverGeneratorProfessional:
         try:
             if not os.path.exists(image_abs_path):
                 return
-            img = Image.open(image_abs_path).convert("RGBA")
+            img = PILImage.open(image_abs_path).convert("RGBA")
             w, h = img.size
-            overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            overlay = PILImage.new("RGBA", (w, h), (0, 0, 0, 0))
             draw = ImageDraw.Draw(overlay)
             # Golden sections
             x1 = int(w * 0.382)
@@ -276,7 +277,7 @@ class CoverGeneratorProfessional:
             # Horizontal golden lines
             draw.line([(0, y1), (w, y1)], fill=line_color, width=3)
             draw.line([(0, y2), (w, y2)], fill=line_color, width=3)
-            out = Image.alpha_composite(img, overlay)
+            out = PILImage.alpha_composite(img, overlay)
             base, ext = os.path.splitext(image_abs_path)
             out_path = f"{base}_golden.png"
             out.convert("RGB").save(out_path, "PNG")
@@ -292,7 +293,7 @@ class CoverGeneratorProfessional:
             # Gather basic info
             dims = None
             try:
-                with Image.open(image_abs) as im:
+                with PILImage.open(image_abs) as im:
                     dims = {"width": im.width, "height": im.height}
             except Exception:
                 dims = None
@@ -363,7 +364,7 @@ class CoverGeneratorProfessional:
                 png_path = self.covers_dir / f"{filename}.png"
                 
                 # Create ReportLab PDF using AI-generated code
-                self._create_reportlab_cover_pdf(book.title, concept, str(pdf_path))
+                self._create_reportlab_cover_pdf(book, concept, str(pdf_path))
                 
                 # Convert PDF to PNG for preview
                 self._pdf_to_png(str(pdf_path), str(png_path))
@@ -1278,7 +1279,7 @@ Accessibility: Ensure high contrast ratio between text and background colors."""
             # Return fallback designs instead of failing
             return self._get_fallback_designs()
     
-    def _create_reportlab_cover_pdf(self, title: str, concept: dict, pdf_path: str):
+    def _create_reportlab_cover_pdf(self, book, concept: dict, pdf_path: str):
         """Create a ReportLab PDF cover using AI-generated code"""
         
         try:
@@ -1375,7 +1376,7 @@ Accessibility: Ensure high contrast ratio between text and background colors."""
         except Exception as e:
             print(f"ReportLab PDF creation error: {str(e)}")
             # Create a fallback simple cover
-            self._create_fallback_reportlab_cover(title, pdf_path)
+            self._create_fallback_reportlab_cover(book, concept, pdf_path)
     
     def _smart_wrap_title(self, canvas_obj, text: str, max_width: float, font_name: str, initial_font_size: int) -> list:
         """
@@ -1443,49 +1444,76 @@ Accessibility: Ensure high contrast ratio between text and background colors."""
         
         return lines if lines else [text]
     
-    def _create_fallback_reportlab_cover(self, title: str, pdf_path: str):
-        """Create a simple fallback ReportLab cover with smart text wrapping"""
-        
+    def _create_fallback_reportlab_cover(self, book=None, concept: dict = None, pdf_path: str = ""):
+        """Create a deterministic premium cover when AI rendering fails."""
+
+        concept = concept or {}
+        title = getattr(book, 'title', concept.get('title', 'Professional Guide'))
+
+        try:
+            canvas_obj = canvas.Canvas(pdf_path, pagesize=letter)
+            template = resolve_template(concept.get('trend'))
+
+            domain_slug = ""
+            subtitle = template.subtitle_text
+            if book and getattr(book, 'domain', None):
+                domain_slug = getattr(book.domain, 'slug', '') or ""
+                subtitle = getattr(book.domain, 'name', subtitle)
+
+            palette_override = concept.get('colors') or None
+
+            engine = CoverLayoutEngine(
+                canvas_obj,
+                template,
+                palette_override=palette_override,
+                subtitle_override=subtitle,
+                domain_slug=domain_slug,
+            )
+            engine.render_cover(title)
+            canvas_obj.save()
+            print(f"✓ Fallback premium cover created: {pdf_path}")
+
+        except Exception as err:
+            print(f"Fallback layout engine error: {err}")
+            self._create_legacy_fallback_cover(title, pdf_path)
+
+    def _create_legacy_fallback_cover(self, title: str, pdf_path: str):
+        """Legacy simple cover generator retained as a last resort."""
+
         try:
             c = canvas.Canvas(pdf_path, pagesize=letter)
-            
-            # Background
+
             c.setFillColor(HexColor('#f8fafc'))
-            c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
-            
-            # Title with smart wrapping
+            c.rect(0, 0, 8.5 * inch, 11 * inch, fill=1)
+
             c.setFillColor(HexColor('#1a365d'))
-            
-            # Use smart wrapping for title
-            title_lines = self._smart_wrap_title(c, title, max_width=7*inch, font_name="Helvetica-Bold", initial_font_size=48)
-            
-            # Calculate optimal font size
+            title_lines = self._smart_wrap_title(c, title, max_width=7 * inch, font_name="Helvetica-Bold", initial_font_size=48)
+
             if len(title_lines) == 1:
                 font_size = 48 if len(title_lines[0]) < 40 else 42
             elif len(title_lines) == 2:
                 font_size = 40 if max(len(line) for line in title_lines) < 30 else 36
             else:
                 font_size = 32
-            
-            # Draw title lines
+
             line_height = font_size * 1.2
-            start_y = 6.5*inch if len(title_lines) <= 2 else 6.8*inch
-            
-            for i, line in enumerate(title_lines):
-                c.setFont("Helvetica-Bold", font_size if i == 0 else font_size * 0.9)
-                y_position = start_y - (i * line_height * 0.8)
-                c.drawCentredString(4.25*inch, y_position, line)
-            
-            # Subtitle
+            start_y = 6.5 * inch if len(title_lines) <= 2 else 6.8 * inch
+
+            for index, line in enumerate(title_lines):
+                weight = font_size if index == 0 else font_size * 0.9
+                c.setFont("Helvetica-Bold", weight)
+                y_position = start_y - (index * line_height * 0.8)
+                c.drawCentredString(4.25 * inch, y_position, line)
+
             c.setFillColor(HexColor('#4a5568'))
             c.setFont("Helvetica", 24)
-            c.drawCentredString(4.25*inch, 4.5*inch, "Professional Guide")
-            
+            c.drawCentredString(4.25 * inch, 4.5 * inch, "Professional Guide")
+
             c.save()
-            print(f"✓ Fallback ReportLab cover created: {pdf_path}")
-            
+            print(f"✓ Legacy fallback cover created: {pdf_path}")
+
         except Exception as e:
-            print(f"Fallback cover creation failed: {e}")
+            print(f"Legacy fallback cover creation failed: {e}")
             raise
     
     def _get_fallback_designs(self) -> list:
@@ -2195,7 +2223,7 @@ Accessibility: Ensure high contrast ratio between text and background colors."""
         
         # Fallback: Create placeholder image
         try:
-            img = Image.new('RGB', (600, 900), color='white')
+            img = PILImage.new('RGB', (600, 900), color='white')
             draw = ImageDraw.Draw(img)
             draw.rectangle([50, 50, 550, 850], outline="gray", width=5)
             draw.text((300, 450), "Cover Preview", fill='gray', anchor="mm")
@@ -2519,7 +2547,7 @@ Remember:
         except Exception as e:
             print(f"Simple cover PDF creation error: {str(e)}")
             # Create fallback
-            self._create_fallback_reportlab_cover(title, pdf_path)
+            self._create_fallback_reportlab_cover(None, concept, pdf_path)
     
     def _get_modern_css(self) -> str:
         """Return modern CSS styles for PDF generation"""

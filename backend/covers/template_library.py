@@ -7,7 +7,7 @@ consumes these templates and produces ReportLab drawings.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional
+from typing import Dict, Optional
 from reportlab.lib.units import inch
 
 
@@ -74,6 +74,358 @@ DEFAULT_PALETTES: Dict[str, Dict[str, str]] = {
         "accent": "#F59E0B",
     },
 }
+
+
+# Domain-specific typography mapping
+DOMAIN_TYPOGRAPHY = {
+    "ai_ml": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Space Grotesk",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "IBM Plex Sans",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Space Grotesk",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "IBM Plex Sans",
+        "interior_body_weight": 400,
+        "title_category": "modern_geometric",
+        "body_category": "modern_sans",
+        "accent_color": "#2563eb",
+        "personality": "modern, tech-forward, precise",
+    },
+    "web3_blockchain": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Sora",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Inter",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Sora",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Inter",
+        "interior_body_weight": 400,
+        "title_category": "modern_geometric",
+        "body_category": "modern_sans",
+        "accent_color": "#7c3aed",
+        "personality": "futuristic, innovative, bold",
+    },
+    "health_wellness_tech": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Playfair Display",
+        "cover_title_weight": 600,
+        "cover_subtitle_font_family": "Source Sans 3",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Playfair Display",
+        "interior_title_weight": 600,
+        "interior_body_font": "Times-Roman",
+        "interior_body_font_family": "Source Sans 3",
+        "interior_body_weight": 400,
+        "title_category": "humanist_serif",
+        "body_category": "clean_sans",
+        "accent_color": "#10b981",
+        "personality": "trustworthy, calming, professional",
+    },
+    "edtech_online_learning": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Manrope",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Manrope",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Manrope",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Manrope",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "modern_sans",
+        "accent_color": "#f59e0b",
+        "personality": "friendly, approachable, clear",
+    },
+    "sustainable_tech": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Work Sans",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Work Sans",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Work Sans",
+        "interior_title_weight": 700,
+        "interior_body_font": "Times-Roman",
+        "interior_body_font_family": "Work Sans",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "modern_sans",
+        "accent_color": "#0ea5e9",
+        "personality": "purposeful, resilient, impact-driven",
+    },
+    "remote_work": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Montserrat",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Inter",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Montserrat",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Inter",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "modern_sans",
+        "accent_color": "#14b8a6",
+        "personality": "collaborative, flexible, streamlined",
+    },
+    "cybersecurity": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Orbitron",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Poppins",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Orbitron",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Poppins",
+        "interior_body_weight": 400,
+        "title_category": "modern_geometric",
+        "body_category": "modern_sans",
+        "accent_color": "#9333ea",
+        "personality": "secure, vigilant, confident",
+    },
+    "creator_economy": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Poppins",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Source Sans 3",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Poppins",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Source Sans 3",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "clean_sans",
+        "accent_color": "#ec4899",
+        "personality": "expressive, dynamic, community-first",
+    },
+    "ecommerce_retail": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Montserrat",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Lato",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Montserrat",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Lato",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "clean_sans",
+        "accent_color": "#f97316",
+        "personality": "energetic, conversion-focused, polished",
+    },
+    "fintech": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Raleway",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Inter",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Raleway",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Inter",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "modern_sans",
+        "accent_color": "#0f172a",
+        "personality": "trustworthy, analytical, modern",
+    },
+    "data_analytics": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "IBM Plex Sans",
+        "cover_title_weight": 600,
+        "cover_subtitle_font_family": "IBM Plex Sans",
+        "cover_subtitle_weight": 400,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "IBM Plex Sans",
+        "interior_title_weight": 600,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "IBM Plex Sans",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "modern_sans",
+        "accent_color": "#2563eb",
+        "personality": "insightful, structured, clear",
+    },
+    "gaming": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Chakra Petch",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Rubik",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Chakra Petch",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Rubik",
+        "interior_body_weight": 400,
+        "title_category": "modern_geometric",
+        "body_category": "modern_sans",
+        "accent_color": "#f43f5e",
+        "personality": "immersive, bold, high-energy",
+    },
+    "automation": {
+        "cover_title_font": "Helvetica-Bold",
+        "cover_title_font_family": "Barlow",
+        "cover_title_weight": 700,
+        "cover_subtitle_font_family": "Barlow",
+        "cover_subtitle_weight": 500,
+        "interior_title_font": "Helvetica-Bold",
+        "interior_title_font_family": "Barlow",
+        "interior_title_weight": 700,
+        "interior_body_font": "Helvetica",
+        "interior_body_font_family": "Barlow",
+        "interior_body_weight": 400,
+        "title_category": "modern_sans",
+        "body_category": "modern_sans",
+        "accent_color": "#38bdf8",
+        "personality": "systematic, efficient, scalable",
+    },
+}
+
+_TYPOGRAPHY_ALIASES = {
+    "artificial_intelligence_machine_learning": "ai_ml",
+    "health_wellness_technology": "health_wellness_tech",
+    "sustainable_tech_green_energy": "sustainable_tech",
+    "remote_work_digital_collaboration": "remote_work",
+    "creator_economy_digital_content": "creator_economy",
+    "ecommerce_retail_tech": "ecommerce_retail",
+    "data_analytics_business_intelligence": "data_analytics",
+    "gaming_interactive_entertainment": "gaming",
+}
+
+
+def get_domain_typography(domain_slug: str) -> dict:
+    """Return typography settings for a domain, with fallback."""
+    if not domain_slug:
+        return DOMAIN_TYPOGRAPHY["ai_ml"]
+
+    normalized = domain_slug.strip().lower()
+    mapped = _TYPOGRAPHY_ALIASES.get(normalized, normalized)
+    return DOMAIN_TYPOGRAPHY.get(mapped, DOMAIN_TYPOGRAPHY["ai_ml"])
+
+
+DOMAIN_PALETTES = {
+    "ai_ml": {
+        "background": "#EEF2FF",
+        "primary": "#1E40AF",
+        "secondary": "#475569",
+        "accent": "#3B82F6",
+    },
+    "web3_blockchain": {
+        "background": "#F5F3FF",
+        "primary": "#5B21B6",
+        "secondary": "#6B7280",
+        "accent": "#7C3AED",
+    },
+    "health_wellness_tech": {
+        "background": "#ECFDF5",
+        "primary": "#065F46",
+        "secondary": "#4B5563",
+        "accent": "#10B981",
+    },
+    "edtech_online_learning": {
+        "background": "#FFFBEB",
+        "primary": "#92400E",
+        "secondary": "#6B7280",
+        "accent": "#F59E0B",
+    },
+    "sustainable_tech": {
+        "background": "#F0FDFA",
+        "primary": "#0F766E",
+        "secondary": "#134E4A",
+        "accent": "#14B8A6",
+    },
+    "remote_work": {
+        "background": "#F8FAFC",
+        "primary": "#0F172A",
+        "secondary": "#475569",
+        "accent": "#22D3EE",
+    },
+    "cybersecurity": {
+        "background": "#0F172A",
+        "primary": "#1E293B",
+        "secondary": "#38BDF8",
+        "accent": "#9333EA",
+    },
+    "creator_economy": {
+        "background": "#FFF1F2",
+        "primary": "#BE123C",
+        "secondary": "#86198F",
+        "accent": "#F472B6",
+    },
+    "ecommerce_retail": {
+        "background": "#FFF7ED",
+        "primary": "#9A3412",
+        "secondary": "#78350F",
+        "accent": "#F97316",
+    },
+    "fintech": {
+        "background": "#F7FBFF",
+        "primary": "#0B4F6C",
+        "secondary": "#274060",
+        "accent": "#06B6D4",
+    },
+    "data_analytics": {
+        "background": "#EFF6FF",
+        "primary": "#1D4ED8",
+        "secondary": "#1E3A8A",
+        "accent": "#2563EB",
+    },
+    "gaming": {
+        "background": "#111827",
+        "primary": "#312E81",
+        "secondary": "#F59E0B",
+        "accent": "#F43F5E",
+    },
+    "automation": {
+        "background": "#ECFEFF",
+        "primary": "#0E7490",
+        "secondary": "#155E75",
+        "accent": "#38BDF8",
+    },
+}
+
+_PALETTE_ALIASES = {
+    "artificial_intelligence_machine_learning": "ai_ml",
+    "health_wellness_technology": "health_wellness_tech",
+    "sustainable_tech_green_energy": "sustainable_tech",
+    "remote_work_digital_collaboration": "remote_work",
+    "creator_economy_digital_content": "creator_economy",
+    "ecommerce_retail_tech": "ecommerce_retail",
+    "data_analytics_business_intelligence": "data_analytics",
+    "gaming_interactive_entertainment": "gaming",
+}
+
+
+def resolve_domain_palette(domain_slug: str, template_key: str) -> dict:
+    """Merge domain palette with template defaults."""
+    template_colors = DEFAULT_PALETTES.get(template_key, {})
+    if not domain_slug:
+        return {**template_colors, **DOMAIN_PALETTES["ai_ml"]}
+
+    normalized = domain_slug.strip().lower()
+    mapped = _PALETTE_ALIASES.get(normalized, normalized)
+    domain_colors = DOMAIN_PALETTES.get(mapped, DOMAIN_PALETTES["ai_ml"])
+    return {**template_colors, **domain_colors}
 
 
 COVER_TEMPLATES: Dict[str, CoverTemplate] = {
@@ -184,5 +536,9 @@ __all__ = [
     "CoverTemplate",
     "COVER_TEMPLATES",
     "DEFAULT_TEMPLATE_KEY",
+    "DOMAIN_TYPOGRAPHY",
+    "DOMAIN_PALETTES",
+    "get_domain_typography",
+    "resolve_domain_palette",
     "resolve_template",
 ]

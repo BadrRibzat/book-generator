@@ -1,175 +1,103 @@
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
+from reportlab.lib.pagesizes import A4, letter
 from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.platypus import (
     BaseDocTemplate, Paragraph, Spacer, PageBreak,
-    Frame, PageTemplate
+    Frame, PageTemplate, NextPageTemplate, HRFlowable, Preformatted
 )
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-import os
-import requests
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional
+import re
+from typing import Dict, List, Optional, Tuple
+
+from backend.utils.fonts import GoogleFontsIntegration
+from covers.template_library import get_domain_typography
 
 logger = logging.getLogger(__name__)
-
-
-class GoogleFontsIntegration:
-    """
-    Google Fonts CSS2 API integration for dynamic font loading
-    """
-    
-    FONT_CACHE_DIR = Path('/tmp/book_generator_fonts')
-    
-    def __init__(self):
-        self.FONT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        self.loaded_fonts = set()
-    
-    def load_google_font(self, font_family: str, weight: int = 400) -> Optional[str]:
-        """
-        Load Google Font and return ReportLab-compatible font name
-        
-        Args:
-            font_family: Google Font family name (e.g., 'Inter', 'Lato')
-            weight: Font weight (400=normal, 700=bold)
-            
-        Returns:
-            str: ReportLab font name or None if failed
-        """
-        font_name = f"{font_family.replace(' ', '')}-{weight}"
-        
-        if font_name in self.loaded_fonts:
-            return font_name
-        
-        try:
-            # Download font from Google Fonts API
-            font_url = f"https://fonts.googleapis.com/css2?family={font_family.replace(' ', '+')}:wght@{weight}&display=swap"
-            response = requests.get(font_url, timeout=10)
-            response.raise_for_status()
-            
-            # Parse CSS to find .ttf URL
-            css_content = response.text
-            # Extract URL from @font-face src
-            import re
-            ttf_url_match = re.search(r'url\((https://[^)]+\.ttf)\)', css_content)
-            
-            if ttf_url_match:
-                ttf_url = ttf_url_match.group(1)
-                
-                # Download .ttf file
-                ttf_response = requests.get(ttf_url, timeout=15)
-                ttf_response.raise_for_status()
-                
-                # Save to cache
-                font_file = self.FONT_CACHE_DIR / f"{font_name}.ttf"
-                font_file.write_bytes(ttf_response.content)
-                
-                # Register with ReportLab
-                pdfmetrics.registerFont(TTFont(font_name, str(font_file)))
-                
-                self.loaded_fonts.add(font_name)
-                logger.info(f"Loaded Google Font: {font_name}")
-                
-                return font_name
-            else:
-                logger.warning(f"Could not find TTF URL for {font_family}")
-                return None
-                
-        except Exception as e:
-            logger.error(f"Failed to load Google Font {font_family}: {str(e)}")
-            return None
-    
-    def get_fallback_font(self, category: str = 'clean_sans') -> str:
-        """
-        Get system fallback font based on category
-        
-        Args:
-            category: Font category
-            
-        Returns:
-            str: System font name
-        """
-        fallbacks = {
-            'clean_sans': 'Helvetica',
-            'elegant_serif': 'Times-Roman',
-            'hand_written': 'Helvetica',
-            'modern_geometric': 'Helvetica',
-            'classic_traditional': 'Times-Roman'
-        }
-        return fallbacks.get(category, 'Helvetica')
-
 class ProfessionalPDFGenerator:
     """
     Generate beautifully formatted PDFs with professional typography
     Supports dynamic font selection based on cover brief and domain
     """
 
-    def __init__(self, font_theme=None):
+    def __init__(self, font_theme=None, domain_slug: str = ""):
         """
         Initialize PDF generator with optional font theme
-        
+
         Args:
             font_theme: FontTheme model instance (optional)
+            domain_slug: Domain slug used for typography mapping
         """
         self.font_theme = font_theme
+        self.domain_slug = (domain_slug or "").strip().lower()
+        self.domain_typography = get_domain_typography(self.domain_slug)
+        self.accent_color_hex = self.domain_typography.get("accent_color", "#2563eb")
+        self.current_chapter = ""
+
+        self.page_size = self._determine_page_size()
+        (
+            self.inner_margin,
+            self.outer_margin,
+            self.top_margin,
+            self.bottom_margin,
+        ) = self._determine_margins()
+        self.brand_palette = self._compose_brand_palette()
+
         self.google_fonts = GoogleFontsIntegration()
         self.setup_fonts()
         self.typography_scale = self._build_typography_scale()
-        self.brand_palette = self._build_brand_palette()
         self.setup_styles()
 
     def setup_fonts(self):
-        """
-        Register professional fonts dynamically based on font theme
-        """
+        """Register fonts dynamically and honor domain typography defaults."""
+        self.header_font = None
+        self.body_font = None
+
         if self.font_theme:
-            # Load Google Fonts dynamically
             self.header_font = self.google_fonts.load_google_font(
                 self.font_theme.header_font,
-                self.font_theme.header_weight
+                self.font_theme.header_weight,
             )
             self.body_font = self.google_fonts.load_google_font(
                 self.font_theme.body_font,
-                self.font_theme.body_weight
+                self.font_theme.body_weight,
             )
-            
-            # Fallback to system fonts if Google Fonts failed
+
             if not self.header_font:
                 self.header_font = self.google_fonts.get_fallback_font(self.font_theme.category)
             if not self.body_font:
                 self.body_font = self.google_fonts.get_fallback_font(self.font_theme.category)
-                
-            logger.info(f"Using font theme: {self.font_theme.name} (Header: {self.header_font}, Body: {self.body_font})")
-        else:
-            # Default fonts (backward compatibility)
-            self.header_font = 'Helvetica-Bold'
-            self.body_font = 'Times-Roman'
-            
-            # Try to load system professional fonts
-            font_paths = {
-                'Montserrat-Bold': '/usr/share/fonts/truetype/montserrat/Montserrat-Bold.ttf',
-                'Lora-Regular': '/usr/share/fonts/truetype/lora/Lora-Regular.ttf',
-            }
 
-            for font_name, font_path in font_paths.items():
-                try:
-                    if os.path.exists(font_path):
-                        pdfmetrics.registerFont(TTFont(font_name, font_path))
-                        if 'Bold' in font_name:
-                            self.header_font = font_name
-                        else:
-                            self.body_font = font_name
-                except Exception as e:
-                    logger.warning(f"Could not load {font_name}: {e}")
+            logger.info(
+                "Using font theme: %s (Header: %s, Body: %s)",
+                getattr(self.font_theme, "name", "custom"),
+                self.header_font,
+                self.body_font,
+            )
 
+        if not self.header_font:
+            self.header_font = self._resolve_domain_font(
+                "interior_title_font_family",
+                "interior_title_weight",
+                "interior_title_font",
+                "title_category",
+            )
+        if not self.body_font:
+            self.body_font = self._resolve_domain_font(
+                "interior_body_font_family",
+                "interior_body_weight",
+                "interior_body_font",
+                "body_category",
+            )
+
+        # Ensure fallbacks are registered fonts
         if not self._font_available(self.header_font):
-            self.header_font = 'Helvetica-Bold'
+            self.header_font = "Helvetica-Bold"
         if not self._font_available(self.body_font):
-            self.body_font = 'Helvetica'
+            self.body_font = "Helvetica"
 
     def _build_typography_scale(self) -> Dict[str, int]:
         """Define a consistent typographic scale used throughout the book."""
@@ -181,21 +109,39 @@ class ProfessionalPDFGenerator:
             'small': 10,
         }
 
-    def _build_brand_palette(self) -> Dict[str, HexColor]:
-        """Centralise brand colors for headers, footers, and accents."""
-        return {
-            'primary': HexColor('#1E3A8A'),
-            'accent': HexColor('#F97316'),
-            'light': HexColor('#F8FAFC'),
-            'muted': HexColor('#475569'),
-        }
-
     def _font_available(self, font_name: str) -> bool:
         try:
             pdfmetrics.getFont(font_name)
             return True
         except KeyError:
             return False
+
+    def _resolve_domain_font(
+        self,
+        family_key: str,
+        weight_key: str,
+        fallback_key: str,
+        category_key: str,
+    ) -> str:
+        family = self.domain_typography.get(family_key)
+        weight_value = self.domain_typography.get(weight_key, 400)
+        fallback = self.domain_typography.get(fallback_key)
+        category = self.domain_typography.get(category_key, "clean_sans")
+
+        try:
+            weight = int(weight_value)
+        except (TypeError, ValueError):
+            weight = 400
+
+        if family:
+            loaded = self.google_fonts.load_google_font(family, weight)
+            if loaded:
+                return loaded
+
+        if fallback and self._font_available(fallback):
+            return fallback
+
+        return self.google_fonts.get_fallback_font(category)
     
     @classmethod
     def create_with_book_context(cls, book, cover_brief: str = None):
@@ -228,211 +174,399 @@ class ProfessionalPDFGenerator:
                     is_active=True
                 ).first()
             
-            return cls(font_theme=font_theme)
+            domain_slug = book.domain.slug if getattr(book, 'domain', None) else ""
+            return cls(font_theme=font_theme, domain_slug=domain_slug)
             
         except Exception as e:
             logger.error(f"Font theme selection failed: {str(e)}, using defaults")
-            return cls()  # Fallback to default fonts
+            domain_slug = book.domain.slug if getattr(book, 'domain', None) else ""
+            return cls(domain_slug=domain_slug)  # Fallback to default fonts
 
     def setup_styles(self):
-        """
-        Create professional paragraph styles with dynamic fonts
-        """
-        self.styles = getSampleStyleSheet()
+        """Create professional paragraph styles with domain accenting."""
+        self.styles = self.create_enhanced_styles()
 
-        # Title Page Style
-        self.styles.add(ParagraphStyle(
+    def create_enhanced_styles(self):
+        """Create domain-specific styles with callouts and hierarchy."""
+        styles = getSampleStyleSheet()
+        accent = HexColor(self.accent_color_hex)
+        neutral = HexColor('#1f2937')
+        subtitle_color = HexColor('#6b7280')
+
+        styles.add(ParagraphStyle(
             name='BookTitle',
-            parent=self.styles['Title'],
+            parent=styles['Title'],
             fontSize=self.typography_scale['display'],
-            textColor=HexColor('#1a365d'),
-            spaceAfter=self.typography_scale['body'] * 2,
+            textColor=accent,
+            spaceAfter=self.typography_scale['body'] * 1.8,
             alignment=TA_CENTER,
             fontName=self.header_font,
-            leading=int(self.typography_scale['display'] * 1.2)
+            leading=int(self.typography_scale['display'] * 1.15),
         ))
 
-        # Chapter Title Style
-        self.styles.add(ParagraphStyle(
-            name='ChapterTitle',
-            parent=self.styles['Heading1'],
-            fontSize=self.typography_scale['headline'],
-            textColor=HexColor('#2c5282'),
-            spaceAfter=self.typography_scale['body'],
-            spaceBefore=self.typography_scale['body'] * 2,
-            fontName=self.header_font,
-            leading=int(self.typography_scale['headline'] * 1.2)
-        ))
-
-        # Section Heading Style
-        self.styles.add(ParagraphStyle(
-            name='SectionHeading',
-            parent=self.styles['Heading2'],
+        styles.add(ParagraphStyle(
+            name='Subtitle',
+            parent=styles['BodyText'],
             fontSize=self.typography_scale['subhead'],
-            textColor=HexColor('#2d3748'),
-            spaceAfter=self.typography_scale['body'] * 0.8,
+            textColor=subtitle_color,
+            alignment=TA_CENTER,
+            fontName=self.body_font,
+            spaceAfter=18,
+        ))
+
+        styles.add(ParagraphStyle(
+            name='ChapterTitle',
+            parent=styles['Heading1'],
+            fontSize=self.typography_scale['headline'],
+            textColor=accent,
+            spaceAfter=self.typography_scale['body'],
+            spaceBefore=self.typography_scale['body'] * 1.8,
+            fontName=self.header_font,
+            leading=int(self.typography_scale['headline'] * 1.15),
+            keepWithNext=True,
+        ))
+
+        styles.add(ParagraphStyle(
+            name='SectionHeading',
+            parent=styles['Heading2'],
+            fontSize=self.typography_scale['subhead'],
+            textColor=neutral,
+            spaceAfter=self.typography_scale['body'] * 0.6,
             spaceBefore=self.typography_scale['body'],
             fontName=self.header_font,
-            leading=int(self.typography_scale['subhead'] * 1.2)
+            leading=int(self.typography_scale['subhead'] * 1.15),
         ))
 
-        # Body Text Style - ENHANCED with dynamic font
-        self.styles.add(ParagraphStyle(
+        styles.add(ParagraphStyle(
             name='BookBody',
-            parent=self.styles['BodyText'],
+            parent=styles['BodyText'],
             fontSize=self.typography_scale['body'],
-            textColor=HexColor('#2d3748'),
-            spaceAfter=self.typography_scale['body'] * 0.9,
-            spaceBefore=0,
+            textColor=neutral,
+            spaceAfter=self.typography_scale['body'] * 0.85,
             alignment=TA_JUSTIFY,
             fontName=self.body_font,
-            leading=int(self.typography_scale['body'] * 1.5),
-            firstLineIndent=0
+            leading=int(self.typography_scale['body'] * 1.45),
         ))
 
-        # Bullet List Style
-        self.styles.add(ParagraphStyle(
+        styles.add(ParagraphStyle(
             name='BulletList',
-            parent=self.styles['BookBody'],
-            fontSize=self.typography_scale['body'],
-            leftIndent=25,
-            bulletIndent=10,
-            spaceAfter=self.typography_scale['body'] * 0.7,
-            leading=int(self.typography_scale['body'] * 1.35)
+            parent=styles['BookBody'],
+            leftIndent=22,
+            bulletIndent=12,
+            bulletFontName=self.body_font,
+            spaceAfter=self.typography_scale['body'] * 0.6,
         ))
 
-        # Quote Style
-        self.styles.add(ParagraphStyle(
+        styles.add(ParagraphStyle(
             name='Quote',
-            parent=self.styles['BookBody'],
+            parent=styles['BookBody'],
             fontSize=max(self.typography_scale['body'] - 1, 12),
-            textColor=HexColor('#4a5568'),
-            leftIndent=40,
-            rightIndent=40,
+            textColor=HexColor('#4b5563'),
+            leftIndent=36,
+            rightIndent=36,
+            borderColor=accent,
+            borderWidth=1,
+            borderPadding=12,
+            borderLeft=4,
             spaceAfter=self.typography_scale['body'],
-            spaceBefore=self.typography_scale['body'],
-            leading=int(self.typography_scale['body'] * 1.4)
         ))
+
+        styles.add(ParagraphStyle(
+            name='CalloutBox',
+            parent=styles['BookBody'],
+            backColor=HexColor('#f3f4f6'),
+            borderColor=accent,
+            borderWidth=2,
+            borderRadius=6,
+            borderPadding=(10, 12, 10, 16),
+            textColor=neutral,
+            spaceBefore=12,
+            spaceAfter=15,
+        ))
+
+        styles.add(ParagraphStyle(
+            name='KeyTakeaway',
+            parent=styles['BookBody'],
+            fontName=self.header_font,
+            textColor=accent,
+            leftIndent=18,
+            bulletIndent=8,
+            bulletFontName='Symbol',
+            bulletFontSize=11,
+            spaceBefore=8,
+            spaceAfter=10,
+        ))
+
+        styles.add(ParagraphStyle(
+            name='CodeBlock',
+            parent=styles['BodyText'],
+            fontName='Courier',
+            fontSize=10,
+            textColor=neutral,
+            backColor=HexColor('#f9fafb'),
+            borderColor=HexColor('#e5e7eb'),
+            borderWidth=1,
+            borderPadding=12,
+            leftIndent=12,
+            rightIndent=12,
+            spaceBefore=8,
+            spaceAfter=12,
+        ))
+
+        return styles
+
+    def _determine_page_size(self) -> tuple:
+        """Resolve the page size in points, honoring domain overrides when present."""
+        requested_size = self.domain_typography.get("page_size")
+
+        custom = self._resolve_custom_page_tuple(requested_size)
+        if custom:
+            return custom
+
+        if isinstance(requested_size, str):
+            key = requested_size.strip().lower()
+            preset_map = {
+                "a4": A4,
+                "iso_a4": A4,
+                "letter": letter,
+                "us_letter": letter,
+            }
+            if key in preset_map:
+                return preset_map[key]
+
+        return (6 * inch, 9 * inch)
+
+    def _resolve_custom_page_tuple(self, requested_size) -> Optional[tuple]:
+        """Validate optional custom (width, height) pair provided in inches or points."""
+        if not isinstance(requested_size, (list, tuple)) or len(requested_size) != 2:
+            return None
+
+        try:
+            width = float(requested_size[0])
+            height = float(requested_size[1])
+        except (TypeError, ValueError):
+            return None
+
+        if width <= 0 or height <= 0:
+            return None
+
+        if width <= 10 and height <= 14:
+            return (width * inch, height * inch)
+
+        return (width, height)
+
+    def _determine_margins(self) -> tuple:
+        """Compute mirrored margins (inner/outer/top/bottom) in points."""
+
+        def to_points(value, default_inches):
+            if value is None:
+                return default_inches * inch
+            try:
+                numeric = float(value)
+            except (TypeError, ValueError):
+                return default_inches * inch
+            if numeric <= 10:
+                return numeric * inch
+            return numeric
+
+        inner = to_points(self.domain_typography.get("inner_margin_inches"), 1.0)
+        outer = to_points(self.domain_typography.get("outer_margin_inches"), 0.8)
+        top = to_points(self.domain_typography.get("top_margin_inches"), 0.9)
+        bottom = to_points(self.domain_typography.get("bottom_margin_inches"), 1.1)
+
+        return inner, outer, top, bottom
+
+    def _compose_brand_palette(self) -> Dict[str, HexColor]:
+        """Derive a small brand palette for headers/footers from the accent color."""
+        accent_hex = self.accent_color_hex
+        accent_color = HexColor(accent_hex)
+        neutral_hex = self.domain_typography.get("neutral_color", "#475569")
+
+        return {
+            "primary": accent_color,
+            "accent": accent_color,
+            "muted": HexColor(neutral_hex),
+            "light": HexColor(self._mix_hex(accent_hex, "#ffffff", 0.72)),
+            "dark": HexColor(self._mix_hex(accent_hex, "#0f172a", 0.35)),
+        }
+
+    def _hex_to_rgb(self, value: str) -> Tuple[int, int, int]:
+        sanitized = (value or "").lstrip('#')
+        if len(sanitized) != 6:
+            return (0, 0, 0)
+        return tuple(int(sanitized[i:i+2], 16) for i in (0, 2, 4))
+
+    def _mix_hex(self, source: str, target: str, factor: float) -> str:
+        factor = max(0.0, min(1.0, factor))
+        sr, sg, sb = self._hex_to_rgb(source)
+        tr, tg, tb = self._hex_to_rgb(target)
+        r = int(sr + (tr - sr) * factor)
+        g = int(sg + (tg - sg) * factor)
+        b = int(sb + (tb - sb) * factor)
+        return f"#{r:02x}{g:02x}{b:02x}"
 
     def create_book_pdf(self, book, content_data: Dict, output_path: str):
-        """
-        Create professionally formatted book PDF
-        """
+        """Create professionally formatted book PDF with mirrored margins."""
         self._active_book_title = book.title
+        doc = self._build_doc_template(output_path, book.title)
+        story = self._build_story(book, content_data)
+        doc.multiBuild(story)
+        return output_path
 
-        # KDP-ready 6x9 inches with professional margins and headers
-        SIX_BY_NINE = (6*inch, 9*inch)
-        # Mirrored margins with gutter: inner margin a bit larger than outer
-        inner_margin = 0.875*inch
-        outer_margin = 0.625*inch
-        top_margin = 0.75*inch
-        bottom_margin = 0.75*inch
+    def _build_doc_template(self, output_path: str, book_title: str) -> BaseDocTemplate:
+        outer_self = self
 
-        # Custom DocTemplate to collect TOC entries
         class ProfessionalDocTemplate(BaseDocTemplate):
             def afterFlowable(self, flowable):
                 try:
-                    # Register headings for TOC
-                    if isinstance(flowable, Paragraph):
-                        style_name = flowable.style.name
-                        # Only include chapters in TOC (not subsections) for a cleaner TOC
-                        if style_name == 'ChapterTitle':
-                            level = 0
-                            text = flowable.getPlainText()
-                            # Notify for TOC collection
-                            self.notify('TOCEntry', (level, text, self.page))
-                            self._current_chapter_title = text
+                    if isinstance(flowable, Paragraph) and flowable.style.name == 'ChapterTitle':
+                        text = flowable.getPlainText()
+                        self.notify('TOCEntry', (0, text, self.page))
+                        self._current_chapter_title = text
+                        outer_self.current_chapter = text
                 except Exception:
                     pass
 
-        # Use DocTemplate with mirrored frames
         doc = ProfessionalDocTemplate(
             output_path,
-            pagesize=SIX_BY_NINE,
-            topMargin=top_margin,
-            bottomMargin=bottom_margin,
+            pagesize=self.page_size,
+            topMargin=self.top_margin,
+            bottomMargin=self.bottom_margin,
+        )
+        doc._current_chapter_title = book_title
+        self.setup_page_templates(doc)
+        return doc
+
+    def setup_page_templates(self, doc: BaseDocTemplate) -> None:
+        page_width, page_height = self.page_size
+        content_width = page_width - self.inner_margin - self.outer_margin
+        content_height = page_height - self.top_margin - self.bottom_margin
+
+        recto_frame = Frame(
+            x1=self.inner_margin,
+            y1=self.bottom_margin,
+            width=content_width,
+            height=content_height,
+            leftPadding=0,
+            rightPadding=0,
+            topPadding=0,
+            bottomPadding=0,
+            id='recto_frame',
         )
 
-        page_width, page_height = SIX_BY_NINE
-
-        # Right-hand (odd) pages: inner margin on the left
-        right_frame = Frame(
-            x1=inner_margin,
-            y1=bottom_margin,
-            width=page_width - inner_margin - outer_margin,
-            height=page_height - top_margin - bottom_margin,
-            id='right_frame'
+        verso_frame = Frame(
+            x1=self.outer_margin,
+            y1=self.bottom_margin,
+            width=content_width,
+            height=content_height,
+            leftPadding=0,
+            rightPadding=0,
+            topPadding=0,
+            bottomPadding=0,
+            id='verso_frame',
         )
 
-        # Left-hand (even) pages: inner margin on the right
-        left_frame = Frame(
-            x1=outer_margin,
-            y1=bottom_margin,
-            width=page_width - inner_margin - outer_margin,
-            height=page_height - top_margin - bottom_margin,
-            id='left_frame'
-        )
+        recto_template = PageTemplate(id='recto', frames=[recto_frame], onPage=self.add_right_page_header)
+        verso_template = PageTemplate(id='verso', frames=[verso_frame], onPage=self.add_left_page_header)
+        doc.addPageTemplates([recto_template, verso_template])
 
-        def _header_footer(canvas_obj, doc_obj, generator=self):
-            generator._render_page_signature(
-                canvas_obj,
-                doc_obj,
-                page_size=SIX_BY_NINE,
-                margins=(inner_margin, outer_margin, top_margin, bottom_margin),
-            )
+    def add_right_page_header(self, canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        header_y = self.page_size[1] - self.top_margin + 14
+        chapter = (getattr(doc_obj, '_current_chapter_title', '') or self.current_chapter or self._active_book_title)[:60]
+        canvas_obj.setFont(self.body_font, 9)
+        canvas_obj.setFillColor(HexColor('#6b7280'))
+        canvas_obj.drawString(self.inner_margin, header_y, chapter)
+        canvas_obj.drawRightString(self.page_size[0] - self.outer_margin, header_y, str(canvas_obj.getPageNumber()))
+        canvas_obj.setStrokeColor(HexColor(self.accent_color_hex))
+        canvas_obj.setLineWidth(1)
+        canvas_obj.line(self.inner_margin, header_y - 4, self.page_size[0] - self.outer_margin, header_y - 4)
+        canvas_obj.restoreState()
 
-        # Two page templates to mirror margins
-        right_template = PageTemplate(id='Right', frames=[right_frame], onPage=_header_footer)
-        left_template = PageTemplate(id='Left', frames=[left_frame], onPage=_header_footer)
-        doc.addPageTemplates([right_template, left_template])
-        doc._current_chapter_title = book.title
+    def add_left_page_header(self, canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        header_y = self.page_size[1] - self.top_margin + 14
+        chapter = (getattr(doc_obj, '_current_chapter_title', '') or self.current_chapter or self._active_book_title)[:60]
+        canvas_obj.setFont(self.body_font, 9)
+        canvas_obj.setFillColor(HexColor('#6b7280'))
+        canvas_obj.drawString(self.outer_margin, header_y, str(canvas_obj.getPageNumber()))
+        canvas_obj.drawRightString(self.page_size[0] - self.inner_margin, header_y, chapter)
+        canvas_obj.setStrokeColor(HexColor(self.accent_color_hex))
+        canvas_obj.setLineWidth(1)
+        canvas_obj.line(self.outer_margin, header_y - 4, self.page_size[0] - self.inner_margin, header_y - 4)
+        canvas_obj.restoreState()
 
-        story = []
-
-        # Title Page
+    def _build_story(self, book, content_data: Dict) -> List:
+        story: List = []
         story.extend(self._create_title_page(book, content_data))
         story.append(PageBreak())
+        story.extend(self._table_of_contents_flow())
 
-        # Table of Contents (auto-generated with page numbers)
-        toc_title = Paragraph('Table of Contents', self.styles['ChapterTitle'])
-        story.append(toc_title)
-        story.append(Spacer(1, 0.3*inch))
+        sections = self._collect_sections(content_data)
+        if sections:
+            self._ensure_recto_start(story)
+
+        for index, (chapter_title, chapter_content) in enumerate(sections):
+            story.extend(self._format_chapter(chapter_title, chapter_content))
+            if index < len(sections) - 1:
+                self._ensure_recto_start(story)
+
+        return story
+
+    def _table_of_contents_flow(self) -> List:
+        flow: List = []
+        flow.append(Paragraph('Table of Contents', self.styles['ChapterTitle']))
+        flow.append(Spacer(1, 0.3 * inch))
         toc = TableOfContents()
-        # TOC level styles
         toc.levelStyles = [
             ParagraphStyle(
-                name='TOCLevel0', parent=self.styles['BookBody'], fontSize=12, leftIndent=10, firstLineIndent=-10, spaceAfter=6
+                name='TOCLevel0',
+                parent=self.styles['BookBody'],
+                fontSize=12,
+                leftIndent=10,
+                firstLineIndent=-10,
+                spaceAfter=6,
             ),
             ParagraphStyle(
-                name='TOCLevel1', parent=self.styles['BookBody'], fontSize=11, leftIndent=30, firstLineIndent=-10, spaceAfter=4
+                name='TOCLevel1',
+                parent=self.styles['BookBody'],
+                fontSize=11,
+                leftIndent=30,
+                firstLineIndent=-10,
+                spaceAfter=4,
             ),
         ]
-        story.append(toc)
-        story.append(PageBreak())
+        flow.append(toc)
+        return flow
 
-        # Introduction
-        if 'introduction' in content_data:
-            story.extend(self._format_chapter('Introduction', content_data['introduction']))
-            story.append(PageBreak())
+    def _collect_sections(self, content_data: Dict) -> List:
+        sections: List = []
+        introduction = content_data.get('introduction')
+        if introduction:
+            sections.append(('Introduction', introduction))
 
-        # Main Chapters
         for chapter in content_data.get('chapters', []):
-            story.extend(self._format_chapter(chapter['title'], chapter['content']))
-            story.append(PageBreak())
+            if isinstance(chapter, dict):
+                title = chapter.get('title', 'Chapter')
+                body = chapter.get('content', '')
+            else:
+                title = 'Chapter'
+                body = chapter
+            sections.append((title, body))
 
-        # Conclusion
-        if 'conclusion' in content_data:
-            story.extend(self._format_chapter('Conclusion', content_data['conclusion']))
-            story.append(PageBreak())
+        conclusion = content_data.get('conclusion')
+        if conclusion:
+            sections.append(('Conclusion', conclusion))
 
-        # Actionable Takeaways
-        if 'takeaways' in content_data:
-            story.extend(self._format_chapter('Actionable Takeaways', content_data['takeaways']))
+        takeaways = content_data.get('takeaways')
+        if takeaways:
+            sections.append(('Actionable Takeaways', takeaways))
 
-        # Build PDF with TOC resolution (multi-pass)
-        doc.multiBuild(story)
+        return sections
 
-        return output_path
+    def _ensure_recto_start(self, story: List) -> None:
+        story.append(NextPageTemplate('recto'))
+        story.append(PageBreak())
 
     def _create_title_page(self, book, content_data: Dict) -> List:
         """Create professional title page"""
@@ -448,26 +582,12 @@ class ProfessionalPDFGenerator:
 
         # Subtitle (if exists)
         if 'subtitle' in content_data:
-            subtitle_style = ParagraphStyle(
-                'Subtitle',
-                parent=self.styles['BookBody'],
-                fontSize=16,
-                textColor=HexColor('#4a5568'),
-                alignment=TA_CENTER,
-                spaceAfter=30
-            )
-            elements.append(Paragraph(content_data['subtitle'], subtitle_style))
+            elements.append(Paragraph(content_data['subtitle'], self.styles['Subtitle']))
 
-        # Domain/Category
-        domain_style = ParagraphStyle(
-            'Domain',
-            parent=self.styles['BookBody'],
-            fontSize=12,
-            textColor=HexColor('#718096'),
-            alignment=TA_CENTER,
-            spaceAfter=10
-        )
-        elements.append(Paragraph(f"<b>{book.domain.name}</b>", domain_style))
+        # Domain/Category badge
+        if getattr(book, 'domain', None):
+            domain_badge = f"<b>{book.domain.name}</b>"
+            elements.append(Paragraph(domain_badge, self.styles['Subtitle']))
 
         return elements
 
@@ -477,20 +597,9 @@ class ProfessionalPDFGenerator:
 
         # Chapter Title
         elements.append(Paragraph(title, self.styles['ChapterTitle']))
-        # Decorative divider under chapter title
-        from reportlab.platypus import Flowable
-        class HR(Flowable):
-            def __init__(self, width=1, color=HexColor('#CBD5E0')):
-                Flowable.__init__(self)
-                self.width = width
-                self.color = color
-            def draw(self):
-                self.canv.setStrokeColor(self.color)
-                self.canv.setLineWidth(self.width)
-                self.canv.line(0, 0, self.canv._pagesize[0] - 2*0.75*inch, 0)
-        elements.append(Spacer(1, 0.1*inch))
-        elements.append(HR(width=1))
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.12 * inch))
+        elements.append(HRFlowable(width="100%", thickness=1, color=HexColor(self.accent_color_hex)))
+        elements.append(Spacer(1, 0.24 * inch))
 
         # Split content into sections and paragraphs
         sections = content.split('####')
@@ -515,25 +624,114 @@ class ProfessionalPDFGenerator:
             # Process paragraphs
             paragraphs = [p.strip() for p in section_content.split('\n') if p.strip()]
 
-            for para in paragraphs:
-                # Handle bullet points
-                if para.startswith('- '):
-                    bullet_items = [item.strip('- ').strip() for item in para.split('\n- ')]
-                    for item in bullet_items:
-                        elements.append(Paragraph(f'• {item}', self.styles['BulletList']))
-                else:
-                    # Regular paragraph
-                    # Ensure minimum length - pad if necessary
-                    if len(para.split()) < 30:
-                        # Skip very short paragraphs that might be artifacts
-                        if len(para.split()) > 5:
-                            elements.append(Paragraph(para, self.styles['BookBody']))
-                    else:
-                        elements.append(Paragraph(para, self.styles['BookBody']))
+            idx = 0
+            while idx < len(paragraphs):
+                paragraph = paragraphs[idx]
 
-                elements.append(Spacer(1, 0.12*inch))
+                if self._is_code_fence(paragraph):
+                    code_lines, idx = self._collect_code_block(paragraphs, idx)
+                    if code_lines:
+                        elements.append(Preformatted('\n'.join(code_lines), self.styles['CodeBlock']))
+                        elements.append(Spacer(1, 0.18 * inch))
+                    continue
+
+                if self._is_bullet_line(paragraph):
+                    idx = self._render_bullet_block(paragraphs, idx, elements)
+                    continue
+
+                if self._render_structured_paragraph(paragraph, elements):
+                    idx += 1
+                    continue
+
+                elements.append(Paragraph(paragraph, self.styles['BookBody']))
+                elements.append(Spacer(1, 0.14 * inch))
+                idx += 1
 
         return elements
+
+    def _is_code_fence(self, line: str) -> bool:
+        return line.strip().startswith('```')
+
+    def _collect_code_block(self, paragraphs: List[str], start_index: int) -> Tuple[List[str], int]:
+        idx = start_index + 1
+        code_lines: List[str] = []
+
+        while idx < len(paragraphs) and not self._is_code_fence(paragraphs[idx]):
+            code_lines.append(paragraphs[idx])
+            idx += 1
+
+        if idx < len(paragraphs) and self._is_code_fence(paragraphs[idx]):
+            idx += 1
+
+        return code_lines, idx
+
+    def _is_bullet_line(self, line: str) -> bool:
+        stripped = line.lstrip()
+        return bool(re.match(r'^(?:[-*•]\s+|\d+[\.\)]\s+)', stripped))
+
+    def _render_bullet_block(self, paragraphs: List[str], start_index: int, elements: List) -> int:
+        bullet_items: List[str] = []
+        idx = start_index
+
+        while idx < len(paragraphs) and self._is_bullet_line(paragraphs[idx]):
+            bullet_items.append(self._clean_bullet_text(paragraphs[idx]))
+            idx += 1
+
+        for item in bullet_items:
+            if not item:
+                continue
+            elements.append(Paragraph(f'• {item}', self.styles['BulletList']))
+
+        elements.append(Spacer(1, 0.16 * inch))
+        return idx
+
+    def _clean_bullet_text(self, line: str) -> str:
+        stripped = line.strip()
+        stripped = re.sub(r'^(?:[-*•]|\d+[\.\)])\s*', '', stripped)
+        return stripped.strip()
+
+    def _render_structured_paragraph(self, paragraph: str, elements: List) -> bool:
+        lowered = paragraph.lower()
+
+        if lowered.startswith(("key takeaway", "key takeaways", "key insight")):
+            heading, remainder = self._split_heading(paragraph)
+            if heading:
+                elements.append(Paragraph(f"<b>{heading}</b>", self.styles['SectionHeading']))
+            for item in self._split_key_takeaway_items(remainder):
+                elements.append(Paragraph(f'• {item}', self.styles['KeyTakeaway']))
+            elements.append(Spacer(1, 0.18 * inch))
+            return True
+
+        if lowered.startswith(("pro tip", "insight", "note", "remember", "warning", "action step")):
+            elements.append(Paragraph(self._highlight_leading_phrase(paragraph), self.styles['CalloutBox']))
+            elements.append(Spacer(1, 0.16 * inch))
+            return True
+
+        if lowered.startswith("quote:") or paragraph.startswith("\u201c") or paragraph.startswith('"'):
+            cleaned = paragraph.replace("Quote:", "", 1).strip()
+            elements.append(Paragraph(cleaned, self.styles['Quote']))
+            elements.append(Spacer(1, 0.16 * inch))
+            return True
+
+        return False
+
+    def _split_heading(self, text: str) -> Tuple[str, str]:
+        if ':' in text:
+            heading, remainder = text.split(':', 1)
+            return heading.strip(), remainder.strip()
+        return text.strip(), ""
+
+    def _split_key_takeaway_items(self, text: str) -> List[str]:
+        if not text:
+            return []
+        candidates = re.split(r'(?:\n|;|•|\||-)\s*', text)
+        return [candidate.strip('• ').strip() for candidate in candidates if candidate.strip()]
+
+    def _highlight_leading_phrase(self, text: str) -> str:
+        if ':' not in text:
+            return f"<b>{text.strip()}</b>"
+        lead, remainder = text.split(':', 1)
+        return f"<b>{lead.strip()}:</b> {remainder.strip()}"
 
     def _render_page_signature(self, canvas_obj, doc_obj, page_size, margins):
         """Draw brand header, footer, and navigation markers per page."""

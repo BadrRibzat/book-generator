@@ -518,117 +518,146 @@ Accessibility: Ensure high contrast ratio between text and background colors."""
         else:
             title_line1 = title
             title_line2 = ""
-        
+        cover_a_lines = [
+            "Cover A: Modern Minimalist",
+            "",
+            f'Use ReportLab to create a clean, modern cover for "{title}".',
+            "",
+            "Canvas Setup:",
+            "- Page size: letter (8.5 x 11 inches)",
+            "- Background: White (#FFFFFF)",
+            "",
+            "Title Rendering:",
+            f'- Primary title: "{title_line1}"',
+        ]
+        if title_line2:
+            cover_a_lines.append(f'- Secondary title: "{title_line2}"')
+        cover_a_lines.extend([
+            "- Font: Helvetica-Bold, 48pt primary, 32pt secondary",
+            "- Color: Navy blue (#1a365d)",
+            "- Position: Centered",
+            "",
+            "Visual Elements:",
+            "- Add a simple colored rectangle background",
+            "- Use HexColor('#e2e8f0') for background shape",
+            "",
+            "ReportLab Code:",
+            "```python",
+            "from reportlab.lib.pagesizes import letter",
+            "from reportlab.pdfgen import canvas",
+            "from reportlab.lib.colors import HexColor",
+            "",
+            "def create_coverA(c):",
+            "    c.setPageSize(letter)",
+            "    c.setFillColor(HexColor('#e2e8f0'))",
+            "    c.rect(0.5*inch, 0.5*inch, 7.5*inch, 10*inch, fill=1)",
+            "    c.setFillColor(HexColor('#1a365d'))",
+            '    c.setFont("Helvetica-Bold", 48)',
+            f'    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")',
+        ])
+        if title_line2:
+            cover_a_lines.append(f'    c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")')
+        cover_a_lines.append("```")
+
+        cover_b_lines = [
+            "Cover B: Elegant Typography",
+            "",
+            f'Use ReportLab to create an elegant typographic cover for "{title}".',
+            "",
+            "Canvas Setup:",
+            "- Page size: letter",
+            "- Background: Light gray gradient (#f8fafc to #e2e8f0)",
+            "",
+            "Title Rendering:",
+            f'- Primary title: "{title_line1}"',
+        ]
+        if title_line2:
+            cover_b_lines.append(f'- Secondary title: "{title_line2}"')
+        cover_b_lines.extend([
+            "- Font: Helvetica-Bold, 52pt primary, 36pt secondary",
+            "- Color: Dark blue (#2d3748)",
+            "- Position: Left-aligned with margin",
+            "",
+            "Visual Elements:",
+            "- Add decorative line under title",
+            "- Use subtle background pattern",
+            "",
+            "ReportLab Code:",
+            "```python",
+            "from reportlab.lib.pagesizes import letter",
+            "from reportlab.pdfgen import canvas",
+            "from reportlab.lib.colors import HexColor",
+            "",
+            "def create_coverB(c):",
+            "    c.setPageSize(letter)",
+            "    # Gradient background simulation",
+            "    c.setFillColor(HexColor('#f8fafc'))",
+            "    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)",
+            "    c.setFillColor(HexColor('#2d3748'))",
+            '    c.setFont("Helvetica-Bold", 52)',
+            f'    c.drawString(1*inch, 7*inch, "{title_line1}")',
+        ])
+        if title_line2:
+            cover_b_lines.extend([
+                '    c.setFont("Helvetica-Bold", 36)',
+                f'    c.drawString(1*inch, 6.5*inch, "{title_line2}")',
+            ])
+        cover_b_lines.extend([
+            "    # Decorative line",
+            "    c.setStrokeColor(HexColor('#4a5568'))",
+            "    c.setLineWidth(3)",
+            "    c.line(1*inch, 6*inch, 7.5*inch, 6*inch)",
+            "```",
+        ])
+
+        cover_c_lines = [
+            "Cover C: Bold Statement",
+            "",
+            f'Use ReportLab to create a bold, striking cover for "{title}".',
+            "",
+            "Canvas Setup:",
+            "- Page size: letter",
+            "- Background: Dark with light text (#1a202c)",
+            "",
+            "Title Rendering:",
+            f'- Primary title: "{title_line1}"',
+        ]
+        if title_line2:
+            cover_c_lines.append(f'- Secondary title: "{title_line2}"')
+        cover_c_lines.extend([
+            "- Font: Helvetica-Bold, 56pt primary, 40pt secondary",
+            "- Color: White (#ffffff)",
+            "- Position: Centered",
+            "",
+            "Visual Elements:",
+            "- High contrast design",
+            "- Bold background shapes",
+            "",
+            "ReportLab Code:",
+            "```python",
+            "from reportlab.lib.pagesizes import letter",
+            "from reportlab.pdfgen import canvas",
+            "from reportlab.lib.colors import HexColor",
+            "",
+            "def create_coverC(c):",
+            "    c.setPageSize(letter)",
+            "    c.setFillColor(HexColor('#1a202c'))",
+            "    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)",
+            "    c.setFillColor(HexColor('#ffffff'))",
+            '    c.setFont("Helvetica-Bold", 56)',
+            f'    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")',
+        ])
+        if title_line2:
+            cover_c_lines.extend([
+                '    c.setFont("Helvetica-Bold", 40)',
+                f'    c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")',
+            ])
+        cover_c_lines.append("```")
+
         return [
-            f"""Cover A: Modern Minimalist
-
-Use ReportLab to create a clean, modern cover for "{title}".
-
-Canvas Setup:
-- Page size: letter (8.5 x 11 inches)
-- Background: White (#FFFFFF)
-
-Title Rendering:
-- Primary title: "{title_line1}"
-{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
-- Font: Helvetica-Bold, 48pt primary, 32pt secondary
-- Color: Navy blue (#1a365d)
-- Position: Centered
-
-Visual Elements:
-- Add a simple colored rectangle background
-- Use HexColor('#e2e8f0') for background shape
-
-ReportLab Code:
-```python
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-
-def create_coverA(c):
-    c.setPageSize(letter)
-    c.setFillColor(HexColor('#e2e8f0'))
-    c.rect(0.5*inch, 0.5*inch, 7.5*inch, 10*inch, fill=1)
-    c.setFillColor(HexColor('#1a365d'))
-    c.setFont("Helvetica-Bold", 48)
-    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
-    {f'c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
-```""",
-            
-            f"""Cover B: Elegant Typography
-
-Use ReportLab to create an elegant typographic cover for "{title}".
-
-Canvas Setup:
-- Page size: letter
-- Background: Light gray gradient (#f8fafc to #e2e8f0)
-
-Title Rendering:
-- Primary title: "{title_line1}"
-{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
-- Font: Helvetica-Bold, 52pt primary, 36pt secondary
-- Color: Dark blue (#2d3748)
-- Position: Left-aligned with margin
-
-Visual Elements:
-- Add decorative line under title
-- Use subtle background pattern
-
-ReportLab Code:
-```python
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-
-def create_coverB(c):
-    c.setPageSize(letter)
-    # Gradient background simulation
-    c.setFillColor(HexColor('#f8fafc'))
-    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
-    c.setFillColor(HexColor('#2d3748'))
-    c.setFont("Helvetica-Bold", 52)
-    c.drawString(1*inch, 7*inch, "{title_line1}")
-    {f'c.setFont("Helvetica-Bold", 36)\nc.drawString(1*inch, 6.5*inch, "{title_line2}")' if title_line2 else ''}
-    # Decorative line
-    c.setStrokeColor(HexColor('#4a5568'))
-    c.setLineWidth(3)
-    c.line(1*inch, 6*inch, 7.5*inch, 6*inch)
-```""",
-            
-            f"""Cover C: Bold Statement
-
-Use ReportLab to create a bold, striking cover for "{title}".
-
-Canvas Setup:
-- Page size: letter
-- Background: Dark with light text (#1a202c)
-
-Title Rendering:
-- Primary title: "{title_line1}"
-{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
-- Font: Helvetica-Bold, 56pt primary, 40pt secondary
-- Color: White (#ffffff)
-- Position: Centered
-
-Visual Elements:
-- High contrast design
-- Bold background shapes
-
-ReportLab Code:
-```python
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-
-def create_coverC(c):
-    c.setPageSize(letter)
-    c.setFillColor(HexColor('#1a202c'))
-    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
-    c.setFillColor(HexColor('#ffffff'))
-    c.setFont("Helvetica-Bold", 56)
-    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
-    {f'c.setFont("Helvetica-Bold", 40)\nc.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
-```"""
+            "\n".join(cover_a_lines),
+            "\n".join(cover_b_lines),
+            "\n".join(cover_c_lines),
         ]
         """
         Generate 3 AI-powered cover designs for a book
@@ -894,117 +923,146 @@ Accessibility: Ensure high contrast ratio between text and background colors."""
         else:
             title_line1 = title
             title_line2 = ""
-        
+        cover_a_lines = [
+            "Cover A: Modern Minimalist",
+            "",
+            f'Use ReportLab to create a clean, modern cover for "{title}".',
+            "",
+            "Canvas Setup:",
+            "- Page size: letter (8.5 x 11 inches)",
+            "- Background: White (#FFFFFF)",
+            "",
+            "Title Rendering:",
+            f'- Primary title: "{title_line1}"',
+        ]
+        if title_line2:
+            cover_a_lines.append(f'- Secondary title: "{title_line2}"')
+        cover_a_lines.extend([
+            "- Font: Helvetica-Bold, 48pt primary, 32pt secondary",
+            "- Color: Navy blue (#1a365d)",
+            "- Position: Centered",
+            "",
+            "Visual Elements:",
+            "- Add a simple colored rectangle background",
+            "- Use HexColor('#e2e8f0') for background shape",
+            "",
+            "ReportLab Code:",
+            "```python",
+            "from reportlab.lib.pagesizes import letter",
+            "from reportlab.pdfgen import canvas",
+            "from reportlab.lib.colors import HexColor",
+            "",
+            "def create_coverA(c):",
+            "    c.setPageSize(letter)",
+            "    c.setFillColor(HexColor('#e2e8f0'))",
+            "    c.rect(0.5*inch, 0.5*inch, 7.5*inch, 10*inch, fill=1)",
+            "    c.setFillColor(HexColor('#1a365d'))",
+            '    c.setFont("Helvetica-Bold", 48)',
+            f'    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")',
+        ])
+        if title_line2:
+            cover_a_lines.append(f'    c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")')
+        cover_a_lines.append("```")
+
+        cover_b_lines = [
+            "Cover B: Elegant Typography",
+            "",
+            f'Use ReportLab to create an elegant typographic cover for "{title}".',
+            "",
+            "Canvas Setup:",
+            "- Page size: letter",
+            "- Background: Light gray gradient (#f8fafc to #e2e8f0)",
+            "",
+            "Title Rendering:",
+            f'- Primary title: "{title_line1}"',
+        ]
+        if title_line2:
+            cover_b_lines.append(f'- Secondary title: "{title_line2}"')
+        cover_b_lines.extend([
+            "- Font: Helvetica-Bold, 52pt primary, 36pt secondary",
+            "- Color: Dark blue (#2d3748)",
+            "- Position: Left-aligned with margin",
+            "",
+            "Visual Elements:",
+            "- Add decorative line under title",
+            "- Use subtle background pattern",
+            "",
+            "ReportLab Code:",
+            "```python",
+            "from reportlab.lib.pagesizes import letter",
+            "from reportlab.pdfgen import canvas",
+            "from reportlab.lib.colors import HexColor",
+            "",
+            "def create_coverB(c):",
+            "    c.setPageSize(letter)",
+            "    # Gradient background simulation",
+            "    c.setFillColor(HexColor('#f8fafc'))",
+            "    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)",
+            "    c.setFillColor(HexColor('#2d3748'))",
+            '    c.setFont("Helvetica-Bold", 52)',
+            f'    c.drawString(1*inch, 7*inch, "{title_line1}")',
+        ])
+        if title_line2:
+            cover_b_lines.extend([
+                '    c.setFont("Helvetica-Bold", 36)',
+                f'    c.drawString(1*inch, 6.5*inch, "{title_line2}")',
+            ])
+        cover_b_lines.extend([
+            "    # Decorative line",
+            "    c.setStrokeColor(HexColor('#4a5568'))",
+            "    c.setLineWidth(3)",
+            "    c.line(1*inch, 6*inch, 7.5*inch, 6*inch)",
+            "```",
+        ])
+
+        cover_c_lines = [
+            "Cover C: Bold Statement",
+            "",
+            f'Use ReportLab to create a bold, striking cover for "{title}".',
+            "",
+            "Canvas Setup:",
+            "- Page size: letter",
+            "- Background: Dark with light text (#1a202c)",
+            "",
+            "Title Rendering:",
+            f'- Primary title: "{title_line1}"',
+        ]
+        if title_line2:
+            cover_c_lines.append(f'- Secondary title: "{title_line2}"')
+        cover_c_lines.extend([
+            "- Font: Helvetica-Bold, 56pt primary, 40pt secondary",
+            "- Color: White (#ffffff)",
+            "- Position: Centered",
+            "",
+            "Visual Elements:",
+            "- High contrast design",
+            "- Bold background shapes",
+            "",
+            "ReportLab Code:",
+            "```python",
+            "from reportlab.lib.pagesizes import letter",
+            "from reportlab.pdfgen import canvas",
+            "from reportlab.lib.colors import HexColor",
+            "",
+            "def create_coverC(c):",
+            "    c.setPageSize(letter)",
+            "    c.setFillColor(HexColor('#1a202c'))",
+            "    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)",
+            "    c.setFillColor(HexColor('#ffffff'))",
+            '    c.setFont("Helvetica-Bold", 56)',
+            f'    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")',
+        ])
+        if title_line2:
+            cover_c_lines.extend([
+                '    c.setFont("Helvetica-Bold", 40)',
+                f'    c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")',
+            ])
+        cover_c_lines.append("```")
+
         return [
-            f"""Cover A: Modern Minimalist
-
-Use ReportLab to create a clean, modern cover for "{title}".
-
-Canvas Setup:
-- Page size: letter (8.5 x 11 inches)
-- Background: White (#FFFFFF)
-
-Title Rendering:
-- Primary title: "{title_line1}"
-{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
-- Font: Helvetica-Bold, 48pt primary, 32pt secondary
-- Color: Navy blue (#1a365d)
-- Position: Centered
-
-Visual Elements:
-- Add a simple colored rectangle background
-- Use HexColor('#e2e8f0') for background shape
-
-ReportLab Code:
-```python
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-
-def create_coverA(c):
-    c.setPageSize(letter)
-    c.setFillColor(HexColor('#e2e8f0'))
-    c.rect(0.5*inch, 0.5*inch, 7.5*inch, 10*inch, fill=1)
-    c.setFillColor(HexColor('#1a365d'))
-    c.setFont("Helvetica-Bold", 48)
-    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
-    {f'c.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
-```""",
-            
-            f"""Cover B: Elegant Typography
-
-Use ReportLab to create an elegant typographic cover for "{title}".
-
-Canvas Setup:
-- Page size: letter
-- Background: Light gray gradient (#f8fafc to #e2e8f0)
-
-Title Rendering:
-- Primary title: "{title_line1}"
-{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
-- Font: Helvetica-Bold, 52pt primary, 36pt secondary
-- Color: Dark blue (#2d3748)
-- Position: Left-aligned with margin
-
-Visual Elements:
-- Add decorative line under title
-- Use subtle background pattern
-
-ReportLab Code:
-```python
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-
-def create_coverB(c):
-    c.setPageSize(letter)
-    # Gradient background simulation
-    c.setFillColor(HexColor('#f8fafc'))
-    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
-    c.setFillColor(HexColor('#2d3748'))
-    c.setFont("Helvetica-Bold", 52)
-    c.drawString(1*inch, 7*inch, "{title_line1}")
-    {f'c.setFont("Helvetica-Bold", 36)\nc.drawString(1*inch, 6.5*inch, "{title_line2}")' if title_line2 else ''}
-    # Decorative line
-    c.setStrokeColor(HexColor('#4a5568'))
-    c.setLineWidth(3)
-    c.line(1*inch, 6*inch, 7.5*inch, 6*inch)
-```""",
-            
-            f"""Cover C: Bold Statement
-
-Use ReportLab to create a bold, striking cover for "{title}".
-
-Canvas Setup:
-- Page size: letter
-- Background: Dark with light text (#1a202c)
-
-Title Rendering:
-- Primary title: "{title_line1}"
-{f'- Secondary title: "{title_line2}"' if title_line2 else ''}
-- Font: Helvetica-Bold, 56pt primary, 40pt secondary
-- Color: White (#ffffff)
-- Position: Centered
-
-Visual Elements:
-- High contrast design
-- Bold background shapes
-
-ReportLab Code:
-```python
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib.colors import HexColor
-
-def create_coverC(c):
-    c.setPageSize(letter)
-    c.setFillColor(HexColor('#1a202c'))
-    c.rect(0, 0, 8.5*inch, 11*inch, fill=1)
-    c.setFillColor(HexColor('#ffffff'))
-    c.setFont("Helvetica-Bold", 56)
-    c.drawCentredString(4.25*inch, 6*inch, "{title_line1}")
-    {f'c.setFont("Helvetica-Bold", 40)\nc.drawCentredString(4.25*inch, 5.5*inch, "{title_line2}")' if title_line2 else ''}
-```"""
+            "\n".join(cover_a_lines),
+            "\n".join(cover_b_lines),
+            "\n".join(cover_c_lines),
         ]
         """
         Generate 3 AI-powered cover designs for a book

@@ -1,11 +1,10 @@
-from reportlab.lib.pagesizes import letter, A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch, cm
-from reportlab.lib.colors import HexColor, black, white
-from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_JUSTIFY
+from reportlab.lib.units import inch
+from reportlab.lib.colors import HexColor
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.platypus import (
-    BaseDocTemplate, SimpleDocTemplate, Paragraph, Spacer, PageBreak,
-    Table, TableStyle, Image, KeepTogether, Frame, PageTemplate
+    BaseDocTemplate, Paragraph, Spacer, PageBreak,
+    Frame, PageTemplate
 )
 from reportlab.platypus.tableofcontents import TableOfContents
 from reportlab.pdfbase import pdfmetrics
@@ -119,6 +118,8 @@ class ProfessionalPDFGenerator:
         self.font_theme = font_theme
         self.google_fonts = GoogleFontsIntegration()
         self.setup_fonts()
+        self.typography_scale = self._build_typography_scale()
+        self.brand_palette = self._build_brand_palette()
         self.setup_styles()
 
     def setup_fonts(self):
@@ -164,6 +165,37 @@ class ProfessionalPDFGenerator:
                             self.body_font = font_name
                 except Exception as e:
                     logger.warning(f"Could not load {font_name}: {e}")
+
+        if not self._font_available(self.header_font):
+            self.header_font = 'Helvetica-Bold'
+        if not self._font_available(self.body_font):
+            self.body_font = 'Helvetica'
+
+    def _build_typography_scale(self) -> Dict[str, int]:
+        """Define a consistent typographic scale used throughout the book."""
+        return {
+            'display': 44,
+            'headline': 28,
+            'subhead': 18,
+            'body': 14,
+            'small': 10,
+        }
+
+    def _build_brand_palette(self) -> Dict[str, HexColor]:
+        """Centralise brand colors for headers, footers, and accents."""
+        return {
+            'primary': HexColor('#1E3A8A'),
+            'accent': HexColor('#F97316'),
+            'light': HexColor('#F8FAFC'),
+            'muted': HexColor('#475569'),
+        }
+
+    def _font_available(self, font_name: str) -> bool:
+        try:
+            pdfmetrics.getFont(font_name)
+            return True
+        except KeyError:
+            return False
     
     @classmethod
     def create_with_book_context(cls, book, cover_brief: str = None):
@@ -212,49 +244,49 @@ class ProfessionalPDFGenerator:
         self.styles.add(ParagraphStyle(
             name='BookTitle',
             parent=self.styles['Title'],
-            fontSize=42,
+            fontSize=self.typography_scale['display'],
             textColor=HexColor('#1a365d'),
-            spaceAfter=30,
+            spaceAfter=self.typography_scale['body'] * 2,
             alignment=TA_CENTER,
             fontName=self.header_font,
-            leading=50
+            leading=int(self.typography_scale['display'] * 1.2)
         ))
 
         # Chapter Title Style
         self.styles.add(ParagraphStyle(
             name='ChapterTitle',
             parent=self.styles['Heading1'],
-            fontSize=28,
+            fontSize=self.typography_scale['headline'],
             textColor=HexColor('#2c5282'),
-            spaceAfter=20,
-            spaceBefore=30,
+            spaceAfter=self.typography_scale['body'],
+            spaceBefore=self.typography_scale['body'] * 2,
             fontName=self.header_font,
-            leading=34
+            leading=int(self.typography_scale['headline'] * 1.2)
         ))
 
         # Section Heading Style
         self.styles.add(ParagraphStyle(
             name='SectionHeading',
             parent=self.styles['Heading2'],
-            fontSize=18,
+            fontSize=self.typography_scale['subhead'],
             textColor=HexColor('#2d3748'),
-            spaceAfter=12,
-            spaceBefore=18,
+            spaceAfter=self.typography_scale['body'] * 0.8,
+            spaceBefore=self.typography_scale['body'],
             fontName=self.header_font,
-            leading=22
+            leading=int(self.typography_scale['subhead'] * 1.2)
         ))
 
         # Body Text Style - ENHANCED with dynamic font
         self.styles.add(ParagraphStyle(
             name='BookBody',
             parent=self.styles['BodyText'],
-            fontSize=14,  # Increased from default 10-12
+            fontSize=self.typography_scale['body'],
             textColor=HexColor('#2d3748'),
-            spaceAfter=14,
+            spaceAfter=self.typography_scale['body'] * 0.9,
             spaceBefore=0,
             alignment=TA_JUSTIFY,
             fontName=self.body_font,
-            leading=21,  # 1.5 line spacing
+            leading=int(self.typography_scale['body'] * 1.5),
             firstLineIndent=0
         ))
 
@@ -262,30 +294,32 @@ class ProfessionalPDFGenerator:
         self.styles.add(ParagraphStyle(
             name='BulletList',
             parent=self.styles['BookBody'],
-            fontSize=14,
+            fontSize=self.typography_scale['body'],
             leftIndent=25,
             bulletIndent=10,
-            spaceAfter=10,
-            leading=20
+            spaceAfter=self.typography_scale['body'] * 0.7,
+            leading=int(self.typography_scale['body'] * 1.35)
         ))
 
         # Quote Style
         self.styles.add(ParagraphStyle(
             name='Quote',
             parent=self.styles['BookBody'],
-            fontSize=13,
+            fontSize=max(self.typography_scale['body'] - 1, 12),
             textColor=HexColor('#4a5568'),
             leftIndent=40,
             rightIndent=40,
-            spaceAfter=16,
-            spaceBefore=16,
-            leading=19
+            spaceAfter=self.typography_scale['body'],
+            spaceBefore=self.typography_scale['body'],
+            leading=int(self.typography_scale['body'] * 1.4)
         ))
 
     def create_book_pdf(self, book, content_data: Dict, output_path: str):
         """
         Create professionally formatted book PDF
         """
+        self._active_book_title = book.title
+
         # KDP-ready 6x9 inches with professional margins and headers
         SIX_BY_NINE = (6*inch, 9*inch)
         # Mirrored margins with gutter: inner margin a bit larger than outer
@@ -307,6 +341,7 @@ class ProfessionalPDFGenerator:
                             text = flowable.getPlainText()
                             # Notify for TOC collection
                             self.notify('TOCEntry', (level, text, self.page))
+                            self._current_chapter_title = text
                 except Exception:
                     pass
 
@@ -338,31 +373,19 @@ class ProfessionalPDFGenerator:
             id='left_frame'
         )
 
-        def _header_footer(canvas, doc_obj):
-            canvas.saveState()
-            width, height = SIX_BY_NINE
-            # Running header
-            canvas.setFont(self.body_font, 9)
-            canvas.setFillColor(HexColor('#718096'))
-            header_text = book.title[:60]
-            # Draw header aligned to outer edge per page side
-            on_left_page = (doc_obj.page % 2 == 0)
-            if on_left_page:
-                canvas.drawRightString(width - outer_margin, height - top_margin + 12, header_text)
-            else:
-                canvas.drawString(outer_margin, height - top_margin + 12, header_text)
-            # Page number on outer edge bottom
-            page_num_text = f"{doc_obj.page}"
-            if on_left_page:
-                canvas.drawString(outer_margin, bottom_margin - 12, page_num_text)
-            else:
-                canvas.drawRightString(width - outer_margin, bottom_margin - 12, page_num_text)
-            canvas.restoreState()
+        def _header_footer(canvas_obj, doc_obj, generator=self):
+            generator._render_page_signature(
+                canvas_obj,
+                doc_obj,
+                page_size=SIX_BY_NINE,
+                margins=(inner_margin, outer_margin, top_margin, bottom_margin),
+            )
 
         # Two page templates to mirror margins
         right_template = PageTemplate(id='Right', frames=[right_frame], onPage=_header_footer)
         left_template = PageTemplate(id='Left', frames=[left_frame], onPage=_header_footer)
         doc.addPageTemplates([right_template, left_template])
+        doc._current_chapter_title = book.title
 
         story = []
 
@@ -511,6 +534,66 @@ class ProfessionalPDFGenerator:
                 elements.append(Spacer(1, 0.12*inch))
 
         return elements
+
+    def _render_page_signature(self, canvas_obj, doc_obj, page_size, margins):
+        """Draw brand header, footer, and navigation markers per page."""
+        canvas_obj.saveState()
+        width, height = page_size
+        inner_margin, outer_margin, top_margin, bottom_margin = margins
+        on_left_page = (doc_obj.page % 2 == 0)
+
+        chapter_title = getattr(doc_obj, '_current_chapter_title', self._active_book_title)
+        chapter_label = (chapter_title or self._active_book_title or '').strip()
+        chapter_label = chapter_label[:70]
+
+        header_y = height - top_margin + 16
+        logo_size = 0.52 * inch
+        self._draw_brand_logo(canvas_obj, width / 2, header_y, logo_size)
+
+        if chapter_label:
+            canvas_obj.setFont(self.body_font, self.typography_scale['small'])
+            canvas_obj.setFillColor(self.brand_palette['muted'])
+            if on_left_page:
+                canvas_obj.drawRightString(width - outer_margin, header_y - 6, chapter_label)
+            else:
+                canvas_obj.drawString(inner_margin, header_y - 6, chapter_label)
+
+        strap_height = 0.22 * inch
+        strap_y = bottom_margin - strap_height - 6
+        canvas_obj.setFillColor(self.brand_palette['primary'])
+        canvas_obj.rect(0, strap_y, width, strap_height, stroke=0, fill=1)
+
+        footer_y = strap_y + strap_height / 2 - 3
+        canvas_obj.setFont(self.body_font, self.typography_scale['small'])
+        canvas_obj.setFillColor(self.brand_palette['light'])
+        canvas_obj.drawString(inner_margin, footer_y, "BookAI Platform")
+        canvas_obj.drawCentredString(width / 2, footer_y, f"Page {doc_obj.page}")
+        if chapter_label:
+            canvas_obj.drawRightString(width - inner_margin, footer_y, chapter_label)
+
+        canvas_obj.restoreState()
+
+    def _draw_brand_logo(self, canvas_obj, center_x: float, center_y: float, width: float):
+        """Render a simplified brand mark derived from the frontend logo."""
+        book_width = width
+        book_height = width * 0.62
+        left_x = center_x - book_width / 2
+        bottom_y = center_y - book_height / 2
+
+        canvas_obj.setFillColor(self.brand_palette['primary'])
+        canvas_obj.roundRect(left_x, bottom_y, book_width, book_height, width * 0.12, stroke=0, fill=1)
+
+        spine_width = width * 0.12
+        canvas_obj.setFillColor(self.brand_palette['light'])
+        canvas_obj.rect(center_x - spine_width / 2, bottom_y + book_height * 0.12, spine_width, book_height * 0.76, stroke=0, fill=1)
+
+        accent_width = width * 0.28
+        canvas_obj.setFillColor(self.brand_palette['accent'])
+        canvas_obj.roundRect(left_x + book_width - accent_width, bottom_y + book_height * 0.08, accent_width, book_height * 0.84, width * 0.1, stroke=0, fill=1)
+
+        canvas_obj.setFillColor(self.brand_palette['light'])
+        canvas_obj.setFont(self.header_font, max(10, int(book_height * 0.85)))
+        canvas_obj.drawCentredString(center_x, center_y - book_height * 0.18, "AI")
 
     def _create_toc(self, content_data: Dict) -> List:
         """Create table of contents"""

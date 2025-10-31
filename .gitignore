@@ -53,3 +53,7 @@ tmp/
 # Celery
 celerybeat-schedule
 .history/
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md

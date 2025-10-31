@@ -2,21 +2,16 @@ from django.db import models
 from books.models import Book
 
 class Cover(models.Model):
-    """
-    Cover model - stores generated cover designs for each book
-    Each book can have multiple cover options, but only one selected
-    """
-    TEMPLATE_CHOICES = [
-        ('modern', 'Modern Minimalist'),
-        ('bold', 'Bold Typography'),
-        ('elegant', 'Elegant Professional'),
-    ]
-    
+    """Cover model storing generated design variants per book."""
+
     # Relationships
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name='covers')
     
     # Cover details
-    template_style = models.CharField(max_length=20, choices=TEMPLATE_CHOICES)
+    template_style = models.CharField(
+        max_length=80,
+        help_text="Identifier for the dynamic template or trend used to render the cover",
+    )
     image_path = models.CharField(max_length=500)  # Path to generated cover image
     pdf_path = models.CharField(max_length=500, blank=True, null=True)  # Path to cover PDF
     
